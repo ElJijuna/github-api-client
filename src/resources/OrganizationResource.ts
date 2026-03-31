@@ -1,4 +1,4 @@
-import type { GitHubOrganization, OrgMembersParams } from '../domain/Organization';
+import type { GitHubOrganization, OrgMembersParams, CreateOrgRepoData } from '../domain/Organization';
 import type { GitHubRepository, ReposParams } from '../domain/Repository';
 import type { GitHubUser } from '../domain/User';
 import type { GitHubPagedResponse } from '../domain/Pagination';
@@ -21,6 +21,12 @@ export type RequestTextFn = (
   path: string,
   params?: Record<string, string | number | boolean>,
 ) => Promise<string>;
+
+/** @internal */
+export type RequestBodyFn = <T>(
+  path: string,
+  body: unknown,
+) => Promise<T>;
 
 /**
  * Represents a GitHub organization resource with chainable async methods.
@@ -49,6 +55,7 @@ export class OrganizationResource implements PromiseLike<GitHubOrganization> {
     private readonly request: RequestFn,
     private readonly requestList: RequestListFn,
     private readonly requestText: RequestTextFn,
+    private readonly requestBody: RequestBodyFn,
     private readonly org: string,
   ) {}
 
@@ -128,5 +135,27 @@ export class OrganizationResource implements PromiseLike<GitHubOrganization> {
       `/orgs/${this.org}/members`,
       params as Record<string, string | number | boolean>,
     );
+  }
+
+  /**
+   * Creates a new repository in this organization.
+   *
+   * `POST /orgs/{org}/repos`
+   *
+   * @param data - Repository creation options. `name` is required.
+   * @returns The newly created repository
+   *
+   * @example
+   * ```typescript
+   * const repo = await gh.org('my-org').createRepo({
+   *   name: 'my-new-repo',
+   *   description: 'My new repository',
+   *   private: true,
+   *   auto_init: true,
+   * });
+   * ```
+   */
+  async createRepo(data: CreateOrgRepoData): Promise<GitHubRepository> {
+    return this.requestBody<GitHubRepository>(`/orgs/${this.org}/repos`, data);
   }
 }

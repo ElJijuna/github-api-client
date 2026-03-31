@@ -8,7 +8,7 @@ export { PullRequestResource } from './resources/PullRequestResource';
 export { CommitResource } from './resources/CommitResource';
 export { UserResource } from './resources/UserResource';
 export type { GitHubUser, UsersParams, SearchUsersParams } from './domain/User';
-export type { GitHubOrganization, OrgMembersParams } from './domain/Organization';
+export type { GitHubOrganization, OrgMembersParams, CreateOrgRepoData } from './domain/Organization';
 export type { GitHubRepository, ReposParams, ForksParams, SearchReposParams } from './domain/Repository';
 export type { GitHubPullRequest, GitHubRef, GitHubLabel, GitHubMilestone, PullRequestsParams } from './domain/PullRequest';
 export type { GitHubReview, GitHubReviewComment, ReviewsParams, ReviewCommentsParams } from './domain/Review';

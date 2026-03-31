@@ -273,6 +273,17 @@ function mockTextResponse(text: string, status = 200) {
   });
 }
 
+function mockPostResponse(data: unknown, status = 201) {
+  fetchMock.mockResolvedValueOnce({
+    ok: status >= 200 && status < 300,
+    status,
+    statusText: status === 201 ? 'Created' : 'OK',
+    json: async () => data,
+    text: async () => JSON.stringify(data),
+    headers: { get: () => null },
+  });
+}
+
 function mockErrorResponse(status: number, statusText: string) {
   fetchMock.mockResolvedValueOnce({
     ok: false,
@@ -440,6 +451,64 @@ describe('GitHubClient.org(name)', () => {
       expect.anything(),
     );
     expect(result.values[0].login).toBe('octocat');
+  });
+});
+
+describe('OrganizationResource.createRepo()', () => {
+  it('creates a repository and returns it', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse({ ...mockRepo, name: 'new-repo', full_name: 'github/new-repo', private: true });
+
+    const result = await gh.org('github').createRepo({ name: 'new-repo', private: true });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/orgs/github/repos`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ name: 'new-repo', private: true }),
+        headers: expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }),
+      }),
+    );
+    expect(result.name).toBe('new-repo');
+    expect(result.private).toBe(true);
+  });
+
+  it('passes all optional fields in the request body', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse(mockRepo);
+
+    await gh.org('github').createRepo({
+      name: 'my-repo',
+      description: 'A new repo',
+      private: false,
+      auto_init: true,
+      gitignore_template: 'Node',
+      license_template: 'mit',
+      delete_branch_on_merge: true,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/orgs/github/repos`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'my-repo',
+          description: 'A new repo',
+          private: false,
+          auto_init: true,
+          gitignore_template: 'Node',
+          license_template: 'mit',
+          delete_branch_on_merge: true,
+        }),
+      }),
+    );
+  });
+
+  it('throws GitHubApiError on 422 (validation failed)', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockErrorResponse(422, 'Unprocessable Entity');
+
+    await expect(gh.org('github').createRepo({ name: 'invalid name!' })).rejects.toThrow(GitHubApiError);
   });
 });
 

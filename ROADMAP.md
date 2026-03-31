@@ -26,7 +26,7 @@
 | `repos(params?)` | `GET /orgs/{org}/repos` | ✅ |
 | `repo(name)` | — chainable | ✅ |
 | `members(params?)` | `GET /orgs/{org}/members` | ✅ |
-| `createRepo(data)` | `POST /orgs/{org}/repos` | ⬜ |
+| `createRepo(data)` | `POST /orgs/{org}/repos` | ✅ |
 
 ---
 
