@@ -1,7 +1,7 @@
 {
   "name": "gh-api-client",
   "version": "1.0.0",
-  "description": "TypeScript client for the GitHub REST API",
+  "description": "A lightweight Java client for the GitHub API that simplifies common operations such as listing repositories, branches, commits, collaborators, and files, with built-in support for token-based authentication.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -30,16 +30,26 @@
   },
   "keywords": [
     "github",
-    "github-api",
-    "api-client",
-    "rest",
-    "typescript"
+    "api",
+    "client",
+    "repositories",
+    "branches",
+    "commits",
+    "collaborators",
+    "files",
+    "pull requests",
+    "github api client",
+    "github api wrapper",
+    "github api library"
   ],
   "license": "MIT",
   "homepage": "https://github.com/ElJijuna/github-api-client",
   "repository": {
     "type": "git",
     "url": "https://github.com/ElJijuna/github-api-client.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ElJijuna/github-api-client/issues"
   },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
