@@ -2,10 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A lightweight Java client for the GitHub API that simplifies common operations such as listing repositories, branches, commits, collaborators, and files, with built-in support for token-based authentication.
-
-[GitHub REST API](https://docs.github.com/en/rest).
-
+TypeScript client for the [GitHub REST API](https://docs.github.com/en/rest).
 Works in **Node.js** and the **browser** (isomorphic). Fully typed, zero runtime dependencies.
 
 ---
