@@ -1,7 +1,7 @@
 import { Security } from './security/Security';
 import { GitHubApiError } from './errors/GitHubApiError';
 import { OrganizationResource } from './resources/OrganizationResource';
-import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn } from './resources/OrganizationResource';
+import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn } from './resources/OrganizationResource';
 import { RepositoryResource } from './resources/RepositoryResource';
 import { UserResource } from './resources/UserResource';
 import type { GitHubUser } from './domain/User';
@@ -15,7 +15,7 @@ export interface RequestEvent {
   /** Full URL that was requested */
   url: string;
   /** HTTP method used */
-  method: 'GET' | 'POST';
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   /** Timestamp when the request started */
   startedAt: Date;
   /** Timestamp when the request finished (success or error) */
@@ -252,6 +252,61 @@ export class GitHubClient {
       this.requestPost<T>(path, body);
   }
 
+  private async requestPatch<T>(path: string, body: unknown): Promise<T> {
+    const url = `${this.security.getApiUrl()}${path}`;
+    const startedAt = new Date();
+    let statusCode: number | undefined;
+    try {
+      const response = await fetch(url, {
+        method: 'PATCH',
+        headers: this.security.getHeaders(),
+        body: JSON.stringify(body),
+      });
+      statusCode = response.status;
+      if (!response.ok) {
+        throw new GitHubApiError(response.status, response.statusText);
+      }
+      const data = await response.json() as T;
+      this.emit('request', { url, method: 'PATCH', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      return data;
+    } catch (err) {
+      const finishedAt = new Date();
+      this.emit('request', { url, method: 'PATCH', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      throw err;
+    }
+  }
+
+  private async requestDelete(path: string): Promise<void> {
+    const url = `${this.security.getApiUrl()}${path}`;
+    const startedAt = new Date();
+    let statusCode: number | undefined;
+    try {
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: this.security.getHeaders(),
+      });
+      statusCode = response.status;
+      if (!response.ok) {
+        throw new GitHubApiError(response.status, response.statusText);
+      }
+      this.emit('request', { url, method: 'DELETE', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+    } catch (err) {
+      const finishedAt = new Date();
+      this.emit('request', { url, method: 'DELETE', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      throw err;
+    }
+  }
+
+  private makeRequestPatchFn(): RequestPatchFn {
+    return <T>(path: string, body: unknown) =>
+      this.requestPatch<T>(path, body);
+  }
+
+  private makeRequestDeleteFn(): RequestDeleteFn {
+    return (path: string) =>
+      this.requestDelete(path);
+  }
+
   /**
    * Fetches the authenticated user's profile.
    *
@@ -291,6 +346,9 @@ export class GitHubClient {
       this.makeRequestFn(),
       this.makeRequestListFn(),
       this.makeRequestTextFn(),
+      this.makeRequestBodyFn(),
+      this.makeRequestPatchFn(),
+      this.makeRequestDeleteFn(),
       login,
     );
   }
@@ -318,6 +376,8 @@ export class GitHubClient {
       this.makeRequestListFn(),
       this.makeRequestTextFn(),
       this.makeRequestBodyFn(),
+      this.makeRequestPatchFn(),
+      this.makeRequestDeleteFn(),
       name,
     );
   }
@@ -342,6 +402,9 @@ export class GitHubClient {
       this.makeRequestFn(),
       this.makeRequestListFn(),
       this.makeRequestTextFn(),
+      this.makeRequestBodyFn(),
+      this.makeRequestPatchFn(),
+      this.makeRequestDeleteFn(),
       owner,
       name,
     );

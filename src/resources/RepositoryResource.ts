@@ -1,15 +1,17 @@
-import type { GitHubRepository, ReposParams, ForksParams } from '../domain/Repository';
+import type { GitHubRepository, ReposParams, ForksParams, CreateForkData } from '../domain/Repository';
 import type { GitHubPullRequest, PullRequestsParams } from '../domain/PullRequest';
 import type { GitHubCommit, CommitsParams } from '../domain/Commit';
 import type { GitHubBranch, BranchesParams } from '../domain/Branch';
 import type { GitHubTag, TagsParams } from '../domain/Tag';
 import type { GitHubRelease, ReleasesParams } from '../domain/Release';
-import type { GitHubWebhook, WebhooksParams } from '../domain/Webhook';
+import type { GitHubWebhook, WebhooksParams, CreateWebhookData, UpdateWebhookData } from '../domain/Webhook';
 import type { GitHubContent, ContentParams } from '../domain/Content';
+import type { GitHubIssue, IssuesParams, CreateIssueData } from '../domain/Issue';
 import type { GitHubPagedResponse, PaginationParams } from '../domain/Pagination';
-import type { RequestFn, RequestListFn, RequestTextFn } from './OrganizationResource';
+import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn } from './OrganizationResource';
 import { PullRequestResource } from './PullRequestResource';
 import { CommitResource } from './CommitResource';
+import { IssueResource } from './IssueResource';
 
 /**
  * Represents a GitHub repository resource with chainable async methods.
@@ -45,6 +47,9 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
     private readonly request: RequestFn,
     private readonly requestList: RequestListFn,
     private readonly requestText: RequestTextFn,
+    private readonly requestBody: RequestBodyFn,
+    private readonly requestPatch: RequestPatchFn,
+    private readonly requestDelete: RequestDeleteFn,
     owner: string,
     repo: string,
   ) {
@@ -93,18 +98,8 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
   /**
    * Returns a {@link PullRequestResource} for a given pull request number.
    *
-   * The returned resource can be awaited directly to fetch pull request info,
-   * or chained to access nested resources.
-   *
    * @param pullNumber - The pull request number (not the ID)
    * @returns A chainable pull request resource
-   *
-   * @example
-   * ```typescript
-   * const pr      = await gh.org('github').repo('linguist').pullRequest(42);
-   * const files   = await gh.org('github').repo('linguist').pullRequest(42).files();
-   * const reviews = await gh.org('github').repo('linguist').pullRequest(42).reviews();
-   * ```
    */
   pullRequest(pullNumber: number): PullRequestResource {
     return new PullRequestResource(
@@ -134,17 +129,8 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
   /**
    * Returns a {@link CommitResource} for a given commit ref (SHA, branch, or tag).
    *
-   * The returned resource can be awaited directly to fetch commit info,
-   * or chained to access nested resources.
-   *
    * @param ref - Commit SHA, branch name, or tag name
    * @returns A chainable commit resource
-   *
-   * @example
-   * ```typescript
-   * const commit   = await gh.org('github').repo('linguist').commit('abc123');
-   * const statuses = await gh.org('github').repo('linguist').commit('abc123').statuses();
-   * ```
    */
   commit(ref: string): CommitResource {
     return new CommitResource(
@@ -240,6 +226,33 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
   }
 
   /**
+   * Creates a fork of this repository.
+   *
+   * `POST /repos/{owner}/{repo}/forks`
+   *
+   * Note: Forking is asynchronous on GitHub's side. The returned repository
+   * may not be fully ready immediately after this call returns.
+   *
+   * @param data - Optional: target organization, custom name, default-branch-only flag
+   * @returns The newly created fork
+   *
+   * @example
+   * ```typescript
+   * // Fork into authenticated user's account
+   * const fork = await gh.repo('octocat', 'Hello-World').createFork();
+   *
+   * // Fork into an organization with a custom name
+   * const fork = await gh.repo('octocat', 'Hello-World').createFork({
+   *   organization: 'my-org',
+   *   name: 'hello-world-fork',
+   * });
+   * ```
+   */
+  async createFork(data?: CreateForkData): Promise<GitHubRepository> {
+    return this.requestBody<GitHubRepository>(`${this.basePath}/forks`, data ?? {});
+  }
+
+  /**
    * Fetches webhooks configured on this repository.
    *
    * `GET /repos/{owner}/{repo}/hooks`
@@ -255,15 +268,71 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
   }
 
   /**
+   * Creates a webhook on this repository.
+   *
+   * `POST /repos/{owner}/{repo}/hooks`
+   *
+   * @param data - Webhook configuration. `config.url` is required.
+   * @returns The created webhook
+   *
+   * @example
+   * ```typescript
+   * const hook = await gh.repo('octocat', 'Hello-World').createWebhook({
+   *   config: { url: 'https://example.com/webhook', content_type: 'json', secret: 'mysecret' },
+   *   events: ['push', 'pull_request'],
+   * });
+   * ```
+   */
+  async createWebhook(data: CreateWebhookData): Promise<GitHubWebhook> {
+    return this.requestBody<GitHubWebhook>(`${this.basePath}/hooks`, { name: 'web', ...data });
+  }
+
+  /**
+   * Updates an existing webhook on this repository.
+   *
+   * `PATCH /repos/{owner}/{repo}/hooks/{hook_id}`
+   *
+   * @param hookId - The webhook ID
+   * @param data - Fields to update
+   * @returns The updated webhook
+   *
+   * @example
+   * ```typescript
+   * const hook = await gh.repo('octocat', 'Hello-World').updateWebhook(1, {
+   *   active: false,
+   *   add_events: ['issues'],
+   * });
+   * ```
+   */
+  async updateWebhook(hookId: number, data: UpdateWebhookData): Promise<GitHubWebhook> {
+    return this.requestPatch<GitHubWebhook>(`${this.basePath}/hooks/${hookId}`, data);
+  }
+
+  /**
+   * Deletes a webhook from this repository.
+   *
+   * `DELETE /repos/{owner}/{repo}/hooks/{hook_id}`
+   *
+   * @param hookId - The webhook ID to delete
+   *
+   * @example
+   * ```typescript
+   * await gh.repo('octocat', 'Hello-World').deleteWebhook(1);
+   * ```
+   */
+  async deleteWebhook(hookId: number): Promise<void> {
+    return this.requestDelete(`${this.basePath}/hooks/${hookId}`);
+  }
+
+  /**
    * Fetches the contents of a file or directory in this repository.
    *
    * `GET /repos/{owner}/{repo}/contents/{path}`
    *
    * Returns a single {@link GitHubContent} for files, or an array for directories.
    *
-   * @param path - Path to the file or directory (e.g., `'src/index.ts'` or `'src'`). Omit for root.
+   * @param path - Path to the file or directory. Omit for root.
    * @param params - Optional: `ref` (branch, tag, or commit SHA)
-   * @returns File content object or array of directory entries
    */
   async contents(path?: string, params?: ContentParams): Promise<GitHubContent | GitHubContent[]> {
     const contentPath = path ? `${this.basePath}/contents/${path}` : `${this.basePath}/contents`;
@@ -276,8 +345,7 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
   /**
    * Fetches the raw text content of a file in this repository.
    *
-   * Uses `Accept: application/vnd.github.raw+json` to retrieve the file directly
-   * without base64 encoding.
+   * Uses `Accept: application/vnd.github.raw+json`.
    *
    * `GET /repos/{owner}/{repo}/contents/{filePath}`
    *
@@ -309,13 +377,76 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    *
    * `GET /repos/{owner}/{repo}/contributors`
    *
-   * @param params - Optional filters: `anon` (include anonymous contributors), `per_page`, `page`
-   * @returns A paged response of contributors
+   * @param params - Optional filters: `anon`, `per_page`, `page`
    */
   async contributors(params?: PaginationParams & { anon?: boolean }): Promise<GitHubPagedResponse<{ login?: string; id?: number; contributions: number; avatar_url?: string; html_url?: string }>> {
     return this.requestList(
       `${this.basePath}/contributors`,
       params as Record<string, string | number | boolean>,
     );
+  }
+
+  /**
+   * Fetches issues for this repository.
+   *
+   * `GET /repos/{owner}/{repo}/issues`
+   *
+   * Note: GitHub returns pull requests as issues in this endpoint.
+   * Filter them out by checking for the absence of `pull_request`.
+   *
+   * @param params - Optional filters: `state`, `labels`, `sort`, `direction`, `since`, `per_page`, `page`
+   * @returns A paged response of issues
+   */
+  async issues(params?: IssuesParams): Promise<GitHubPagedResponse<GitHubIssue>> {
+    return this.requestList<GitHubIssue>(
+      `${this.basePath}/issues`,
+      params as Record<string, string | number | boolean>,
+    );
+  }
+
+  /**
+   * Returns an {@link IssueResource} for a given issue number.
+   *
+   * The returned resource can be awaited directly to fetch issue info,
+   * or chained to access sub-resources (comments).
+   *
+   * @param issueNumber - The issue number within the repository
+   * @returns A chainable issue resource
+   *
+   * @example
+   * ```typescript
+   * const issue    = await gh.repo('octocat', 'Hello-World').issue(1);
+   * const comments = await gh.repo('octocat', 'Hello-World').issue(1).comments();
+   * ```
+   */
+  issue(issueNumber: number): IssueResource {
+    return new IssueResource(
+      this.request,
+      this.requestList,
+      this.owner,
+      this.repo,
+      issueNumber,
+    );
+  }
+
+  /**
+   * Creates an issue in this repository.
+   *
+   * `POST /repos/{owner}/{repo}/issues`
+   *
+   * @param data - Issue data. `title` is required.
+   * @returns The created issue
+   *
+   * @example
+   * ```typescript
+   * const issue = await gh.repo('octocat', 'Hello-World').createIssue({
+   *   title: 'Found a bug',
+   *   body: 'Steps to reproduce...',
+   *   labels: ['bug'],
+   * });
+   * ```
+   */
+  async createIssue(data: CreateIssueData): Promise<GitHubIssue> {
+    return this.requestBody<GitHubIssue>(`${this.basePath}/issues`, data);
   }
 }

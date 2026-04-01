@@ -12,6 +12,7 @@ import type { GitHubWebhook } from '../src/domain/Webhook';
 import type { GitHubReview, GitHubReviewComment } from '../src/domain/Review';
 import type { GitHubPullRequestFile } from '../src/domain/PullRequestFile';
 import type { GitHubCommitStatus, GitHubCombinedStatus } from '../src/domain/CommitStatus';
+import type { GitHubIssue } from '../src/domain/Issue';
 
 const API_URL = 'https://api.github.com';
 const TOKEN = 'ghp_myToken';
@@ -269,6 +270,28 @@ function mockTextResponse(text: string, status = 200) {
     statusText: 'OK',
     text: async () => text,
     json: async () => { throw new Error('not json'); },
+    headers: { get: () => null },
+  });
+}
+
+function mockPatchResponse(data: unknown, status = 200) {
+  fetchMock.mockResolvedValueOnce({
+    ok: true,
+    status,
+    statusText: 'OK',
+    json: async () => data,
+    text: async () => JSON.stringify(data),
+    headers: { get: () => null },
+  });
+}
+
+function mockDeleteResponse(status = 204) {
+  fetchMock.mockResolvedValueOnce({
+    ok: true,
+    status,
+    statusText: 'No Content',
+    json: async () => ({}),
+    text: async () => '',
     headers: { get: () => null },
   });
 }
@@ -1026,5 +1049,193 @@ describe('Custom API URL (GitHub Enterprise)', () => {
       'https://github.example.com/api/v3/user',
       expect.anything(),
     );
+  });
+});
+
+const mockIssue: GitHubIssue = {
+  id: 1,
+  number: 1,
+  title: 'Found a bug',
+  body: 'Something is wrong',
+  state: 'open',
+  locked: false,
+  user: mockUser,
+  assignees: [],
+  labels: [],
+  milestone: null,
+  created_at: '2011-04-22T13:33:48Z',
+  updated_at: '2011-04-22T13:33:48Z',
+  closed_at: null,
+  comments: 0,
+  html_url: 'https://github.com/octocat/Hello-World/issues/1',
+};
+
+describe('RepositoryResource.createFork()', () => {
+  it('creates a fork with no data', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse(mockRepo);
+
+    const result = await gh.repo('octocat', 'Hello-World').createFork();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/forks`,
+      expect.objectContaining({ method: 'POST' }),
+    );
+    expect(result.name).toBe('Hello-World');
+  });
+
+  it('creates a fork with an organization target', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse({ ...mockRepo, full_name: 'my-org/Hello-World' });
+
+    const result = await gh.repo('octocat', 'Hello-World').createFork({ organization: 'my-org' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/forks`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ organization: 'my-org' }),
+      }),
+    );
+    expect(result.full_name).toBe('my-org/Hello-World');
+  });
+});
+
+describe('RepositoryResource.createWebhook()', () => {
+  it('creates a webhook and returns it', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse(mockWebhook);
+
+    const result = await gh.repo('octocat', 'Hello-World').createWebhook({
+      config: { url: 'https://example.com/webhook', content_type: 'json' },
+      events: ['push'],
+      active: true,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/hooks`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'web',
+          config: { url: 'https://example.com/webhook', content_type: 'json' },
+          events: ['push'],
+          active: true,
+        }),
+      }),
+    );
+    expect(result.id).toBe(1);
+    expect(result.active).toBe(true);
+  });
+});
+
+describe('RepositoryResource.updateWebhook()', () => {
+  it('updates a webhook and returns the updated webhook', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPatchResponse({ ...mockWebhook, events: ['push', 'pull_request', 'release'] });
+
+    const result = await gh.repo('octocat', 'Hello-World').updateWebhook(1, {
+      events: ['push', 'pull_request', 'release'],
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/hooks/1`,
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ events: ['push', 'pull_request', 'release'] }),
+      }),
+    );
+    expect(result.events).toEqual(['push', 'pull_request', 'release']);
+  });
+});
+
+describe('RepositoryResource.deleteWebhook()', () => {
+  it('deletes a webhook and returns void', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockDeleteResponse();
+
+    await gh.repo('octocat', 'Hello-World').deleteWebhook(1);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/hooks/1`,
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
+});
+
+describe('RepositoryResource.issues()', () => {
+  it('fetches issues', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(pagedOf(mockIssue));
+
+    const result = await gh.repo('octocat', 'Hello-World').issues({ state: 'open' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/issues?state=open`,
+      expect.anything(),
+    );
+    expect(result.values[0].number).toBe(1);
+  });
+});
+
+describe('RepositoryResource.createIssue()', () => {
+  it('creates an issue and returns it', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse(mockIssue);
+
+    const result = await gh.repo('octocat', 'Hello-World').createIssue({
+      title: 'Found a bug',
+      body: 'Something is wrong',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/issues`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ title: 'Found a bug', body: 'Something is wrong' }),
+      }),
+    );
+    expect(result.title).toBe('Found a bug');
+    expect(result.state).toBe('open');
+  });
+});
+
+describe('IssueResource', () => {
+  describe('get()', () => {
+    it('fetches the issue when awaited directly', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockJsonResponse(mockIssue);
+
+      const result = await gh.repo('octocat', 'Hello-World').issue(1);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/issues/1`,
+        expect.anything(),
+      );
+      expect(result.number).toBe(1);
+      expect(result.title).toBe('Found a bug');
+    });
+  });
+
+  describe('comments()', () => {
+    it('fetches issue comments', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockJsonResponse(pagedOf({
+        id: 1,
+        body: 'Me too!',
+        user: mockUser,
+        created_at: '2011-04-14T16:00:49Z',
+        updated_at: '2011-04-14T16:00:49Z',
+        html_url: 'https://github.com/octocat/Hello-World/issues/1#issuecomment-1',
+      }));
+
+      const result = await gh.repo('octocat', 'Hello-World').issue(1).comments();
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/issues/1/comments`,
+        expect.anything(),
+      );
+      expect(result.values[0].body).toBe('Me too!');
+    });
   });
 });

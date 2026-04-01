@@ -92,6 +92,20 @@ export interface ForksParams extends PaginationParams {
 }
 
 /**
+ * Request body for creating a fork of a repository.
+ *
+ * @see {@link https://docs.github.com/en/rest/repos/forks#create-a-fork}
+ */
+export interface CreateForkData {
+  /** Organization login to fork into. Omit to fork into the authenticated user's account. */
+  organization?: string;
+  /** Custom name for the fork. Defaults to the original repository name. */
+  name?: string;
+  /** Whether to copy only the default branch. Defaults to `false`. */
+  default_branch_only?: boolean;
+}
+
+/**
  * Query parameters accepted by `GET /search/repositories`.
  *
  * @see {@link https://docs.github.com/en/rest/search/search#search-repositories}

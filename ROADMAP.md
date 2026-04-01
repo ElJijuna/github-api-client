@@ -62,13 +62,13 @@
 | `raw(filePath, params?)` | `GET /repos/{owner}/{repo}/contents/{path}` (raw) | ✅ |
 | `topics()` | `GET /repos/{owner}/{repo}/topics` | ✅ |
 | `contributors(params?)` | `GET /repos/{owner}/{repo}/contributors` | ✅ |
-| `createFork(data?)` | `POST /repos/{owner}/{repo}/forks` | ⬜ |
-| `createWebhook(data)` | `POST /repos/{owner}/{repo}/hooks` | ⬜ |
-| `updateWebhook(hookId, data)` | `PATCH /repos/{owner}/{repo}/hooks/{hook_id}` | ⬜ |
-| `deleteWebhook(hookId)` | `DELETE /repos/{owner}/{repo}/hooks/{hook_id}` | ⬜ |
-| `issues(params?)` | `GET /repos/{owner}/{repo}/issues` | ⬜ |
-| `issue(number)` | — chainable | ⬜ |
-| `createIssue(data)` | `POST /repos/{owner}/{repo}/issues` | ⬜ |
+| `createFork(data?)` | `POST /repos/{owner}/{repo}/forks` | ✅ |
+| `createWebhook(data)` | `POST /repos/{owner}/{repo}/hooks` | ✅ |
+| `updateWebhook(hookId, data)` | `PATCH /repos/{owner}/{repo}/hooks/{hook_id}` | ✅ |
+| `deleteWebhook(hookId)` | `DELETE /repos/{owner}/{repo}/hooks/{hook_id}` | ✅ |
+| `issues(params?)` | `GET /repos/{owner}/{repo}/issues` | ✅ |
+| `issue(number)` | — chainable | ✅ |
+| `createIssue(data)` | `POST /repos/{owner}/{repo}/issues` | ✅ |
 
 ---
 

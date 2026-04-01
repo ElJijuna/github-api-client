@@ -28,6 +28,15 @@ export type RequestBodyFn = <T>(
   body: unknown,
 ) => Promise<T>;
 
+/** @internal */
+export type RequestPatchFn = <T>(
+  path: string,
+  body: unknown,
+) => Promise<T>;
+
+/** @internal */
+export type RequestDeleteFn = (path: string) => Promise<void>;
+
 /**
  * Represents a GitHub organization resource with chainable async methods.
  *
@@ -56,6 +65,8 @@ export class OrganizationResource implements PromiseLike<GitHubOrganization> {
     private readonly requestList: RequestListFn,
     private readonly requestText: RequestTextFn,
     private readonly requestBody: RequestBodyFn,
+    private readonly requestPatch: RequestPatchFn,
+    private readonly requestDelete: RequestDeleteFn,
     private readonly org: string,
   ) {}
 
@@ -117,6 +128,9 @@ export class OrganizationResource implements PromiseLike<GitHubOrganization> {
       this.request,
       this.requestList,
       this.requestText,
+      this.requestBody,
+      this.requestPatch,
+      this.requestDelete,
       this.org,
       name,
     );
