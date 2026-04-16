@@ -49,8 +49,8 @@ export class IssueResource implements PromiseLike<GitHubIssue> {
    *
    * @returns The issue object
    */
-  async get(): Promise<GitHubIssue> {
-    return this.request<GitHubIssue>(this.basePath);
+  async get(signal?: AbortSignal): Promise<GitHubIssue> {
+    return this.request<GitHubIssue>(this.basePath, undefined, signal);
   }
 
   /**
@@ -61,10 +61,11 @@ export class IssueResource implements PromiseLike<GitHubIssue> {
    * @param params - Optional filters: `since`, `per_page`, `page`
    * @returns A paged response of comments
    */
-  async comments(params?: PaginationParams & { since?: string }): Promise<GitHubPagedResponse<GitHubIssueComment>> {
+  async comments(params?: PaginationParams & { since?: string }, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubIssueComment>> {
     return this.requestList<GitHubIssueComment>(
       `${this.basePath}/comments`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 }

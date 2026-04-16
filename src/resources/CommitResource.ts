@@ -58,8 +58,8 @@ export class CommitResource implements PromiseLike<GitHubCommit> {
    *
    * @returns The commit object with stats and files
    */
-  async get(): Promise<GitHubCommit> {
-    return this.request<GitHubCommit>(this.basePath);
+  async get(signal?: AbortSignal): Promise<GitHubCommit> {
+    return this.request<GitHubCommit>(this.basePath, undefined, signal);
   }
 
   /**
@@ -70,11 +70,12 @@ export class CommitResource implements PromiseLike<GitHubCommit> {
    * @param params - Optional pagination: `per_page`, `page`
    * @returns A paged response of commit statuses
    */
-  async statuses(params?: CommitStatusesParams): Promise<GitHubPagedResponse<GitHubCommitStatus>> {
+  async statuses(params?: CommitStatusesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubCommitStatus>> {
     const repoPath = this.basePath.replace(`/commits/${this.ref}`, '');
     return this.requestList<GitHubCommitStatus>(
       `${repoPath}/statuses/${this.ref}`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -85,8 +86,8 @@ export class CommitResource implements PromiseLike<GitHubCommit> {
    *
    * @returns The combined status object
    */
-  async combinedStatus(): Promise<GitHubCombinedStatus> {
-    return this.request<GitHubCombinedStatus>(`${this.basePath}/status`);
+  async combinedStatus(signal?: AbortSignal): Promise<GitHubCombinedStatus> {
+    return this.request<GitHubCombinedStatus>(`${this.basePath}/status`, undefined, signal);
   }
 
   /**
@@ -97,10 +98,11 @@ export class CommitResource implements PromiseLike<GitHubCommit> {
    * @param params - Optional filters: `check_name`, `status`, `app_id`, `per_page`, `page`
    * @returns A paged response of check runs
    */
-  async checkRuns(params?: CheckRunsParams): Promise<GitHubPagedResponse<GitHubCheckRun>> {
+  async checkRuns(params?: CheckRunsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubCheckRun>> {
     const raw = await this.request<{ check_runs: GitHubCheckRun[] }>(
       `${this.basePath}/check-runs`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
     return {
       values: raw.check_runs,
