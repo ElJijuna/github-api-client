@@ -8,34 +8,39 @@ import { RepositoryResource } from './RepositoryResource';
 export type RequestFn = <T>(
   path: string,
   params?: Record<string, string | number | boolean>,
+  signal?: AbortSignal,
 ) => Promise<T>;
 
 /** @internal */
 export type RequestListFn = <T>(
   path: string,
   params?: Record<string, string | number | boolean>,
+  signal?: AbortSignal,
 ) => Promise<GitHubPagedResponse<T>>;
 
 /** @internal */
 export type RequestTextFn = (
   path: string,
   params?: Record<string, string | number | boolean>,
+  signal?: AbortSignal,
 ) => Promise<string>;
 
 /** @internal */
 export type RequestBodyFn = <T>(
   path: string,
   body: unknown,
+  signal?: AbortSignal,
 ) => Promise<T>;
 
 /** @internal */
 export type RequestPatchFn = <T>(
   path: string,
   body: unknown,
+  signal?: AbortSignal,
 ) => Promise<T>;
 
 /** @internal */
-export type RequestDeleteFn = (path: string) => Promise<void>;
+export type RequestDeleteFn = (path: string, signal?: AbortSignal) => Promise<void>;
 
 /**
  * Represents a GitHub organization resource with chainable async methods.
@@ -88,8 +93,8 @@ export class OrganizationResource implements PromiseLike<GitHubOrganization> {
    *
    * @returns The organization object
    */
-  async get(): Promise<GitHubOrganization> {
-    return this.request<GitHubOrganization>(`/orgs/${this.org}`);
+  async get(signal?: AbortSignal): Promise<GitHubOrganization> {
+    return this.request<GitHubOrganization>(`/orgs/${this.org}`, undefined, signal);
   }
 
   /**
@@ -100,10 +105,11 @@ export class OrganizationResource implements PromiseLike<GitHubOrganization> {
    * @param params - Optional filters: `type`, `sort`, `direction`, `per_page`, `page`
    * @returns A paged response of repositories
    */
-  async repos(params?: ReposParams): Promise<GitHubPagedResponse<GitHubRepository>> {
+  async repos(params?: ReposParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubRepository>> {
     return this.requestList<GitHubRepository>(
       `/orgs/${this.org}/repos`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -144,10 +150,11 @@ export class OrganizationResource implements PromiseLike<GitHubOrganization> {
    * @param params - Optional filters: `role`, `filter`, `per_page`, `page`
    * @returns A paged response of users
    */
-  async members(params?: OrgMembersParams): Promise<GitHubPagedResponse<GitHubUser>> {
+  async members(params?: OrgMembersParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubUser>> {
     return this.requestList<GitHubUser>(
       `/orgs/${this.org}/members`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -169,7 +176,7 @@ export class OrganizationResource implements PromiseLike<GitHubOrganization> {
    * });
    * ```
    */
-  async createRepo(data: CreateOrgRepoData): Promise<GitHubRepository> {
-    return this.requestBody<GitHubRepository>(`/orgs/${this.org}/repos`, data);
+  async createRepo(data: CreateOrgRepoData, signal?: AbortSignal): Promise<GitHubRepository> {
+    return this.requestBody<GitHubRepository>(`/orgs/${this.org}/repos`, data, signal);
   }
 }
