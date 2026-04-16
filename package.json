@@ -1,6 +1,6 @@
 {
   "name": "gh-api-client",
-  "version": "1.0.0",
+  "version": "1.4.0",
   "description": "A lightweight Java client for the GitHub API that simplifies common operations such as listing repositories, branches, commits, collaborators, and files, with built-in support for token-based authentication.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
