@@ -38,7 +38,7 @@ export interface GitHubClientEvents {
  */
 export interface GitHubClientOptions {
   /** A GitHub personal access token (`ghp_...`), OAuth token, or GitHub App installation token */
-  token: string;
+  token?: string;
   /**
    * The base URL of the GitHub API.
    * Defaults to `'https://api.github.com'`.
@@ -82,7 +82,7 @@ export class GitHubClient {
    * @param options - Authentication and connection options
    * @throws {TypeError} If `apiUrl` is not a valid URL
    */
-  constructor({ token, apiUrl }: GitHubClientOptions) {
+  constructor({ token, apiUrl }: GitHubClientOptions = {}) {
     this.security = new Security(token, apiUrl);
   }
 
