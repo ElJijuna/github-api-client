@@ -42,6 +42,9 @@ export type RequestPatchFn = <T>(
 /** @internal */
 export type RequestDeleteFn = (path: string, signal?: AbortSignal) => Promise<void>;
 
+/** @internal */
+export type RequestPutFn = (path: string, signal?: AbortSignal) => Promise<void>;
+
 /**
  * Represents a GitHub organization resource with chainable async methods.
  *
