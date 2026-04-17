@@ -76,8 +76,8 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    *
    * @returns The repository object
    */
-  async get(): Promise<GitHubRepository> {
-    return this.request<GitHubRepository>(this.basePath);
+  async get(signal?: AbortSignal): Promise<GitHubRepository> {
+    return this.request<GitHubRepository>(this.basePath, undefined, signal);
   }
 
   /**
@@ -88,10 +88,11 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * @param params - Optional filters: `state`, `head`, `base`, `sort`, `direction`, `per_page`, `page`
    * @returns A paged response of pull requests
    */
-  async pullRequests(params?: PullRequestsParams): Promise<GitHubPagedResponse<GitHubPullRequest>> {
+  async pullRequests(params?: PullRequestsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubPullRequest>> {
     return this.requestList<GitHubPullRequest>(
       `${this.basePath}/pulls`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -119,10 +120,11 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * @param params - Optional filters: `sha`, `path`, `author`, `since`, `until`, `per_page`, `page`
    * @returns A paged response of commits
    */
-  async commits(params?: CommitsParams): Promise<GitHubPagedResponse<GitHubCommit>> {
+  async commits(params?: CommitsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubCommit>> {
     return this.requestList<GitHubCommit>(
       `${this.basePath}/commits`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -150,10 +152,11 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * @param params - Optional filters: `protected`, `per_page`, `page`
    * @returns A paged response of branches
    */
-  async branches(params?: BranchesParams): Promise<GitHubPagedResponse<GitHubBranch>> {
+  async branches(params?: BranchesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubBranch>> {
     return this.requestList<GitHubBranch>(
       `${this.basePath}/branches`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -165,8 +168,8 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * @param name - The branch name (e.g., `'main'`)
    * @returns The branch object
    */
-  async branch(name: string): Promise<GitHubBranch> {
-    return this.request<GitHubBranch>(`${this.basePath}/branches/${encodeURIComponent(name)}`);
+  async branch(name: string, signal?: AbortSignal): Promise<GitHubBranch> {
+    return this.request<GitHubBranch>(`${this.basePath}/branches/${encodeURIComponent(name)}`, undefined, signal);
   }
 
   /**
@@ -177,10 +180,11 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * @param params - Optional pagination: `per_page`, `page`
    * @returns A paged response of tags
    */
-  async tags(params?: TagsParams): Promise<GitHubPagedResponse<GitHubTag>> {
+  async tags(params?: TagsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubTag>> {
     return this.requestList<GitHubTag>(
       `${this.basePath}/tags`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -192,10 +196,11 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * @param params - Optional pagination: `per_page`, `page`
    * @returns A paged response of releases
    */
-  async releases(params?: ReleasesParams): Promise<GitHubPagedResponse<GitHubRelease>> {
+  async releases(params?: ReleasesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubRelease>> {
     return this.requestList<GitHubRelease>(
       `${this.basePath}/releases`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -206,8 +211,8 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    *
    * @returns The latest release object
    */
-  async latestRelease(): Promise<GitHubRelease> {
-    return this.request<GitHubRelease>(`${this.basePath}/releases/latest`);
+  async latestRelease(signal?: AbortSignal): Promise<GitHubRelease> {
+    return this.request<GitHubRelease>(`${this.basePath}/releases/latest`, undefined, signal);
   }
 
   /**
@@ -218,10 +223,11 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * @param params - Optional filters: `sort`, `per_page`, `page`
    * @returns A paged response of forked repositories
    */
-  async forks(params?: ForksParams): Promise<GitHubPagedResponse<GitHubRepository>> {
+  async forks(params?: ForksParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubRepository>> {
     return this.requestList<GitHubRepository>(
       `${this.basePath}/forks`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -248,8 +254,8 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * });
    * ```
    */
-  async createFork(data?: CreateForkData): Promise<GitHubRepository> {
-    return this.requestBody<GitHubRepository>(`${this.basePath}/forks`, data ?? {});
+  async createFork(data?: CreateForkData, signal?: AbortSignal): Promise<GitHubRepository> {
+    return this.requestBody<GitHubRepository>(`${this.basePath}/forks`, data ?? {}, signal);
   }
 
   /**
@@ -260,10 +266,11 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * @param params - Optional pagination: `per_page`, `page`
    * @returns A paged response of webhooks
    */
-  async webhooks(params?: WebhooksParams): Promise<GitHubPagedResponse<GitHubWebhook>> {
+  async webhooks(params?: WebhooksParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubWebhook>> {
     return this.requestList<GitHubWebhook>(
       `${this.basePath}/hooks`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -283,8 +290,8 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * });
    * ```
    */
-  async createWebhook(data: CreateWebhookData): Promise<GitHubWebhook> {
-    return this.requestBody<GitHubWebhook>(`${this.basePath}/hooks`, { name: 'web', ...data });
+  async createWebhook(data: CreateWebhookData, signal?: AbortSignal): Promise<GitHubWebhook> {
+    return this.requestBody<GitHubWebhook>(`${this.basePath}/hooks`, { name: 'web', ...data }, signal);
   }
 
   /**
@@ -304,8 +311,8 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * });
    * ```
    */
-  async updateWebhook(hookId: number, data: UpdateWebhookData): Promise<GitHubWebhook> {
-    return this.requestPatch<GitHubWebhook>(`${this.basePath}/hooks/${hookId}`, data);
+  async updateWebhook(hookId: number, data: UpdateWebhookData, signal?: AbortSignal): Promise<GitHubWebhook> {
+    return this.requestPatch<GitHubWebhook>(`${this.basePath}/hooks/${hookId}`, data, signal);
   }
 
   /**
@@ -320,8 +327,8 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * await gh.repo('octocat', 'Hello-World').deleteWebhook(1);
    * ```
    */
-  async deleteWebhook(hookId: number): Promise<void> {
-    return this.requestDelete(`${this.basePath}/hooks/${hookId}`);
+  async deleteWebhook(hookId: number, signal?: AbortSignal): Promise<void> {
+    return this.requestDelete(`${this.basePath}/hooks/${hookId}`, signal);
   }
 
   /**
@@ -334,11 +341,12 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * @param path - Path to the file or directory. Omit for root.
    * @param params - Optional: `ref` (branch, tag, or commit SHA)
    */
-  async contents(path?: string, params?: ContentParams): Promise<GitHubContent | GitHubContent[]> {
+  async contents(path?: string, params?: ContentParams, signal?: AbortSignal): Promise<GitHubContent | GitHubContent[]> {
     const contentPath = path ? `${this.basePath}/contents/${path}` : `${this.basePath}/contents`;
     return this.request<GitHubContent | GitHubContent[]>(
       contentPath,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -353,10 +361,11 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * @param params - Optional: `ref` (branch, tag, or commit SHA)
    * @returns The raw file content as a string
    */
-  async raw(filePath: string, params?: ContentParams): Promise<string> {
+  async raw(filePath: string, params?: ContentParams, signal?: AbortSignal): Promise<string> {
     return this.requestText(
       `${this.basePath}/contents/${filePath}`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -367,8 +376,8 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    *
    * @returns An array of topic strings
    */
-  async topics(): Promise<string[]> {
-    const data = await this.request<{ names: string[] }>(`${this.basePath}/topics`);
+  async topics(signal?: AbortSignal): Promise<string[]> {
+    const data = await this.request<{ names: string[] }>(`${this.basePath}/topics`, undefined, signal);
     return data.names;
   }
 
@@ -379,10 +388,11 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    *
    * @param params - Optional filters: `anon`, `per_page`, `page`
    */
-  async contributors(params?: PaginationParams & { anon?: boolean }): Promise<GitHubPagedResponse<{ login?: string; id?: number; contributions: number; avatar_url?: string; html_url?: string }>> {
+  async contributors(params?: PaginationParams & { anon?: boolean }, signal?: AbortSignal): Promise<GitHubPagedResponse<{ login?: string; id?: number; contributions: number; avatar_url?: string; html_url?: string }>> {
     return this.requestList(
       `${this.basePath}/contributors`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -397,10 +407,11 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * @param params - Optional filters: `state`, `labels`, `sort`, `direction`, `since`, `per_page`, `page`
    * @returns A paged response of issues
    */
-  async issues(params?: IssuesParams): Promise<GitHubPagedResponse<GitHubIssue>> {
+  async issues(params?: IssuesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubIssue>> {
     return this.requestList<GitHubIssue>(
       `${this.basePath}/issues`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -446,7 +457,7 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    * });
    * ```
    */
-  async createIssue(data: CreateIssueData): Promise<GitHubIssue> {
-    return this.requestBody<GitHubIssue>(`${this.basePath}/issues`, data);
+  async createIssue(data: CreateIssueData, signal?: AbortSignal): Promise<GitHubIssue> {
+    return this.requestBody<GitHubIssue>(`${this.basePath}/issues`, data, signal);
   }
 }

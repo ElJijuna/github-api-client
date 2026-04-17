@@ -61,8 +61,8 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
    *
    * @returns The pull request object
    */
-  async get(): Promise<GitHubPullRequest> {
-    return this.request<GitHubPullRequest>(this.basePath);
+  async get(signal?: AbortSignal): Promise<GitHubPullRequest> {
+    return this.request<GitHubPullRequest>(this.basePath, undefined, signal);
   }
 
   /**
@@ -73,10 +73,11 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
    * @param params - Optional pagination: `per_page`, `page`
    * @returns A paged response of commits
    */
-  async commits(params?: PaginationParams): Promise<GitHubPagedResponse<GitHubCommit>> {
+  async commits(params?: PaginationParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubCommit>> {
     return this.requestList<GitHubCommit>(
       `${this.basePath}/commits`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -88,10 +89,11 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
    * @param params - Optional pagination: `per_page`, `page`
    * @returns A paged response of changed files
    */
-  async files(params?: PullRequestFilesParams): Promise<GitHubPagedResponse<GitHubPullRequestFile>> {
+  async files(params?: PullRequestFilesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubPullRequestFile>> {
     return this.requestList<GitHubPullRequestFile>(
       `${this.basePath}/files`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -103,10 +105,11 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
    * @param params - Optional pagination: `per_page`, `page`
    * @returns A paged response of reviews
    */
-  async reviews(params?: ReviewsParams): Promise<GitHubPagedResponse<GitHubReview>> {
+  async reviews(params?: ReviewsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubReview>> {
     return this.requestList<GitHubReview>(
       `${this.basePath}/reviews`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -118,10 +121,11 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
    * @param params - Optional filters: `sort`, `direction`, `since`, `per_page`, `page`
    * @returns A paged response of review comments
    */
-  async reviewComments(params?: ReviewCommentsParams): Promise<GitHubPagedResponse<GitHubReviewComment>> {
+  async reviewComments(params?: ReviewCommentsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubReviewComment>> {
     return this.requestList<GitHubReviewComment>(
       `${this.basePath}/comments`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -132,11 +136,12 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
    *
    * @returns `true` if merged (HTTP 204), `false` if not merged (HTTP 404)
    */
-  async isMerged(): Promise<boolean> {
+  async isMerged(signal?: AbortSignal): Promise<boolean> {
     try {
-      await this.request<never>(`${this.basePath}/merge`);
+      await this.request<never>(`${this.basePath}/merge`, undefined, signal);
       return true;
-    } catch {
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') throw err;
       return false;
     }
   }

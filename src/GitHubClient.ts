@@ -121,7 +121,7 @@ export class GitHubClient {
   private async request<T>(
     path: string,
     params?: Record<string, string | number | boolean>,
-    options?: { headers?: Record<string, string> },
+    options?: { headers?: Record<string, string>; signal?: AbortSignal },
   ): Promise<T> {
     const base = `${this.security.getApiUrl()}${path}`;
     const url = buildUrl(base, params);
@@ -129,7 +129,7 @@ export class GitHubClient {
     let statusCode: number | undefined;
     try {
       const headers = options?.headers ?? this.security.getHeaders();
-      const response = await fetch(url, { headers });
+      const response = await fetch(url, { headers, signal: options?.signal });
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
@@ -152,13 +152,14 @@ export class GitHubClient {
   private async requestList<T>(
     path: string,
     params?: Record<string, string | number | boolean>,
+    signal?: AbortSignal,
   ): Promise<GitHubPagedResponse<T>> {
     const base = `${this.security.getApiUrl()}${path}`;
     const url = buildUrl(base, params);
     const startedAt = new Date();
     let statusCode: number | undefined;
     try {
-      const response = await fetch(url, { headers: this.security.getHeaders() });
+      const response = await fetch(url, { headers: this.security.getHeaders(), signal });
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
@@ -187,13 +188,14 @@ export class GitHubClient {
   private async requestText(
     path: string,
     params?: Record<string, string | number | boolean>,
+    signal?: AbortSignal,
   ): Promise<string> {
     const base = `${this.security.getApiUrl()}${path}`;
     const url = buildUrl(base, params);
     const startedAt = new Date();
     let statusCode: number | undefined;
     try {
-      const response = await fetch(url, { headers: this.security.getRawHeaders() });
+      const response = await fetch(url, { headers: this.security.getRawHeaders(), signal });
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
@@ -209,21 +211,21 @@ export class GitHubClient {
   }
 
   private makeRequestFn(): RequestFn {
-    return <T>(path: string, params?: Record<string, string | number | boolean>) =>
-      this.request<T>(path, params);
+    return <T>(path: string, params?: Record<string, string | number | boolean>, signal?: AbortSignal) =>
+      this.request<T>(path, params, { signal });
   }
 
   private makeRequestListFn(): RequestListFn {
-    return <T>(path: string, params?: Record<string, string | number | boolean>) =>
-      this.requestList<T>(path, params);
+    return <T>(path: string, params?: Record<string, string | number | boolean>, signal?: AbortSignal) =>
+      this.requestList<T>(path, params, signal);
   }
 
   private makeRequestTextFn(): RequestTextFn {
-    return (path: string, params?: Record<string, string | number | boolean>) =>
-      this.requestText(path, params);
+    return (path: string, params?: Record<string, string | number | boolean>, signal?: AbortSignal) =>
+      this.requestText(path, params, signal);
   }
 
-  private async requestPost<T>(path: string, body: unknown): Promise<T> {
+  private async requestPost<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
     const url = `${this.security.getApiUrl()}${path}`;
     const startedAt = new Date();
     let statusCode: number | undefined;
@@ -232,6 +234,7 @@ export class GitHubClient {
         method: 'POST',
         headers: this.security.getHeaders(),
         body: JSON.stringify(body),
+        signal,
       });
       statusCode = response.status;
       if (!response.ok) {
@@ -248,11 +251,11 @@ export class GitHubClient {
   }
 
   private makeRequestBodyFn(): RequestBodyFn {
-    return <T>(path: string, body: unknown) =>
-      this.requestPost<T>(path, body);
+    return <T>(path: string, body: unknown, signal?: AbortSignal) =>
+      this.requestPost<T>(path, body, signal);
   }
 
-  private async requestPatch<T>(path: string, body: unknown): Promise<T> {
+  private async requestPatch<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
     const url = `${this.security.getApiUrl()}${path}`;
     const startedAt = new Date();
     let statusCode: number | undefined;
@@ -261,6 +264,7 @@ export class GitHubClient {
         method: 'PATCH',
         headers: this.security.getHeaders(),
         body: JSON.stringify(body),
+        signal,
       });
       statusCode = response.status;
       if (!response.ok) {
@@ -276,7 +280,7 @@ export class GitHubClient {
     }
   }
 
-  private async requestDelete(path: string): Promise<void> {
+  private async requestDelete(path: string, signal?: AbortSignal): Promise<void> {
     const url = `${this.security.getApiUrl()}${path}`;
     const startedAt = new Date();
     let statusCode: number | undefined;
@@ -284,6 +288,7 @@ export class GitHubClient {
       const response = await fetch(url, {
         method: 'DELETE',
         headers: this.security.getHeaders(),
+        signal,
       });
       statusCode = response.status;
       if (!response.ok) {
@@ -298,13 +303,13 @@ export class GitHubClient {
   }
 
   private makeRequestPatchFn(): RequestPatchFn {
-    return <T>(path: string, body: unknown) =>
-      this.requestPatch<T>(path, body);
+    return <T>(path: string, body: unknown, signal?: AbortSignal) =>
+      this.requestPatch<T>(path, body, signal);
   }
 
   private makeRequestDeleteFn(): RequestDeleteFn {
-    return (path: string) =>
-      this.requestDelete(path);
+    return (path: string, signal?: AbortSignal) =>
+      this.requestDelete(path, signal);
   }
 
   /**
@@ -320,8 +325,8 @@ export class GitHubClient {
    * console.log(me.login); // 'octocat'
    * ```
    */
-  async currentUser(): Promise<GitHubUser> {
-    return this.request<GitHubUser>('/user');
+  async currentUser(signal?: AbortSignal): Promise<GitHubUser> {
+    return this.request<GitHubUser>('/user', undefined, { signal });
   }
 
   /**
@@ -424,13 +429,13 @@ export class GitHubClient {
    * console.log(`Found ${results.totalCount} repositories`);
    * ```
    */
-  async searchRepos(params: SearchReposParams): Promise<GitHubPagedResponse<GitHubRepository>> {
+  async searchRepos(params: SearchReposParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubRepository>> {
     const base = `${this.security.getApiUrl()}/search/repositories`;
     const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
     const startedAt = new Date();
     let statusCode: number | undefined;
     try {
-      const response = await fetch(url, { headers: this.security.getHeaders() });
+      const response = await fetch(url, { headers: this.security.getHeaders(), signal });
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
