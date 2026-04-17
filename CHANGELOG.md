@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/ElJijuna/github-api-client/compare/v1.5.0...v1.5.1) (2026-04-17)
+
+
+### Bug Fixes
+
+* remove hardcoded issue [#123](https://github.com/ElJijuna/github-api-client/issues/123) from PR template to prevent semantic-release failure ([6c1c6d2](https://github.com/ElJijuna/github-api-client/commit/6c1c6d20509fe8e2ee24061f80843f302b97d34e))
+
 # [1.4.0](https://github.com/ElJijuna/github-api-client/compare/v1.3.0...v1.4.0) (2026-04-16)
 
 
