@@ -4,7 +4,7 @@
 
 ## Related issue
 
-<!-- Closes #123 -->
+<!-- Closes #ISSUE_NUMBER (remove this line if not applicable) -->
 
 ## Checklist
 
