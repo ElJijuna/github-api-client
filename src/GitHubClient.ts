@@ -1,11 +1,13 @@
 import { Security } from './security/Security';
 import { GitHubApiError } from './errors/GitHubApiError';
 import { OrganizationResource } from './resources/OrganizationResource';
-import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn } from './resources/OrganizationResource';
+import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestPutFn } from './resources/OrganizationResource';
 import { RepositoryResource } from './resources/RepositoryResource';
 import { UserResource } from './resources/UserResource';
+import { GistResource } from './resources/GistResource';
 import type { GitHubUser } from './domain/User';
 import type { GitHubRepository, SearchReposParams } from './domain/Repository';
+import type { GitHubGist, GistsParams, CreateGistData } from './domain/Gist';
 import type { GitHubPagedResponse } from './domain/Pagination';
 
 /**
@@ -15,7 +17,7 @@ export interface RequestEvent {
   /** Full URL that was requested */
   url: string;
   /** HTTP method used */
-  method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE' | 'PUT';
   /** Timestamp when the request started */
   startedAt: Date;
   /** Timestamp when the request finished (success or error) */
@@ -312,6 +314,33 @@ export class GitHubClient {
       this.requestDelete(path, signal);
   }
 
+  private async requestPut(path: string, signal?: AbortSignal): Promise<void> {
+    const url = `${this.security.getApiUrl()}${path}`;
+    const startedAt = new Date();
+    let statusCode: number | undefined;
+    try {
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: this.security.getHeaders(),
+        signal,
+      });
+      statusCode = response.status;
+      if (!response.ok) {
+        throw new GitHubApiError(response.status, response.statusText);
+      }
+      this.emit('request', { url, method: 'PUT', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+    } catch (err) {
+      const finishedAt = new Date();
+      this.emit('request', { url, method: 'PUT', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      throw err;
+    }
+  }
+
+  private makeRequestPutFn(): RequestPutFn {
+    return (path: string, signal?: AbortSignal) =>
+      this.requestPut(path, signal);
+  }
+
   /**
    * Fetches the authenticated user's profile.
    *
@@ -455,6 +484,56 @@ export class GitHubClient {
       this.emit('request', { url, method: 'GET', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
       throw err;
     }
+  }
+
+  /**
+   * Returns a {@link GistResource} for a given gist ID.
+   *
+   * The returned resource can be awaited directly to fetch the gist,
+   * or chained to access nested resources (comments, forks, star).
+   *
+   * @param gistId - The gist ID
+   * @returns A chainable gist resource
+   *
+   * @example
+   * ```typescript
+   * const gist     = await gh.gist('abc123');
+   * const comments = await gh.gist('abc123').comments();
+   * await gh.gist('abc123').star();
+   * ```
+   */
+  gist(gistId: string): GistResource {
+    return new GistResource(
+      this.makeRequestFn(),
+      this.makeRequestListFn(),
+      this.makeRequestBodyFn(),
+      this.makeRequestPatchFn(),
+      this.makeRequestDeleteFn(),
+      this.makeRequestPutFn(),
+      gistId,
+    );
+  }
+
+  /**
+   * Lists gists for the authenticated user (or publicly if unauthenticated).
+   *
+   * `GET /gists`
+   *
+   * @param params - Optional filters: `since`, `per_page`, `page`
+   */
+  async listGists(params?: GistsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubGist>> {
+    return this.requestList<GitHubGist>('/gists', params as Record<string, string | number | boolean>, signal);
+  }
+
+  /**
+   * Creates a new gist.
+   *
+   * `POST /gists`
+   *
+   * @param data - Gist files and optional description/visibility
+   */
+  async createGist(data: CreateGistData, signal?: AbortSignal): Promise<GitHubGist> {
+    return this.requestPost<GitHubGist>('/gists', data, signal);
   }
 }
 

@@ -8,6 +8,7 @@ export { PullRequestResource } from './resources/PullRequestResource';
 export { CommitResource } from './resources/CommitResource';
 export { UserResource } from './resources/UserResource';
 export { IssueResource } from './resources/IssueResource';
+export { GistResource } from './resources/GistResource';
 export type { GitHubUser, UsersParams, SearchUsersParams } from './domain/User';
 export type { GitHubOrganization, OrgMembersParams, CreateOrgRepoData } from './domain/Organization';
 export type { GitHubRepository, ReposParams, ForksParams, SearchReposParams, CreateForkData } from './domain/Repository';
@@ -22,4 +23,5 @@ export type { GitHubRelease, GitHubReleaseAsset, ReleasesParams } from './domain
 export type { GitHubWebhook, WebhooksParams, CreateWebhookData, UpdateWebhookData } from './domain/Webhook';
 export type { GitHubContent, ContentParams } from './domain/Content';
 export type { GitHubIssue, GitHubIssueComment, IssuesParams, CreateIssueData } from './domain/Issue';
+export type { GitHubGist, GistFile, GistCommit, GistFork, GistComment, GistsParams, CreateGistData, UpdateGistData, GistCommentData } from './domain/Gist';
 export type { PaginationParams, GitHubPagedResponse } from './domain/Pagination';

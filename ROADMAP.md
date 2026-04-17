@@ -104,6 +104,28 @@
 
 ---
 
+## GistResource
+
+| Method | Endpoint | Status |
+|--------|----------|--------|
+| `listGists(params?)` | `GET /gists` | ✅ |
+| `gist(gistId).get()` | `GET /gists/{gist_id}` | ✅ |
+| `createGist(data)` | `POST /gists` | ✅ |
+| `gist(gistId).update(data)` | `PATCH /gists/{gist_id}` | ✅ |
+| `gist(gistId).delete()` | `DELETE /gists/{gist_id}` | ✅ |
+| `gist(gistId).commits(params?)` | `GET /gists/{gist_id}/commits` | ✅ |
+| `gist(gistId).fork()` | `POST /gists/{gist_id}/forks` | ✅ |
+| `gist(gistId).forks(params?)` | `GET /gists/{gist_id}/forks` | ✅ |
+| `gist(gistId).star()` | `PUT /gists/{gist_id}/star` | ✅ |
+| `gist(gistId).unstar()` | `DELETE /gists/{gist_id}/star` | ✅ |
+| `gist(gistId).isStarred()` | `GET /gists/{gist_id}/star` | ✅ |
+| `gist(gistId).comments(params?)` | `GET /gists/{gist_id}/comments` | ✅ |
+| `gist(gistId).addComment(data)` | `POST /gists/{gist_id}/comments` | ✅ |
+| `gist(gistId).updateComment(commentId, data)` | `PATCH /gists/{gist_id}/comments/{comment_id}` | ✅ |
+| `gist(gistId).deleteComment(commentId)` | `DELETE /gists/{gist_id}/comments/{comment_id}` | ✅ |
+
+---
+
 ## Cross-cutting concerns
 
 | Feature | Scope | Status |

@@ -206,6 +206,72 @@ const merged = await gh.repo('octocat', 'Hello-World').pullRequest(42).isMerged(
 // true | false
 ```
 
+### Issues
+
+```typescript
+// List issues in a repository
+const issues = await gh.repo('octocat', 'Hello-World').issues();
+const issues = await gh.repo('octocat', 'Hello-World').issues({ state: 'open', labels: 'bug' });
+
+// Get a single issue
+const issue = await gh.repo('octocat', 'Hello-World').issue(1);
+
+// Create an issue
+const newIssue = await gh.repo('octocat', 'Hello-World').createIssue({
+  title: 'Something is broken',
+  body:  'Steps to reproduce...',
+  labels: ['bug'],
+});
+```
+
+### Gists
+
+```typescript
+// List gists for the authenticated user
+const gists = await gh.listGists();
+const gists = await gh.listGists({ per_page: 50, since: '2024-01-01T00:00:00Z' });
+
+// Get a single gist (awaitable directly)
+const gist = await gh.gist('abc123');
+
+// Create a gist
+const newGist = await gh.createGist({
+  description: 'My snippet',
+  public: true,
+  files: {
+    'hello.ts': { content: 'console.log("hello")' },
+  },
+});
+
+// Update a gist
+const updated = await gh.gist('abc123').update({
+  description: 'Updated description',
+  files: {
+    'hello.ts': { content: 'console.log("updated")' },
+    'old.ts':   null, // deletes the file
+  },
+});
+
+// Delete a gist
+await gh.gist('abc123').delete();
+
+// Commits and forks
+const commits = await gh.gist('abc123').commits();
+const fork    = await gh.gist('abc123').fork();
+const forks   = await gh.gist('abc123').forks();
+
+// Star / unstar
+await gh.gist('abc123').star();
+await gh.gist('abc123').unstar();
+const starred = await gh.gist('abc123').isStarred(); // true | false
+
+// Comments
+const comments  = await gh.gist('abc123').comments();
+const comment   = await gh.gist('abc123').addComment({ body: 'Great snippet!' });
+const updated   = await gh.gist('abc123').updateComment(comment.id, { body: 'Even better!' });
+await gh.gist('abc123').deleteComment(comment.id);
+```
+
 ### Repository search
 
 ```typescript
@@ -266,7 +332,7 @@ The `event` object contains:
 | Field | Type | Description |
 |---|---|---|
 | `url` | `string` | Full URL that was requested |
-| `method` | `'GET'` | HTTP method used |
+| `method` | `'GET' \| 'POST' \| 'PATCH' \| 'DELETE' \| 'PUT'` | HTTP method used |
 | `startedAt` | `Date` | When the request started |
 | `finishedAt` | `Date` | When the request finished |
 | `durationMs` | `number` | Duration in milliseconds |
@@ -361,6 +427,11 @@ import type {
   // Webhooks & Content
   GitHubWebhook, WebhooksParams,
   GitHubContent, ContentParams,
+  // Issues
+  GitHubIssue, GitHubIssueComment, IssuesParams, CreateIssueData,
+  // Gists
+  GitHubGist, GistFile, GistCommit, GistFork, GistComment,
+  GistsParams, CreateGistData, UpdateGistData, GistCommentData,
 } from 'gh-api-client';
 ```
 
