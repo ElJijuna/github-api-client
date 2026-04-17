@@ -327,6 +327,18 @@ describe('GitHubClient constructor', () => {
     expect(() => new GitHubClient({ token: TOKEN, apiUrl: 'https://github.example.com/api/v3' })).not.toThrow();
   });
 
+  it('creates a client without any options (unauthenticated)', () => {
+    expect(() => new GitHubClient()).not.toThrow();
+  });
+
+  it('creates a client with empty options (unauthenticated)', () => {
+    expect(() => new GitHubClient({})).not.toThrow();
+  });
+
+  it('creates a client with only apiUrl and no token', () => {
+    expect(() => new GitHubClient({ apiUrl: 'https://api.github.com' })).not.toThrow();
+  });
+
   it('throws TypeError for an invalid API URL', () => {
     expect(() => new GitHubClient({ token: TOKEN, apiUrl: 'not-a-url' })).toThrow(TypeError);
   });
@@ -1035,6 +1047,33 @@ describe('Request headers', () => {
         }),
       }),
     );
+  });
+
+  it('omits Authorization header when no token is provided', async () => {
+    const gh = new GitHubClient();
+    mockJsonResponse(pagedOf(mockRepo));
+
+    await gh.repo('octocat', 'Hello-World').branches();
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
+    expect(init.headers).not.toHaveProperty('Authorization');
+    expect(init.headers).toMatchObject({
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    });
+  });
+
+  it('makes unauthenticated requests to public endpoints', async () => {
+    const gh = new GitHubClient();
+    mockJsonResponse(mockUser);
+
+    const result = await gh.user('octocat');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/users/octocat`,
+      expect.anything(),
+    );
+    expect(result.login).toBe('octocat');
   });
 });
 

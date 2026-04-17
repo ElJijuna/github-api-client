@@ -101,3 +101,11 @@
 | `createStatus(data)` | `POST /repos/{owner}/{repo}/statuses/{sha}` | ⬜ |
 | `comments(params?)` | `GET /repos/{owner}/{repo}/commits/{commit_sha}/comments` | ⬜ |
 | `addComment(data)` | `POST /repos/{owner}/{repo}/commits/{commit_sha}/comments` | ⬜ |
+
+---
+
+## Cross-cutting concerns
+
+| Feature | Scope | Status |
+|---------|-------|--------|
+| `AbortSignal` support | All resource methods (pass `signal` to `fetch`) | ✅ |

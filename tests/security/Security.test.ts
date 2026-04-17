@@ -15,6 +15,14 @@ describe('Security', () => {
       expect(security.getApiUrl()).toBe('https://api.github.com');
     });
 
+    it('creates an instance without a token (unauthenticated)', () => {
+      expect(() => new Security()).not.toThrow();
+    });
+
+    it('creates an instance with only apiUrl and no token', () => {
+      expect(() => new Security(undefined, 'https://api.github.com')).not.toThrow();
+    });
+
     it('throws TypeError for an invalid URL', () => {
       expect(() => new Security('ghp_token', 'not-a-url')).toThrow(TypeError);
       expect(() => new Security('ghp_token', 'not-a-url')).toThrow('Invalid apiUrl');
@@ -63,6 +71,18 @@ describe('Security', () => {
       });
     });
 
+    it('omits Authorization header when no token is provided', () => {
+      const security = new Security();
+      const headers = security.getHeaders();
+
+      expect(headers).not.toHaveProperty('Authorization');
+      expect(headers).toEqual({
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      });
+    });
+
     it('includes the correct Accept header for the GitHub API', () => {
       const security = new Security('ghp_token');
       expect(security.getHeaders()['Accept']).toBe('application/vnd.github+json');
@@ -88,6 +108,14 @@ describe('Security', () => {
 
       expect(headers['Authorization']).toBe('Bearer ghp_myToken');
       expect(headers['X-GitHub-Api-Version']).toBe('2022-11-28');
+    });
+
+    it('omits Authorization header in raw headers when no token is provided', () => {
+      const security = new Security();
+      const headers = security.getRawHeaders();
+
+      expect(headers).not.toHaveProperty('Authorization');
+      expect(headers['Accept']).toBe('application/vnd.github.raw+json');
     });
   });
 });

@@ -56,8 +56,8 @@ export class UserResource implements PromiseLike<GitHubUser> {
    *
    * @returns The user object
    */
-  async get(): Promise<GitHubUser> {
-    return this.request<GitHubUser>(this.basePath);
+  async get(signal?: AbortSignal): Promise<GitHubUser> {
+    return this.request<GitHubUser>(this.basePath, undefined, signal);
   }
 
   /**
@@ -68,10 +68,11 @@ export class UserResource implements PromiseLike<GitHubUser> {
    * @param params - Optional filters: `type`, `sort`, `direction`, `per_page`, `page`
    * @returns A paged response of repositories
    */
-  async repos(params?: ReposParams): Promise<GitHubPagedResponse<GitHubRepository>> {
+  async repos(params?: ReposParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubRepository>> {
     return this.requestList<GitHubRepository>(
       `${this.basePath}/repos`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -108,10 +109,11 @@ export class UserResource implements PromiseLike<GitHubUser> {
    *
    * @returns A paged response of users
    */
-  async following(params?: { per_page?: number; page?: number }): Promise<GitHubPagedResponse<GitHubUser>> {
+  async following(params?: { per_page?: number; page?: number }, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubUser>> {
     return this.requestList<GitHubUser>(
       `${this.basePath}/following`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 
@@ -122,10 +124,11 @@ export class UserResource implements PromiseLike<GitHubUser> {
    *
    * @returns A paged response of users
    */
-  async followers(params?: { per_page?: number; page?: number }): Promise<GitHubPagedResponse<GitHubUser>> {
+  async followers(params?: { per_page?: number; page?: number }, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubUser>> {
     return this.requestList<GitHubUser>(
       `${this.basePath}/followers`,
       params as Record<string, string | number | boolean>,
+      signal,
     );
   }
 }

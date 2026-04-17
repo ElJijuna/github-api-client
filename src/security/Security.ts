@@ -27,7 +27,7 @@ export class Security {
    *
    * @throws {TypeError} If `apiUrl` is not a valid URL
    */
-  constructor(token: string, apiUrl: string = 'https://api.github.com') {
+  constructor(token: string = '', apiUrl: string = 'https://api.github.com') {
     if (!URL.canParse(apiUrl)) {
       throw new TypeError(`Invalid apiUrl: "${apiUrl}" is not a valid URL`);
     }
@@ -60,7 +60,7 @@ export class Security {
    */
   getHeaders(): Record<string, string> {
     return {
-      Authorization: `Bearer ${this.token}`,
+      ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
       Accept: 'application/vnd.github+json',
       'Content-Type': 'application/json',
       'X-GitHub-Api-Version': '2022-11-28',
