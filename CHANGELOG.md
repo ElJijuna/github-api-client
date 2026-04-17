@@ -1,23 +1,9 @@
-# [1.3.0](https://github.com/ElJijuna/github-api-client/compare/v1.2.0...v1.3.0) (2026-04-16)
+# [1.4.0](https://github.com/ElJijuna/github-api-client/compare/v1.3.0...v1.4.0) (2026-04-16)
 
 
 ### Features
 
-* make GitHub token optional for unauthenticated API access ([b14cc73](https://github.com/ElJijuna/github-api-client/commit/b14cc73933bb490ba069658ea22a43b1c524dc35))
-
-# [1.2.0](https://github.com/ElJijuna/github-api-client/compare/v1.1.0...v1.2.0) (2026-04-01)
-
-
-### Features
-
-* complete RepositoryResource activities in ROADMAP. ([6f20264](https://github.com/ElJijuna/github-api-client/commit/6f20264ce0d6bf8076dc1fb154a8c8d6713657f3))
-
-# [1.1.0](https://github.com/ElJijuna/github-api-client/compare/v1.0.1...v1.1.0) (2026-03-31)
-
-
-### Features
-
-* implement createRepo and update domain Organization and OrganizationResource. ([5b4a3e3](https://github.com/ElJijuna/github-api-client/commit/5b4a3e3a0b50f3862bd8c31ffa956467c86ca4c2))
+* add AbortSignal support to all resource methods [#4](https://github.com/ElJijuna/github-api-client/issues/4) ([ae06320](https://github.com/ElJijuna/github-api-client/commit/ae063208a64671e6b9b1ec6ebc82ff6106a379dc))
 
 # Changelog
 
