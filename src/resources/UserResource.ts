@@ -1,5 +1,6 @@
 import type { GitHubUser } from '../domain/User';
 import type { GitHubRepository, ReposParams } from '../domain/Repository';
+import type { GitHubEvent, EventsParams } from '../domain/Event';
 import type { GitHubPagedResponse } from '../domain/Pagination';
 import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn } from './OrganizationResource';
 import { RepositoryResource } from './RepositoryResource';
@@ -127,6 +128,22 @@ export class UserResource implements PromiseLike<GitHubUser> {
   async followers(params?: { per_page?: number; page?: number }, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubUser>> {
     return this.requestList<GitHubUser>(
       `${this.basePath}/followers`,
+      params as Record<string, string | number | boolean>,
+      signal,
+    );
+  }
+
+  /**
+   * Lists public events performed by this user.
+   *
+   * `GET /users/{username}/events/public`
+   *
+   * @param params - Optional pagination: `per_page`, `page`
+   * @returns A paged response of public events
+   */
+  async publicEvents(params?: EventsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubEvent>> {
+    return this.requestList<GitHubEvent>(
+      `${this.basePath}/events/public`,
       params as Record<string, string | number | boolean>,
       signal,
     );

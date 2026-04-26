@@ -13,6 +13,7 @@ import type { GitHubReview, GitHubReviewComment } from '../src/domain/Review';
 import type { GitHubPullRequestFile } from '../src/domain/PullRequestFile';
 import type { GitHubCommitStatus, GitHubCombinedStatus } from '../src/domain/CommitStatus';
 import type { GitHubIssue } from '../src/domain/Issue';
+import type { GitHubEvent } from '../src/domain/Event';
 
 const API_URL = 'https://api.github.com';
 const TOKEN = 'ghp_myToken';
@@ -443,6 +444,51 @@ describe('GitHubClient.user(login)', () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       `${API_URL}/users/octocat/following`,
+      expect.anything(),
+    );
+  });
+
+  it('fetches public events for a user', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    const mockEvent: GitHubEvent = {
+      id: '123456789',
+      type: 'PushEvent',
+      actor: {
+        id: 1,
+        login: 'octocat',
+        avatar_url: 'https://github.com/images/error/octocat_happy.gif',
+        url: 'https://api.github.com/users/octocat',
+        gravatar_id: '',
+      },
+      repo: {
+        id: 1296269,
+        name: 'octocat/Hello-World',
+        url: 'https://api.github.com/repos/octocat/Hello-World',
+      },
+      payload: { push_id: 1, size: 1, distinct_size: 1, ref: 'refs/heads/main' },
+      public: true,
+      created_at: '2011-09-06T17:26:27Z',
+    };
+    mockJsonResponse(pagedOf(mockEvent));
+
+    const result = await gh.user('octocat').publicEvents();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/users/octocat/events/public`,
+      expect.anything(),
+    );
+    expect(result.values[0].type).toBe('PushEvent');
+    expect(result.values[0].public).toBe(true);
+  });
+
+  it('forwards per_page and page params to publicEvents', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse([]);
+
+    await gh.user('octocat').publicEvents({ per_page: 10, page: 2 });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/users/octocat/events/public?per_page=10&page=2`,
       expect.anything(),
     );
   });
