@@ -62,6 +62,10 @@ const content = await gh.user('octocat').repo('Hello-World').raw('README.md');
 // Followers and following
 const followers = await gh.user('octocat').followers();
 const following = await gh.user('octocat').following();
+
+// List public events performed by a user
+const events = await gh.user('octocat').publicEvents();
+const events = await gh.user('octocat').publicEvents({ per_page: 30 });
 ```
 
 ### Organizations
@@ -427,6 +431,8 @@ import type {
   // Webhooks & Content
   GitHubWebhook, WebhooksParams,
   GitHubContent, ContentParams,
+  // Events
+  GitHubEvent, GitHubActor, EventsParams,
   // Issues
   GitHubIssue, GitHubIssueComment, IssuesParams, CreateIssueData,
   // Gists
