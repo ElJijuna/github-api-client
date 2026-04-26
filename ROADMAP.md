@@ -39,6 +39,7 @@
 | `repo(name)` | — chainable | ✅ |
 | `followers(params?)` | `GET /users/{username}/followers` | ✅ |
 | `following(params?)` | `GET /users/{username}/following` | ✅ |
+| `publicEvents(params?)` | `GET /users/{username}/events/public` | ✅ |
 
 ---
 
