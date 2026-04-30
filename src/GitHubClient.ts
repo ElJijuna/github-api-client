@@ -8,6 +8,7 @@ import { GistResource } from './resources/GistResource';
 import type { GitHubUser } from './domain/User';
 import type { GitHubRepository, SearchReposParams } from './domain/Repository';
 import type { GitHubGist, GistsParams, CreateGistData } from './domain/Gist';
+import type { GitHubAdvisory, AdvisoriesParams } from './domain/Advisory';
 import type { GitHubPagedResponse } from './domain/Pagination';
 
 /**
@@ -567,6 +568,40 @@ export class GitHubClient {
    */
   async createGist(data: CreateGistData, signal?: AbortSignal): Promise<GitHubGist> {
     return this.requestPost<GitHubGist>('/gists', data, signal);
+  }
+
+  /**
+   * Lists global security advisories from the GitHub Advisory Database.
+   *
+   * `GET /advisories`
+   *
+   * @param params - Optional filters: `ghsa_id`, `cve_id`, `ecosystem`, `severity`, `cwe_id`, `is_withdrawn`, `sort`, `direction`, `per_page`, `page`
+   * @returns A paged response of global advisories
+   *
+   * @example
+   * ```typescript
+   * const advisories = await gh.advisories({ severity: 'critical', ecosystem: 'npm' });
+   * ```
+   */
+  async advisories(params?: AdvisoriesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubAdvisory>> {
+    return this.requestList<GitHubAdvisory>('/advisories', params as Record<string, string | number | boolean>, signal);
+  }
+
+  /**
+   * Fetches a single global security advisory by its GHSA ID.
+   *
+   * `GET /advisories/{ghsa_id}`
+   *
+   * @param ghsaId - The GHSA identifier (e.g., `'GHSA-xxxx-xxxx-xxxx'`)
+   * @returns The advisory object
+   *
+   * @example
+   * ```typescript
+   * const advisory = await gh.advisory('GHSA-1234-5678-9abc');
+   * ```
+   */
+  async advisory(ghsaId: string, signal?: AbortSignal): Promise<GitHubAdvisory> {
+    return this.request<GitHubAdvisory>(`/advisories/${ghsaId}`, undefined, { signal });
   }
 }
 

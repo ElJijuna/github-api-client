@@ -7,6 +7,7 @@ import type { GitHubRelease, ReleasesParams } from '../domain/Release';
 import type { GitHubWebhook, WebhooksParams, CreateWebhookData, UpdateWebhookData } from '../domain/Webhook';
 import type { GitHubContent, ContentParams } from '../domain/Content';
 import type { GitHubIssue, IssuesParams, CreateIssueData } from '../domain/Issue';
+import type { GitHubRepositoryAdvisory, RepoAdvisoriesParams, CreateAdvisoryData, UpdateAdvisoryData } from '../domain/Advisory';
 import type { GitHubPagedResponse, PaginationParams } from '../domain/Pagination';
 import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestBodyPutFn } from './OrganizationResource';
 import { PullRequestResource } from './PullRequestResource';
@@ -464,5 +465,91 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    */
   async createIssue(data: CreateIssueData, signal?: AbortSignal): Promise<GitHubIssue> {
     return this.requestBody<GitHubIssue>(`${this.basePath}/issues`, data, signal);
+  }
+
+  /**
+   * Lists security advisories for this repository.
+   *
+   * `GET /repos/{owner}/{repo}/security-advisories`
+   *
+   * @param params - Optional filters: `direction`, `sort`, `state`, `per_page`, `page`
+   * @returns A paged response of repository advisories
+   *
+   * @example
+   * ```typescript
+   * const advisories = await gh.repo('octocat', 'Hello-World').repoAdvisories({ state: 'published' });
+   * ```
+   */
+  async repoAdvisories(params?: RepoAdvisoriesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubRepositoryAdvisory>> {
+    return this.requestList<GitHubRepositoryAdvisory>(
+      `${this.basePath}/security-advisories`,
+      params as Record<string, string | number | boolean>,
+      signal,
+    );
+  }
+
+  /**
+   * Creates a draft security advisory in this repository.
+   *
+   * `POST /repos/{owner}/{repo}/security-advisories`
+   *
+   * @param data - Advisory data. `summary` and `description` are required.
+   * @returns The created advisory draft
+   *
+   * @example
+   * ```typescript
+   * const advisory = await gh.repo('octocat', 'Hello-World').createAdvisory({
+   *   summary: 'Remote code execution via crafted input',
+   *   description: 'A vulnerability in...',
+   *   severity: 'critical',
+   * });
+   * ```
+   */
+  async createAdvisory(data: CreateAdvisoryData, signal?: AbortSignal): Promise<GitHubRepositoryAdvisory> {
+    return this.requestBody<GitHubRepositoryAdvisory>(`${this.basePath}/security-advisories`, data, signal);
+  }
+
+  /**
+   * Fetches a single repository security advisory by its GHSA ID.
+   *
+   * `GET /repos/{owner}/{repo}/security-advisories/{ghsa_id}`
+   *
+   * @param ghsaId - The GHSA identifier (e.g., `'GHSA-xxxx-xxxx-xxxx'`)
+   * @returns The repository advisory object
+   */
+  async repoAdvisory(ghsaId: string, signal?: AbortSignal): Promise<GitHubRepositoryAdvisory> {
+    return this.request<GitHubRepositoryAdvisory>(`${this.basePath}/security-advisories/${ghsaId}`, undefined, signal);
+  }
+
+  /**
+   * Updates a repository security advisory.
+   *
+   * `PATCH /repos/{owner}/{repo}/security-advisories/{ghsa_id}`
+   *
+   * @param ghsaId - The GHSA identifier
+   * @param data - Fields to update
+   * @returns The updated advisory
+   *
+   * @example
+   * ```typescript
+   * const updated = await gh.repo('octocat', 'Hello-World').updateAdvisory('GHSA-1234-5678-9abc', {
+   *   state: 'published',
+   * });
+   * ```
+   */
+  async updateAdvisory(ghsaId: string, data: UpdateAdvisoryData, signal?: AbortSignal): Promise<GitHubRepositoryAdvisory> {
+    return this.requestPatch<GitHubRepositoryAdvisory>(`${this.basePath}/security-advisories/${ghsaId}`, data, signal);
+  }
+
+  /**
+   * Requests a CVE ID for a repository security advisory.
+   *
+   * `POST /repos/{owner}/{repo}/security-advisories/{ghsa_id}/cve`
+   *
+   * @param ghsaId - The GHSA identifier
+   * @returns The updated advisory with the CVE request submitted
+   */
+  async requestCve(ghsaId: string, signal?: AbortSignal): Promise<GitHubRepositoryAdvisory> {
+    return this.requestBody<GitHubRepositoryAdvisory>(`${this.basePath}/security-advisories/${ghsaId}/cve`, {}, signal);
   }
 }
