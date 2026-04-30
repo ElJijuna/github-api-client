@@ -1,7 +1,7 @@
 import type { GitHubCommit } from '../domain/Commit';
-import type { GitHubCommitStatus, GitHubCombinedStatus, GitHubCheckRun, CommitStatusesParams, CheckRunsParams } from '../domain/CommitStatus';
+import type { GitHubCommitStatus, GitHubCombinedStatus, GitHubCheckRun, CommitStatusesParams, CheckRunsParams, CreateStatusData, GitHubCommitComment, CommitCommentsParams, CommitCommentData } from '../domain/CommitStatus';
 import type { GitHubPagedResponse } from '../domain/Pagination';
-import type { RequestFn, RequestListFn } from './OrganizationResource';
+import type { RequestFn, RequestListFn, RequestBodyFn } from './OrganizationResource';
 
 /**
  * Represents a GitHub commit resource with chainable async methods.
@@ -32,6 +32,7 @@ export class CommitResource implements PromiseLike<GitHubCommit> {
   constructor(
     private readonly request: RequestFn,
     private readonly requestList: RequestListFn,
+    private readonly requestBody: RequestBodyFn,
     owner: string,
     repo: string,
     ref: string,
@@ -108,5 +109,46 @@ export class CommitResource implements PromiseLike<GitHubCommit> {
       values: raw.check_runs,
       hasNextPage: false,
     };
+  }
+
+  /**
+   * Creates a commit status (e.g., from a CI/CD system).
+   *
+   * `POST /repos/{owner}/{repo}/statuses/{sha}`
+   *
+   * @param data - Status data. `state` is required.
+   * @returns The created commit status
+   */
+  async createStatus(data: CreateStatusData, signal?: AbortSignal): Promise<GitHubCommitStatus> {
+    const repoPath = this.basePath.replace(`/commits/${this.ref}`, '');
+    return this.requestBody<GitHubCommitStatus>(`${repoPath}/statuses/${this.ref}`, data, signal);
+  }
+
+  /**
+   * Fetches comments on this commit.
+   *
+   * `GET /repos/{owner}/{repo}/commits/{commit_sha}/comments`
+   *
+   * @param params - Optional pagination: `per_page`, `page`
+   * @returns A paged response of commit comments
+   */
+  async comments(params?: CommitCommentsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubCommitComment>> {
+    return this.requestList<GitHubCommitComment>(
+      `${this.basePath}/comments`,
+      params as Record<string, string | number | boolean>,
+      signal,
+    );
+  }
+
+  /**
+   * Adds a comment to this commit.
+   *
+   * `POST /repos/{owner}/{repo}/commits/{commit_sha}/comments`
+   *
+   * @param data - Comment data. `body` is required.
+   * @returns The created commit comment
+   */
+  async addComment(data: CommitCommentData, signal?: AbortSignal): Promise<GitHubCommitComment> {
+    return this.requestBody<GitHubCommitComment>(`${this.basePath}/comments`, data, signal);
   }
 }
