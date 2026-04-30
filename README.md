@@ -175,6 +175,22 @@ const combined = await gh.repo('octocat', 'Hello-World').commit('abc123').combin
 // GitHub Actions check runs
 const checks = await gh.repo('octocat', 'Hello-World').commit('abc123').checkRuns();
 const checks = await gh.repo('octocat', 'Hello-World').commit('abc123').checkRuns({ status: 'completed' });
+
+// Create a commit status (e.g., from a CI/CD system)
+const status = await gh.repo('octocat', 'Hello-World').commit('abc123').createStatus({
+  state:       'success',
+  context:     'ci/circleci',
+  description: 'Build passed',
+  target_url:  'https://ci.example.com/build/42',
+});
+
+// List comments on a commit
+const comments = await gh.repo('octocat', 'Hello-World').commit('abc123').comments();
+
+// Add a comment to a commit
+const comment = await gh.repo('octocat', 'Hello-World').commit('abc123').addComment({
+  body: 'Looks good to me!',
+});
 ```
 
 ### Pull requests
@@ -422,8 +438,9 @@ import type {
   GitHubPullRequestFile, PullRequestFilesParams,
   // Commits
   GitHubCommit, GitHubCommitFile, CommitsParams,
-  GitHubCommitStatus, GitHubCombinedStatus, GitHubCheckRun,
-  CommitStatusesParams, CheckRunsParams,
+  GitHubCommitStatus, GitHubCombinedStatus, GitHubCheckRun, GitHubCommitComment,
+  CommitStatusesParams, CheckRunsParams, CommitCommentsParams,
+  CreateStatusData, CommitCommentData,
   // Branches, Tags, Releases
   GitHubBranch, BranchesParams,
   GitHubTag, TagsParams,

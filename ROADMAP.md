@@ -99,9 +99,9 @@
 | `statuses(params?)` | `GET /repos/{owner}/{repo}/statuses/{sha}` | ✅ |
 | `combinedStatus()` | `GET /repos/{owner}/{repo}/commits/{ref}/status` | ✅ |
 | `checkRuns(params?)` | `GET /repos/{owner}/{repo}/commits/{ref}/check-runs` | ✅ |
-| `createStatus(data)` | `POST /repos/{owner}/{repo}/statuses/{sha}` | ⬜ |
-| `comments(params?)` | `GET /repos/{owner}/{repo}/commits/{commit_sha}/comments` | ⬜ |
-| `addComment(data)` | `POST /repos/{owner}/{repo}/commits/{commit_sha}/comments` | ⬜ |
+| `createStatus(data)` | `POST /repos/{owner}/{repo}/statuses/{sha}` | ✅ |
+| `comments(params?)` | `GET /repos/{owner}/{repo}/commits/{commit_sha}/comments` | ✅ |
+| `addComment(data)` | `POST /repos/{owner}/{repo}/commits/{commit_sha}/comments` | ✅ |
 
 ---
 
