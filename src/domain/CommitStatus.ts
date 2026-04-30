@@ -94,3 +94,70 @@ export interface CheckRunsParams extends PaginationParams {
   /** Filter by app slug */
   app_id?: number;
 }
+
+/**
+ * Request body for creating a commit status.
+ *
+ * @see {@link https://docs.github.com/en/rest/commits/statuses#create-a-commit-status}
+ */
+export interface CreateStatusData {
+  /** The state of the status */
+  state: 'error' | 'failure' | 'pending' | 'success';
+  /** URL to associate with this status */
+  target_url?: string;
+  /** Short description of the status */
+  description?: string;
+  /** Label identifying the status source (e.g., `'ci/circleci'`) */
+  context?: string;
+}
+
+/**
+ * Represents a comment on a commit.
+ *
+ * @see {@link https://docs.github.com/en/rest/commits/comments#list-commit-comments-for-a-repository}
+ */
+export interface GitHubCommitComment {
+  /** Unique numeric comment ID */
+  id: number;
+  /** Comment body text */
+  body: string;
+  /** User who created the comment */
+  user: GitHubUser;
+  /** ISO 8601 timestamp of creation */
+  created_at: string;
+  /** ISO 8601 timestamp of last update */
+  updated_at: string;
+  /** URL to the comment on GitHub */
+  html_url: string;
+  /** The commit SHA this comment belongs to */
+  commit_id: string;
+  /** Path of the file the comment is associated with, or `null` for general comments */
+  path: string | null;
+  /** Line index in the diff, or `null` for general comments */
+  position: number | null;
+  /** Line number in the file, or `null` for general comments */
+  line: number | null;
+}
+
+/**
+ * Query parameters for listing commit comments.
+ *
+ * @see {@link https://docs.github.com/en/rest/commits/comments#list-commit-comments}
+ */
+export interface CommitCommentsParams extends PaginationParams {}
+
+/**
+ * Request body for adding a commit comment.
+ *
+ * @see {@link https://docs.github.com/en/rest/commits/comments#create-a-commit-comment}
+ */
+export interface CommitCommentData {
+  /** The comment body text */
+  body: string;
+  /** Relative path of the file to comment on */
+  path?: string;
+  /** Line index in the diff to comment on */
+  position?: number;
+  /** Line number in the file to comment on */
+  line?: number;
+}
