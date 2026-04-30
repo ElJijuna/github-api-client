@@ -127,6 +127,25 @@
 
 ---
 
+## AdvisoryResource (Global)
+
+| Method | Endpoint | Status |
+|--------|----------|--------|
+| `advisories(params?)` | `GET /advisories` | ⬜ |
+| `advisory(ghsaId)` | `GET /advisories/{ghsa_id}` | ⬜ |
+
+## AdvisoryResource (Repository)
+
+| Method | Endpoint | Status |
+|--------|----------|--------|
+| `repoAdvisories(params?)` | `GET /repos/{owner}/{repo}/security-advisories` | ⬜ |
+| `createAdvisory(data)` | `POST /repos/{owner}/{repo}/security-advisories` | ⬜ |
+| `repoAdvisory(ghsaId)` | `GET /repos/{owner}/{repo}/security-advisories/{ghsa_id}` | ⬜ |
+| `updateAdvisory(ghsaId, data)` | `PATCH /repos/{owner}/{repo}/security-advisories/{ghsa_id}` | ⬜ |
+| `requestCve(ghsaId)` | `POST /repos/{owner}/{repo}/security-advisories/{ghsa_id}/cve` | ⬜ |
+
+---
+
 ## Cross-cutting concerns
 
 | Feature | Scope | Status |
