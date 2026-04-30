@@ -138,6 +138,7 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
     return new CommitResource(
       this.request,
       this.requestList,
+      this.requestBody,
       this.owner,
       this.repo,
       ref,
