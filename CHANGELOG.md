@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/ElJijuna/github-api-client/compare/v1.7.0...v1.8.0) (2026-04-30)
+
+
+### Features
+
+* **PullRequestResource:** implement merge, createReview, requestReviewers, addComment, and update ([02d09ac](https://github.com/ElJijuna/github-api-client/commit/02d09ac519bc74e6fae430b802a2e7fcce8f6966)), closes [#9](https://github.com/ElJijuna/github-api-client/issues/9)
+
 ## [1.5.1](https://github.com/ElJijuna/github-api-client/compare/v1.5.0...v1.5.1) (2026-04-17)
 
 
