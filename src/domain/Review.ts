@@ -60,6 +60,66 @@ export interface GitHubReviewComment {
 }
 
 /**
+ * Request body for submitting a pull request review.
+ *
+ * @see {@link https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request}
+ */
+export interface CreateReviewData {
+  /** The SHA of the commit to review (defaults to the latest) */
+  commit_id?: string;
+  /** The review body text */
+  body?: string;
+  /** The review action */
+  event: 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT';
+  /** Inline comments to include with the review */
+  comments?: Array<{
+    path: string;
+    position?: number;
+    body: string;
+    line?: number;
+    side?: 'LEFT' | 'RIGHT';
+  }>;
+}
+
+/**
+ * Request body for adding an inline diff comment to a pull request.
+ *
+ * @see {@link https://docs.github.com/en/rest/pulls/comments#create-a-review-comment-for-a-pull-request}
+ */
+export interface AddCommentData {
+  /** The comment text */
+  body: string;
+  /** The SHA of the commit to comment on */
+  commit_id: string;
+  /** Relative path of the file to comment on */
+  path: string;
+  /** Line index in the diff (deprecated in favour of `line`) */
+  position?: number;
+  /** Line number in the file */
+  line?: number;
+  /** Side of the diff */
+  side?: 'LEFT' | 'RIGHT';
+  /** First line of a multi-line comment */
+  start_line?: number;
+  /** Side for the first line of a multi-line comment */
+  start_side?: 'LEFT' | 'RIGHT';
+  /** ID of the comment to reply to */
+  in_reply_to?: number;
+}
+
+/**
+ * Request body for requesting reviewers on a pull request.
+ *
+ * @see {@link https://docs.github.com/en/rest/pulls/review-requests#request-reviewers-for-a-pull-request}
+ */
+export interface RequestReviewersData {
+  /** GitHub logins of the reviewers to request */
+  reviewers?: string[];
+  /** Team slugs to request */
+  team_reviewers?: string[];
+}
+
+/**
  * Query parameters for listing pull request reviews.
  *
  * @see {@link https://docs.github.com/en/rest/pulls/reviews#list-reviews-for-a-pull-request}

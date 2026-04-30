@@ -2,7 +2,7 @@ import type { GitHubUser } from '../domain/User';
 import type { GitHubRepository, ReposParams } from '../domain/Repository';
 import type { GitHubEvent, EventsParams } from '../domain/Event';
 import type { GitHubPagedResponse } from '../domain/Pagination';
-import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn } from './OrganizationResource';
+import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestBodyPutFn } from './OrganizationResource';
 import { RepositoryResource } from './RepositoryResource';
 
 /**
@@ -34,6 +34,7 @@ export class UserResource implements PromiseLike<GitHubUser> {
     private readonly requestBody: RequestBodyFn,
     private readonly requestPatch: RequestPatchFn,
     private readonly requestDelete: RequestDeleteFn,
+    private readonly requestBodyPut: RequestBodyPutFn,
     private readonly login: string,
   ) {
     this.basePath = `/users/${login}`;
@@ -98,6 +99,7 @@ export class UserResource implements PromiseLike<GitHubUser> {
       this.requestBody,
       this.requestPatch,
       this.requestDelete,
+      this.requestBodyPut,
       this.login,
       name,
     );

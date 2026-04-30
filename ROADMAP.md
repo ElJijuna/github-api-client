@@ -83,11 +83,11 @@
 | `reviews(params?)` | `GET /repos/{owner}/{repo}/pulls/{pull_number}/reviews` | ✅ |
 | `reviewComments(params?)` | `GET /repos/{owner}/{repo}/pulls/{pull_number}/comments` | ✅ |
 | `isMerged()` | `GET /repos/{owner}/{repo}/pulls/{pull_number}/merge` | ✅ |
-| `merge(data?)` | `PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge` | ⬜ |
-| `createReview(data)` | `POST /repos/{owner}/{repo}/pulls/{pull_number}/reviews` | ⬜ |
-| `requestReviewers(data)` | `POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers` | ⬜ |
-| `addComment(data)` | `POST /repos/{owner}/{repo}/pulls/{pull_number}/comments` | ⬜ |
-| `update(data)` | `PATCH /repos/{owner}/{repo}/pulls/{pull_number}` | ⬜ |
+| `merge(data?)` | `PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge` | ✅ |
+| `createReview(data)` | `POST /repos/{owner}/{repo}/pulls/{pull_number}/reviews` | ✅ |
+| `requestReviewers(data)` | `POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers` | ✅ |
+| `addComment(data)` | `POST /repos/{owner}/{repo}/pulls/{pull_number}/comments` | ✅ |
+| `update(data)` | `PATCH /repos/{owner}/{repo}/pulls/{pull_number}` | ✅ |
 
 ---
 

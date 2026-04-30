@@ -1,9 +1,9 @@
-import type { GitHubPullRequest, PullRequestsParams } from '../domain/PullRequest';
-import type { GitHubReview, GitHubReviewComment, ReviewsParams, ReviewCommentsParams } from '../domain/Review';
+import type { GitHubPullRequest, MergeData, MergeResult, UpdatePullRequestData } from '../domain/PullRequest';
+import type { GitHubReview, GitHubReviewComment, ReviewsParams, ReviewCommentsParams, CreateReviewData, AddCommentData, RequestReviewersData } from '../domain/Review';
 import type { GitHubPullRequestFile, PullRequestFilesParams } from '../domain/PullRequestFile';
 import type { GitHubCommit } from '../domain/Commit';
 import type { GitHubPagedResponse, PaginationParams } from '../domain/Pagination';
-import type { RequestFn, RequestListFn } from './OrganizationResource';
+import type { RequestFn, RequestListFn, RequestBodyFn, RequestPatchFn, RequestBodyPutFn } from './OrganizationResource';
 
 /**
  * Represents a GitHub pull request resource with chainable async methods.
@@ -36,6 +36,9 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
   constructor(
     private readonly request: RequestFn,
     private readonly requestList: RequestListFn,
+    private readonly requestBody: RequestBodyFn,
+    private readonly requestPatch: RequestPatchFn,
+    private readonly requestBodyPut: RequestBodyPutFn,
     owner: string,
     repo: string,
     pullNumber: number,
@@ -144,5 +147,65 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
       if (err instanceof DOMException && err.name === 'AbortError') throw err;
       return false;
     }
+  }
+
+  /**
+   * Merges the pull request.
+   *
+   * `PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge`
+   *
+   * @param data - Optional merge options: `commit_title`, `commit_message`, `sha`, `merge_method`
+   * @returns The merge result with SHA and confirmation message
+   */
+  async merge(data?: MergeData, signal?: AbortSignal): Promise<MergeResult> {
+    return this.requestBodyPut<MergeResult>(`${this.basePath}/merge`, data ?? {}, signal);
+  }
+
+  /**
+   * Submits a review on this pull request.
+   *
+   * `POST /repos/{owner}/{repo}/pulls/{pull_number}/reviews`
+   *
+   * @param data - Review data. `event` is required (`'APPROVE'`, `'REQUEST_CHANGES'`, `'COMMENT'`).
+   * @returns The submitted review
+   */
+  async createReview(data: CreateReviewData, signal?: AbortSignal): Promise<GitHubReview> {
+    return this.requestBody<GitHubReview>(`${this.basePath}/reviews`, data, signal);
+  }
+
+  /**
+   * Requests reviewers for this pull request.
+   *
+   * `POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers`
+   *
+   * @param data - Object with `reviewers` (logins) and/or `team_reviewers` (slugs)
+   * @returns The updated pull request
+   */
+  async requestReviewers(data: RequestReviewersData, signal?: AbortSignal): Promise<GitHubPullRequest> {
+    return this.requestBody<GitHubPullRequest>(`${this.basePath}/requested_reviewers`, data, signal);
+  }
+
+  /**
+   * Adds an inline diff comment to this pull request.
+   *
+   * `POST /repos/{owner}/{repo}/pulls/{pull_number}/comments`
+   *
+   * @param data - Comment data. `body`, `commit_id`, and `path` are required.
+   * @returns The created review comment
+   */
+  async addComment(data: AddCommentData, signal?: AbortSignal): Promise<GitHubReviewComment> {
+    return this.requestBody<GitHubReviewComment>(`${this.basePath}/comments`, data, signal);
+  }
+
+  /**
+   * Updates this pull request's metadata.
+   *
+   * `PATCH /repos/{owner}/{repo}/pulls/{pull_number}`
+   *
+   * @param data - Fields to update: `title`, `body`, `state`, `base`, `maintainer_can_modify`
+   * @returns The updated pull request
+   */
+  async update(data: UpdatePullRequestData, signal?: AbortSignal): Promise<GitHubPullRequest> {
+    return this.requestPatch<GitHubPullRequest>(this.basePath, data, signal);
   }
 }
