@@ -11,7 +11,7 @@ import type { GitHubRelease } from '../src/domain/Release';
 import type { GitHubWebhook } from '../src/domain/Webhook';
 import type { GitHubReview, GitHubReviewComment } from '../src/domain/Review';
 import type { GitHubPullRequestFile } from '../src/domain/PullRequestFile';
-import type { GitHubCommitStatus, GitHubCombinedStatus } from '../src/domain/CommitStatus';
+import type { GitHubCommitStatus, GitHubCombinedStatus, GitHubCommitComment } from '../src/domain/CommitStatus';
 import type { GitHubIssue } from '../src/domain/Issue';
 import type { GitHubEvent } from '../src/domain/Event';
 
@@ -230,6 +230,19 @@ const mockCombinedStatus: GitHubCombinedStatus = {
   sha: 'abc123def456',
   total_count: 1,
   repository: mockRepo,
+};
+
+const mockCommitComment: GitHubCommitComment = {
+  id: 42,
+  body: 'Looks good!',
+  user: mockUser,
+  created_at: '2012-07-20T01:19:13Z',
+  updated_at: '2012-07-20T01:19:13Z',
+  html_url: 'https://github.com/octocat/Hello-World/commit/abc123def456#commitcomment-42',
+  commit_id: 'abc123def456',
+  path: null,
+  position: null,
+  line: null,
 };
 
 function pagedOf<T>(...values: T[]) {
@@ -963,6 +976,61 @@ describe('CommitResource', () => {
       );
       expect(result.state).toBe('success');
       expect(result.total_count).toBe(1);
+    });
+  });
+
+  describe('createStatus()', () => {
+    it('posts a new commit status', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockPostResponse(mockStatus);
+
+      const result = await gh.repo('octocat', 'Hello-World').commit('abc123def456').createStatus({
+        state: 'success',
+        context: 'ci/circleci',
+        description: 'Build passed',
+        target_url: 'https://ci.example.com/1',
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/statuses/abc123def456`,
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(result.state).toBe('success');
+      expect(result.context).toBe('ci/circleci');
+    });
+  });
+
+  describe('comments()', () => {
+    it('fetches commit comments', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockJsonResponse(pagedOf(mockCommitComment));
+
+      const result = await gh.repo('octocat', 'Hello-World').commit('abc123def456').comments();
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/commits/abc123def456/comments`,
+        expect.anything(),
+      );
+      expect(result.values[0].body).toBe('Looks good!');
+      expect(result.values[0].commit_id).toBe('abc123def456');
+    });
+  });
+
+  describe('addComment()', () => {
+    it('posts a new commit comment', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockPostResponse(mockCommitComment);
+
+      const result = await gh.repo('octocat', 'Hello-World').commit('abc123def456').addComment({
+        body: 'Looks good!',
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/commits/abc123def456/comments`,
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(result.body).toBe('Looks good!');
+      expect(result.id).toBe(42);
     });
   });
 });
