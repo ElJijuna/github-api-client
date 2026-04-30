@@ -10,6 +10,7 @@ import type { GitHubTag } from '../src/domain/Tag';
 import type { GitHubRelease } from '../src/domain/Release';
 import type { GitHubWebhook } from '../src/domain/Webhook';
 import type { GitHubReview, GitHubReviewComment } from '../src/domain/Review';
+import type { MergeResult } from '../src/domain/PullRequest';
 import type { GitHubPullRequestFile } from '../src/domain/PullRequestFile';
 import type { GitHubCommitStatus, GitHubCombinedStatus, GitHubCommitComment } from '../src/domain/CommitStatus';
 import type { GitHubIssue } from '../src/domain/Issue';
@@ -174,6 +175,12 @@ const mockWebhook: GitHubWebhook = {
   updated_at: '2019-06-03T00:57:16Z',
   ping_url: 'https://api.github.com/repos/octocat/Hello-World/hooks/1/pings',
   deliveries_url: 'https://api.github.com/repos/octocat/Hello-World/hooks/1/deliveries',
+};
+
+const mockMergeResult: MergeResult = {
+  sha: 'abc123def456',
+  merged: true,
+  message: 'Pull Request successfully merged',
 };
 
 const mockReview: GitHubReview = {
@@ -928,6 +935,114 @@ describe('PullRequestResource', () => {
         expect.anything(),
       );
       expect(result.values[0].body).toBe('Great stuff!');
+    });
+  });
+
+  describe('merge()', () => {
+    it('merges the pull request with default options', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockPostResponse(mockMergeResult, 200);
+
+      const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).merge();
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/pulls/1/merge`,
+        expect.objectContaining({ method: 'PUT' }),
+      );
+      expect(result.merged).toBe(true);
+      expect(result.sha).toBe('abc123def456');
+    });
+
+    it('passes merge options in the request body', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockPostResponse(mockMergeResult, 200);
+
+      await gh.repo('octocat', 'Hello-World').pullRequest(1).merge({
+        merge_method: 'squash',
+        commit_title: 'Squash merge',
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/pulls/1/merge`,
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({ merge_method: 'squash', commit_title: 'Squash merge' }),
+        }),
+      );
+    });
+  });
+
+  describe('createReview()', () => {
+    it('submits an approval review', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockPostResponse(mockReview);
+
+      const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).createReview({
+        event: 'APPROVE',
+        body: 'LGTM',
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/pulls/1/reviews`,
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(result.state).toBe('APPROVED');
+    });
+  });
+
+  describe('requestReviewers()', () => {
+    it('requests reviewers on the pull request', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockPostResponse(mockPullRequest);
+
+      const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).requestReviewers({
+        reviewers: ['octocat'],
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/pulls/1/requested_reviewers`,
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(result.number).toBe(1);
+    });
+  });
+
+  describe('addComment()', () => {
+    it('adds an inline diff comment to the pull request', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockPostResponse(mockReviewComment);
+
+      const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).addComment({
+        body: 'Great stuff!',
+        commit_id: 'abc123def456',
+        path: 'file.txt',
+        position: 1,
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/pulls/1/comments`,
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(result.body).toBe('Great stuff!');
+      expect(result.path).toBe('file.txt');
+    });
+  });
+
+  describe('update()', () => {
+    it('updates pull request metadata', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockPatchResponse({ ...mockPullRequest, title: 'Updated title' });
+
+      const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).update({
+        title: 'Updated title',
+        state: 'closed',
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/pulls/1`,
+        expect.objectContaining({ method: 'PATCH' }),
+      );
+      expect(result.title).toBe('Updated title');
     });
   });
 });

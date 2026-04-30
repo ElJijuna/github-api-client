@@ -8,7 +8,7 @@ import type { GitHubWebhook, WebhooksParams, CreateWebhookData, UpdateWebhookDat
 import type { GitHubContent, ContentParams } from '../domain/Content';
 import type { GitHubIssue, IssuesParams, CreateIssueData } from '../domain/Issue';
 import type { GitHubPagedResponse, PaginationParams } from '../domain/Pagination';
-import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn } from './OrganizationResource';
+import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestBodyPutFn } from './OrganizationResource';
 import { PullRequestResource } from './PullRequestResource';
 import { CommitResource } from './CommitResource';
 import { IssueResource } from './IssueResource';
@@ -50,6 +50,7 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
     private readonly requestBody: RequestBodyFn,
     private readonly requestPatch: RequestPatchFn,
     private readonly requestDelete: RequestDeleteFn,
+    private readonly requestBodyPut: RequestBodyPutFn,
     owner: string,
     repo: string,
   ) {
@@ -106,6 +107,9 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
     return new PullRequestResource(
       this.request,
       this.requestList,
+      this.requestBody,
+      this.requestPatch,
+      this.requestBodyPut,
       this.owner,
       this.repo,
       pullNumber,

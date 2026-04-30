@@ -129,6 +129,54 @@ export interface GitHubPullRequest {
 }
 
 /**
+ * Request body for merging a pull request.
+ *
+ * @see {@link https://docs.github.com/en/rest/pulls/pulls#merge-a-pull-request}
+ */
+export interface MergeData {
+  /** Title for the automatic commit message */
+  commit_title?: string;
+  /** Extra detail for the automatic commit message */
+  commit_message?: string;
+  /** SHA that pull request head must match to allow the merge */
+  sha?: string;
+  /** Merge strategy */
+  merge_method?: 'merge' | 'squash' | 'rebase';
+}
+
+/**
+ * Response from merging a pull request.
+ *
+ * @see {@link https://docs.github.com/en/rest/pulls/pulls#merge-a-pull-request}
+ */
+export interface MergeResult {
+  /** The merge commit SHA */
+  sha: string;
+  /** Whether the pull request was merged */
+  merged: boolean;
+  /** Result message */
+  message: string;
+}
+
+/**
+ * Request body for updating a pull request.
+ *
+ * @see {@link https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request}
+ */
+export interface UpdatePullRequestData {
+  /** New title */
+  title?: string;
+  /** New body */
+  body?: string;
+  /** New state */
+  state?: 'open' | 'closed';
+  /** New base branch name */
+  base?: string;
+  /** Whether maintainers can modify the pull request */
+  maintainer_can_modify?: boolean;
+}
+
+/**
  * Query parameters for listing pull requests.
  *
  * @see {@link https://docs.github.com/en/rest/pulls/pulls#list-pull-requests}

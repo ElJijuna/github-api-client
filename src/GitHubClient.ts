@@ -1,7 +1,7 @@
 import { Security } from './security/Security';
 import { GitHubApiError } from './errors/GitHubApiError';
 import { OrganizationResource } from './resources/OrganizationResource';
-import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestPutFn } from './resources/OrganizationResource';
+import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestPutFn, RequestBodyPutFn } from './resources/OrganizationResource';
 import { RepositoryResource } from './resources/RepositoryResource';
 import { UserResource } from './resources/UserResource';
 import { GistResource } from './resources/GistResource';
@@ -341,6 +341,36 @@ export class GitHubClient {
       this.requestPut(path, signal);
   }
 
+  private async requestBodyPut<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
+    const url = `${this.security.getApiUrl()}${path}`;
+    const startedAt = new Date();
+    let statusCode: number | undefined;
+    try {
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: this.security.getHeaders(),
+        body: JSON.stringify(body),
+        signal,
+      });
+      statusCode = response.status;
+      if (!response.ok) {
+        throw new GitHubApiError(response.status, response.statusText);
+      }
+      const data = await response.json() as T;
+      this.emit('request', { url, method: 'PUT', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      return data;
+    } catch (err) {
+      const finishedAt = new Date();
+      this.emit('request', { url, method: 'PUT', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      throw err;
+    }
+  }
+
+  private makeRequestBodyPutFn(): RequestBodyPutFn {
+    return <T>(path: string, body: unknown, signal?: AbortSignal) =>
+      this.requestBodyPut<T>(path, body, signal);
+  }
+
   /**
    * Fetches the authenticated user's profile.
    *
@@ -383,6 +413,7 @@ export class GitHubClient {
       this.makeRequestBodyFn(),
       this.makeRequestPatchFn(),
       this.makeRequestDeleteFn(),
+      this.makeRequestBodyPutFn(),
       login,
     );
   }
@@ -412,6 +443,7 @@ export class GitHubClient {
       this.makeRequestBodyFn(),
       this.makeRequestPatchFn(),
       this.makeRequestDeleteFn(),
+      this.makeRequestBodyPutFn(),
       name,
     );
   }
@@ -439,6 +471,7 @@ export class GitHubClient {
       this.makeRequestBodyFn(),
       this.makeRequestPatchFn(),
       this.makeRequestDeleteFn(),
+      this.makeRequestBodyPutFn(),
       owner,
       name,
     );

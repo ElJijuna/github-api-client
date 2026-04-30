@@ -224,6 +224,40 @@ const comments = await gh.repo('octocat', 'Hello-World').pullRequest(42).reviewC
 // Check if merged
 const merged = await gh.repo('octocat', 'Hello-World').pullRequest(42).isMerged();
 // true | false
+
+// Merge a pull request
+const result = await gh.repo('octocat', 'Hello-World').pullRequest(42).merge();
+const result = await gh.repo('octocat', 'Hello-World').pullRequest(42).merge({
+  merge_method: 'squash',
+  commit_title: 'feat: my feature (#42)',
+});
+
+// Submit a review
+await gh.repo('octocat', 'Hello-World').pullRequest(42).createReview({ event: 'APPROVE' });
+await gh.repo('octocat', 'Hello-World').pullRequest(42).createReview({
+  event: 'REQUEST_CHANGES',
+  body: 'Please fix the tests.',
+});
+
+// Request reviewers
+await gh.repo('octocat', 'Hello-World').pullRequest(42).requestReviewers({
+  reviewers: ['octocat'],
+  team_reviewers: ['justice-league'],
+});
+
+// Add an inline diff comment
+await gh.repo('octocat', 'Hello-World').pullRequest(42).addComment({
+  body: 'Should this be a constant?',
+  commit_id: 'abc123def456',
+  path: 'src/index.ts',
+  line: 10,
+});
+
+// Update pull request metadata
+const updated = await gh.repo('octocat', 'Hello-World').pullRequest(42).update({
+  title: 'feat: improved feature',
+  state: 'closed',
+});
 ```
 
 ### Issues
@@ -434,7 +468,9 @@ import type {
   GitHubRepository, ReposParams, ForksParams, SearchReposParams,
   // Pull Requests
   GitHubPullRequest, GitHubRef, GitHubLabel, GitHubMilestone, PullRequestsParams,
+  MergeData, MergeResult, UpdatePullRequestData,
   GitHubReview, GitHubReviewComment, ReviewsParams, ReviewCommentsParams,
+  CreateReviewData, AddCommentData, RequestReviewersData,
   GitHubPullRequestFile, PullRequestFilesParams,
   // Commits
   GitHubCommit, GitHubCommitFile, CommitsParams,
