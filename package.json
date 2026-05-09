@@ -16,10 +16,7 @@
   "files": [
     "dist"
   ],
-  "author": {
-    "name": "Ivan",
-    "email": "pilmee@gmail.com"
-  },
+  "author": "pilmee <pilmee@gmail.com> (https://github.com/ElJijuna)",
   "publishConfig": {
     "access": "public"
   },
