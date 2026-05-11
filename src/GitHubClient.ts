@@ -603,6 +603,25 @@ export class GitHubClient {
   async advisory(ghsaId: string, signal?: AbortSignal): Promise<GitHubAdvisory> {
     return this.request<GitHubAdvisory>(`/advisories/${ghsaId}`, undefined, { signal });
   }
+
+  /**
+   * Fetches a global security advisory by its CVE ID.
+   *
+   * `GET /advisories?cve_id={cveId}`
+   *
+   * @param cveId - The CVE identifier (e.g., `'CVE-2021-44228'`)
+   * @returns The advisory object, or `null` if no advisory is found for the given CVE ID
+   *
+   * @example
+   * ```typescript
+   * const advisory = await gh.advisoryByCve('CVE-2021-44228');
+   * if (advisory) console.log(advisory.summary);
+   * ```
+   */
+  async advisoryByCve(cveId: string, signal?: AbortSignal): Promise<GitHubAdvisory | null> {
+    const result = await this.requestList<GitHubAdvisory>('/advisories', { cve_id: cveId }, signal);
+    return result.values[0] ?? null;
+  }
 }
 
 /**
