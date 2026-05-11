@@ -1,5 +1,8 @@
 # gh-api-client
 
+[![npm version](https://img.shields.io/npm/v/gh-api-client.svg)](https://www.npmjs.com/package/gh-api-client)
+[![npm downloads](https://img.shields.io/npm/dm/gh-api-client.svg)](https://www.npmjs.com/package/gh-api-client)
+[![GitHub Actions](https://github.com/ElJijuna/github-api-client/actions/workflows/ci.yml/badge.svg)](https://github.com/ElJijuna/github-api-client/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 TypeScript client for the [GitHub REST API](https://docs.github.com/en/rest).
@@ -337,6 +340,51 @@ console.log(`Found ${results.totalCount} repositories`);
 results.values; // GitHubRepository[]
 ```
 
+### Security advisories
+
+```typescript
+// List global advisories from the GitHub Advisory Database
+const advisories = await gh.advisories();
+const advisories = await gh.advisories({
+  severity:  'critical',
+  ecosystem: 'npm',
+  sort:      'published',
+  direction: 'desc',
+});
+
+// Get a single global advisory by GHSA ID
+const advisory = await gh.advisory('GHSA-1234-5678-9abc');
+
+// Get a global advisory by CVE ID (returns null if not found)
+const advisory = await gh.advisoryByCve('CVE-2021-44228');
+if (advisory) {
+  console.log(advisory.summary);
+  console.log(advisory.severity); // 'critical' | 'high' | 'medium' | 'low' | 'unknown'
+}
+
+// List security advisories for a repository
+const repoAdvisories = await gh.repo('octocat', 'Hello-World').repoAdvisories();
+const repoAdvisories = await gh.repo('octocat', 'Hello-World').repoAdvisories({ state: 'published' });
+
+// Get a single repository advisory by GHSA ID
+const repoAdvisory = await gh.repo('octocat', 'Hello-World').repoAdvisory('GHSA-1234-5678-9abc');
+
+// Create a repository advisory draft
+const draft = await gh.repo('octocat', 'Hello-World').createAdvisory({
+  summary:     'Remote code execution via crafted input',
+  description: 'A vulnerability in...',
+  severity:    'critical',
+});
+
+// Update a repository advisory
+const updated = await gh.repo('octocat', 'Hello-World').updateAdvisory('GHSA-1234-5678-9abc', {
+  state: 'published',
+});
+
+// Request a CVE ID for a repository advisory
+const result = await gh.repo('octocat', 'Hello-World').requestCve('GHSA-1234-5678-9abc');
+```
+
 ---
 
 ## Pagination
@@ -491,6 +539,10 @@ import type {
   // Gists
   GitHubGist, GistFile, GistCommit, GistFork, GistComment,
   GistsParams, CreateGistData, UpdateGistData, GistCommentData,
+  // Security advisories
+  GitHubAdvisory, GitHubAdvisoryVulnerability, AdvisoriesParams,
+  GitHubRepositoryAdvisory, RepoAdvisoriesParams,
+  AdvisoryVulnerabilityInput, CreateAdvisoryData, UpdateAdvisoryData,
 } from 'gh-api-client';
 ```
 

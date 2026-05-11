@@ -1697,3 +1697,40 @@ describe('RepositoryResource.requestCve()', () => {
     expect(result.submission).toEqual({ accepted: true });
   });
 });
+
+describe('GitHubClient.advisoryByCve()', () => {
+  it('returns the advisory matching the CVE ID', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(pagedOf(mockGlobalAdvisory));
+
+    const result = await gh.advisoryByCve('CVE-2023-12345');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/advisories?cve_id=CVE-2023-12345`,
+      expect.anything(),
+    );
+    expect(result).not.toBeNull();
+    expect(result!.cve_id).toBe('CVE-2023-12345');
+    expect(result!.ghsa_id).toBe('GHSA-1234-5678-9abc');
+  });
+
+  it('returns null when no advisory is found for the CVE ID', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse([]);
+
+    const result = await gh.advisoryByCve('CVE-9999-00000');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/advisories?cve_id=CVE-9999-00000`,
+      expect.anything(),
+    );
+    expect(result).toBeNull();
+  });
+
+  it('throws GitHubApiError on API error', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockErrorResponse(500, 'Internal Server Error');
+
+    await expect(gh.advisoryByCve('CVE-2023-12345')).rejects.toThrow(GitHubApiError);
+  });
+});
