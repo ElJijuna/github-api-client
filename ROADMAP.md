@@ -83,11 +83,11 @@
 | `reviews(params?)` | `GET /repos/{owner}/{repo}/pulls/{pull_number}/reviews` | ✅ |
 | `reviewComments(params?)` | `GET /repos/{owner}/{repo}/pulls/{pull_number}/comments` | ✅ |
 | `isMerged()` | `GET /repos/{owner}/{repo}/pulls/{pull_number}/merge` | ✅ |
-| `merge(data?)` | `PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge` | ⬜ |
-| `createReview(data)` | `POST /repos/{owner}/{repo}/pulls/{pull_number}/reviews` | ⬜ |
-| `requestReviewers(data)` | `POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers` | ⬜ |
-| `addComment(data)` | `POST /repos/{owner}/{repo}/pulls/{pull_number}/comments` | ⬜ |
-| `update(data)` | `PATCH /repos/{owner}/{repo}/pulls/{pull_number}` | ⬜ |
+| `merge(data?)` | `PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge` | ✅ |
+| `createReview(data)` | `POST /repos/{owner}/{repo}/pulls/{pull_number}/reviews` | ✅ |
+| `requestReviewers(data)` | `POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers` | ✅ |
+| `addComment(data)` | `POST /repos/{owner}/{repo}/pulls/{pull_number}/comments` | ✅ |
+| `update(data)` | `PATCH /repos/{owner}/{repo}/pulls/{pull_number}` | ✅ |
 
 ---
 
@@ -124,6 +124,25 @@
 | `gist(gistId).addComment(data)` | `POST /gists/{gist_id}/comments` | ✅ |
 | `gist(gistId).updateComment(commentId, data)` | `PATCH /gists/{gist_id}/comments/{comment_id}` | ✅ |
 | `gist(gistId).deleteComment(commentId)` | `DELETE /gists/{gist_id}/comments/{comment_id}` | ✅ |
+
+---
+
+## AdvisoryResource (Global)
+
+| Method | Endpoint | Status |
+|--------|----------|--------|
+| `advisories(params?)` | `GET /advisories` | ✅ |
+| `advisory(ghsaId)` | `GET /advisories/{ghsa_id}` | ✅ |
+
+## AdvisoryResource (Repository)
+
+| Method | Endpoint | Status |
+|--------|----------|--------|
+| `repoAdvisories(params?)` | `GET /repos/{owner}/{repo}/security-advisories` | ✅ |
+| `createAdvisory(data)` | `POST /repos/{owner}/{repo}/security-advisories` | ✅ |
+| `repoAdvisory(ghsaId)` | `GET /repos/{owner}/{repo}/security-advisories/{ghsa_id}` | ✅ |
+| `updateAdvisory(ghsaId, data)` | `PATCH /repos/{owner}/{repo}/security-advisories/{ghsa_id}` | ✅ |
+| `requestCve(ghsaId)` | `POST /repos/{owner}/{repo}/security-advisories/{ghsa_id}/cve` | ✅ |
 
 ---
 

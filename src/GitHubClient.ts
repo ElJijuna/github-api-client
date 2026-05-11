@@ -1,13 +1,14 @@
 import { Security } from './security/Security';
 import { GitHubApiError } from './errors/GitHubApiError';
 import { OrganizationResource } from './resources/OrganizationResource';
-import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestPutFn } from './resources/OrganizationResource';
+import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestPutFn, RequestBodyPutFn } from './resources/OrganizationResource';
 import { RepositoryResource } from './resources/RepositoryResource';
 import { UserResource } from './resources/UserResource';
 import { GistResource } from './resources/GistResource';
 import type { GitHubUser } from './domain/User';
 import type { GitHubRepository, SearchReposParams } from './domain/Repository';
 import type { GitHubGist, GistsParams, CreateGistData } from './domain/Gist';
+import type { GitHubAdvisory, AdvisoriesParams } from './domain/Advisory';
 import type { GitHubPagedResponse } from './domain/Pagination';
 
 /**
@@ -341,6 +342,36 @@ export class GitHubClient {
       this.requestPut(path, signal);
   }
 
+  private async requestBodyPut<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
+    const url = `${this.security.getApiUrl()}${path}`;
+    const startedAt = new Date();
+    let statusCode: number | undefined;
+    try {
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: this.security.getHeaders(),
+        body: JSON.stringify(body),
+        signal,
+      });
+      statusCode = response.status;
+      if (!response.ok) {
+        throw new GitHubApiError(response.status, response.statusText);
+      }
+      const data = await response.json() as T;
+      this.emit('request', { url, method: 'PUT', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      return data;
+    } catch (err) {
+      const finishedAt = new Date();
+      this.emit('request', { url, method: 'PUT', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      throw err;
+    }
+  }
+
+  private makeRequestBodyPutFn(): RequestBodyPutFn {
+    return <T>(path: string, body: unknown, signal?: AbortSignal) =>
+      this.requestBodyPut<T>(path, body, signal);
+  }
+
   /**
    * Fetches the authenticated user's profile.
    *
@@ -383,6 +414,7 @@ export class GitHubClient {
       this.makeRequestBodyFn(),
       this.makeRequestPatchFn(),
       this.makeRequestDeleteFn(),
+      this.makeRequestBodyPutFn(),
       login,
     );
   }
@@ -412,6 +444,7 @@ export class GitHubClient {
       this.makeRequestBodyFn(),
       this.makeRequestPatchFn(),
       this.makeRequestDeleteFn(),
+      this.makeRequestBodyPutFn(),
       name,
     );
   }
@@ -439,6 +472,7 @@ export class GitHubClient {
       this.makeRequestBodyFn(),
       this.makeRequestPatchFn(),
       this.makeRequestDeleteFn(),
+      this.makeRequestBodyPutFn(),
       owner,
       name,
     );
@@ -534,6 +568,40 @@ export class GitHubClient {
    */
   async createGist(data: CreateGistData, signal?: AbortSignal): Promise<GitHubGist> {
     return this.requestPost<GitHubGist>('/gists', data, signal);
+  }
+
+  /**
+   * Lists global security advisories from the GitHub Advisory Database.
+   *
+   * `GET /advisories`
+   *
+   * @param params - Optional filters: `ghsa_id`, `cve_id`, `ecosystem`, `severity`, `cwe_id`, `is_withdrawn`, `sort`, `direction`, `per_page`, `page`
+   * @returns A paged response of global advisories
+   *
+   * @example
+   * ```typescript
+   * const advisories = await gh.advisories({ severity: 'critical', ecosystem: 'npm' });
+   * ```
+   */
+  async advisories(params?: AdvisoriesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubAdvisory>> {
+    return this.requestList<GitHubAdvisory>('/advisories', params as Record<string, string | number | boolean>, signal);
+  }
+
+  /**
+   * Fetches a single global security advisory by its GHSA ID.
+   *
+   * `GET /advisories/{ghsa_id}`
+   *
+   * @param ghsaId - The GHSA identifier (e.g., `'GHSA-xxxx-xxxx-xxxx'`)
+   * @returns The advisory object
+   *
+   * @example
+   * ```typescript
+   * const advisory = await gh.advisory('GHSA-1234-5678-9abc');
+   * ```
+   */
+  async advisory(ghsaId: string, signal?: AbortSignal): Promise<GitHubAdvisory> {
+    return this.request<GitHubAdvisory>(`/advisories/${ghsaId}`, undefined, { signal });
   }
 }
 

@@ -10,10 +10,12 @@ import type { GitHubTag } from '../src/domain/Tag';
 import type { GitHubRelease } from '../src/domain/Release';
 import type { GitHubWebhook } from '../src/domain/Webhook';
 import type { GitHubReview, GitHubReviewComment } from '../src/domain/Review';
+import type { MergeResult } from '../src/domain/PullRequest';
 import type { GitHubPullRequestFile } from '../src/domain/PullRequestFile';
 import type { GitHubCommitStatus, GitHubCombinedStatus, GitHubCommitComment } from '../src/domain/CommitStatus';
 import type { GitHubIssue } from '../src/domain/Issue';
 import type { GitHubEvent } from '../src/domain/Event';
+import type { GitHubAdvisory, GitHubRepositoryAdvisory } from '../src/domain/Advisory';
 
 const API_URL = 'https://api.github.com';
 const TOKEN = 'ghp_myToken';
@@ -176,6 +178,12 @@ const mockWebhook: GitHubWebhook = {
   deliveries_url: 'https://api.github.com/repos/octocat/Hello-World/hooks/1/deliveries',
 };
 
+const mockMergeResult: MergeResult = {
+  sha: 'abc123def456',
+  merged: true,
+  message: 'Pull Request successfully merged',
+};
+
 const mockReview: GitHubReview = {
   id: 80,
   user: mockUser,
@@ -230,6 +238,55 @@ const mockCombinedStatus: GitHubCombinedStatus = {
   sha: 'abc123def456',
   total_count: 1,
   repository: mockRepo,
+};
+
+const mockGlobalAdvisory: GitHubAdvisory = {
+  ghsa_id: 'GHSA-1234-5678-9abc',
+  cve_id: 'CVE-2023-12345',
+  url: 'https://api.github.com/advisories/GHSA-1234-5678-9abc',
+  html_url: 'https://github.com/advisories/GHSA-1234-5678-9abc',
+  summary: 'Remote code execution via crafted input',
+  description: 'A vulnerability in...',
+  type: 'reviewed',
+  severity: 'critical',
+  source_code_location: null,
+  identifiers: [{ type: 'GHSA', value: 'GHSA-1234-5678-9abc' }],
+  references: ['https://example.com/vuln'],
+  published_at: '2023-01-01T00:00:00Z',
+  updated_at: '2023-01-02T00:00:00Z',
+  withdrawn_at: null,
+  vulnerabilities: [],
+  cvss: { score: 9.8, vector_string: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H' },
+  cwes: [{ cwe_id: 'CWE-94', name: 'Improper Control of Generation of Code' }],
+  credits: null,
+};
+
+const mockRepoAdvisory: GitHubRepositoryAdvisory = {
+  ghsa_id: 'GHSA-1234-5678-9abc',
+  cve_id: null,
+  url: 'https://api.github.com/repos/octocat/Hello-World/security-advisories/GHSA-1234-5678-9abc',
+  html_url: 'https://github.com/octocat/Hello-World/security/advisories/GHSA-1234-5678-9abc',
+  summary: 'Remote code execution via crafted input',
+  description: 'A vulnerability in...',
+  severity: 'critical',
+  author: mockUser,
+  publisher: null,
+  identifiers: [{ type: 'GHSA', value: 'GHSA-1234-5678-9abc' }],
+  state: 'draft',
+  created_at: '2023-01-01T00:00:00Z',
+  updated_at: '2023-01-02T00:00:00Z',
+  published_at: null,
+  closed_at: null,
+  withdrawn_at: null,
+  submission: null,
+  vulnerabilities: [],
+  cvss: null,
+  cwes: null,
+  credits: null,
+  credits_detailed: null,
+  collaborating_users: null,
+  collaborating_teams: null,
+  private_fork: null,
 };
 
 const mockCommitComment: GitHubCommitComment = {
@@ -930,6 +987,114 @@ describe('PullRequestResource', () => {
       expect(result.values[0].body).toBe('Great stuff!');
     });
   });
+
+  describe('merge()', () => {
+    it('merges the pull request with default options', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockPostResponse(mockMergeResult, 200);
+
+      const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).merge();
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/pulls/1/merge`,
+        expect.objectContaining({ method: 'PUT' }),
+      );
+      expect(result.merged).toBe(true);
+      expect(result.sha).toBe('abc123def456');
+    });
+
+    it('passes merge options in the request body', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockPostResponse(mockMergeResult, 200);
+
+      await gh.repo('octocat', 'Hello-World').pullRequest(1).merge({
+        merge_method: 'squash',
+        commit_title: 'Squash merge',
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/pulls/1/merge`,
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({ merge_method: 'squash', commit_title: 'Squash merge' }),
+        }),
+      );
+    });
+  });
+
+  describe('createReview()', () => {
+    it('submits an approval review', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockPostResponse(mockReview);
+
+      const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).createReview({
+        event: 'APPROVE',
+        body: 'LGTM',
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/pulls/1/reviews`,
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(result.state).toBe('APPROVED');
+    });
+  });
+
+  describe('requestReviewers()', () => {
+    it('requests reviewers on the pull request', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockPostResponse(mockPullRequest);
+
+      const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).requestReviewers({
+        reviewers: ['octocat'],
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/pulls/1/requested_reviewers`,
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(result.number).toBe(1);
+    });
+  });
+
+  describe('addComment()', () => {
+    it('adds an inline diff comment to the pull request', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockPostResponse(mockReviewComment);
+
+      const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).addComment({
+        body: 'Great stuff!',
+        commit_id: 'abc123def456',
+        path: 'file.txt',
+        position: 1,
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/pulls/1/comments`,
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(result.body).toBe('Great stuff!');
+      expect(result.path).toBe('file.txt');
+    });
+  });
+
+  describe('update()', () => {
+    it('updates pull request metadata', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockPatchResponse({ ...mockPullRequest, title: 'Updated title' });
+
+      const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).update({
+        title: 'Updated title',
+        state: 'closed',
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/pulls/1`,
+        expect.objectContaining({ method: 'PATCH' }),
+      );
+      expect(result.title).toBe('Updated title');
+    });
+  });
 });
 
 describe('CommitResource', () => {
@@ -1390,5 +1555,145 @@ describe('IssueResource', () => {
       );
       expect(result.values[0].body).toBe('Me too!');
     });
+  });
+});
+
+describe('GitHubClient.advisories()', () => {
+  it('fetches global advisories with params', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(pagedOf(mockGlobalAdvisory));
+
+    const result = await gh.advisories({ severity: 'critical', ecosystem: 'npm' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/advisories?severity=critical&ecosystem=npm`,
+      expect.anything(),
+    );
+    expect(result.values[0].ghsa_id).toBe('GHSA-1234-5678-9abc');
+    expect(result.values[0].severity).toBe('critical');
+  });
+
+  it('fetches global advisories without params', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(pagedOf(mockGlobalAdvisory));
+
+    const result = await gh.advisories();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/advisories`,
+      expect.anything(),
+    );
+    expect(result.values).toHaveLength(1);
+  });
+});
+
+describe('GitHubClient.advisory()', () => {
+  it('fetches a single global advisory by GHSA ID', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(mockGlobalAdvisory);
+
+    const result = await gh.advisory('GHSA-1234-5678-9abc');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/advisories/GHSA-1234-5678-9abc`,
+      expect.anything(),
+    );
+    expect(result.ghsa_id).toBe('GHSA-1234-5678-9abc');
+    expect(result.cve_id).toBe('CVE-2023-12345');
+  });
+});
+
+describe('RepositoryResource.repoAdvisories()', () => {
+  it('fetches repository advisories with params', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(pagedOf(mockRepoAdvisory));
+
+    const result = await gh.repo('octocat', 'Hello-World').repoAdvisories({ state: 'draft' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/security-advisories?state=draft`,
+      expect.anything(),
+    );
+    expect(result.values[0].ghsa_id).toBe('GHSA-1234-5678-9abc');
+    expect(result.values[0].state).toBe('draft');
+  });
+});
+
+describe('RepositoryResource.createAdvisory()', () => {
+  it('creates an advisory draft and returns it', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse(mockRepoAdvisory);
+
+    const result = await gh.repo('octocat', 'Hello-World').createAdvisory({
+      summary: 'Remote code execution via crafted input',
+      description: 'A vulnerability in...',
+      severity: 'critical',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/security-advisories`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          summary: 'Remote code execution via crafted input',
+          description: 'A vulnerability in...',
+          severity: 'critical',
+        }),
+      }),
+    );
+    expect(result.summary).toBe('Remote code execution via crafted input');
+    expect(result.state).toBe('draft');
+  });
+});
+
+describe('RepositoryResource.repoAdvisory()', () => {
+  it('fetches a single repository advisory by GHSA ID', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(mockRepoAdvisory);
+
+    const result = await gh.repo('octocat', 'Hello-World').repoAdvisory('GHSA-1234-5678-9abc');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/security-advisories/GHSA-1234-5678-9abc`,
+      expect.anything(),
+    );
+    expect(result.ghsa_id).toBe('GHSA-1234-5678-9abc');
+    expect(result.severity).toBe('critical');
+  });
+});
+
+describe('RepositoryResource.updateAdvisory()', () => {
+  it('updates a repository advisory and returns it', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPatchResponse({ ...mockRepoAdvisory, state: 'published', published_at: '2023-02-01T00:00:00Z' });
+
+    const result = await gh.repo('octocat', 'Hello-World').updateAdvisory('GHSA-1234-5678-9abc', {
+      state: 'published',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/security-advisories/GHSA-1234-5678-9abc`,
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ state: 'published' }),
+      }),
+    );
+    expect(result.state).toBe('published');
+    expect(result.published_at).toBe('2023-02-01T00:00:00Z');
+  });
+});
+
+describe('RepositoryResource.requestCve()', () => {
+  it('submits a CVE request and returns the updated advisory', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse({ ...mockRepoAdvisory, submission: { accepted: true } });
+
+    const result = await gh.repo('octocat', 'Hello-World').requestCve('GHSA-1234-5678-9abc');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/security-advisories/GHSA-1234-5678-9abc/cve`,
+      expect.objectContaining({ method: 'POST' }),
+    );
+    expect(result.submission).toEqual({ accepted: true });
   });
 });
