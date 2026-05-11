@@ -69,10 +69,6 @@ jobs:
 
           Automated changelog and version bump for release v${NEW_VERSION}.
 
-          ## Related issue
-
-          <!-- Closes #123 -->
-
           ## Checklist
 
           - [x] \`npm test\` passes
