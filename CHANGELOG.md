@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/ElJijuna/github-api-client/compare/v1.9.0...v1.9.1) (2026-05-11)
+
+
+### Bug Fixes
+
+* remove hardcoded issue [#123](https://github.com/ElJijuna/github-api-client/issues/123) from release PR template ([8100444](https://github.com/ElJijuna/github-api-client/commit/81004440087d67d9f8335fc970f7eabbd0b462b5))
+
 # [1.9.0](https://github.com/ElJijuna/github-api-client/compare/v1.8.0...v1.9.0) (2026-05-11)
 
 
