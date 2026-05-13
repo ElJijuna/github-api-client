@@ -2,7 +2,8 @@ import type { GitHubUser } from '../domain/User';
 import type { GitHubRepository, ReposParams } from '../domain/Repository';
 import type { GitHubEvent, EventsParams } from '../domain/Event';
 import type { GitHubPagedResponse } from '../domain/Pagination';
-import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestBodyPutFn } from './OrganizationResource';
+import type { ContributionCalendar, ContributionMapParams } from '../domain/Contribution';
+import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestBodyPutFn, GraphQLFn } from './OrganizationResource';
 import { RepositoryResource } from './RepositoryResource';
 
 /**
@@ -35,6 +36,7 @@ export class UserResource implements PromiseLike<GitHubUser> {
     private readonly requestPatch: RequestPatchFn,
     private readonly requestDelete: RequestDeleteFn,
     private readonly requestBodyPut: RequestBodyPutFn,
+    private readonly graphql: GraphQLFn,
     private readonly login: string,
   ) {
     this.basePath = `/users/${login}`;
@@ -149,5 +151,65 @@ export class UserResource implements PromiseLike<GitHubUser> {
       params as Record<string, string | number | boolean>,
       signal,
     );
+  }
+
+  /**
+   * Fetches the contribution calendar for this user using the GitHub GraphQL API.
+   *
+   * Returns the same data that powers GitHub's annual contribution map (the green
+   * squares heatmap on a user's profile), including a count and color per day.
+   *
+   * Requires a token with the `read:user` scope.
+   *
+   * `POST https://api.github.com/graphql`
+   *
+   * @param params - Optional `from` / `to` ISO 8601 DateTime strings.
+   *   When omitted, GitHub defaults to the past year.
+   * @returns The contribution calendar with weekly buckets of daily counts
+   *
+   * @example
+   * ```typescript
+   * const calendar = await gh.user('octocat').contributionMap();
+   * console.log(calendar.totalContributions);
+   *
+   * const days = calendar.weeks.flatMap(w => w.contributionDays);
+   * // [{ date: '2024-01-01', contributionCount: 3, color: '#216e39' }, ...]
+   *
+   * // Specific date range
+   * const q1 = await gh.user('octocat').contributionMap({
+   *   from: '2024-01-01T00:00:00Z',
+   *   to:   '2024-03-31T23:59:59Z',
+   * });
+   * ```
+   */
+  async contributionMap(params?: ContributionMapParams, signal?: AbortSignal): Promise<ContributionCalendar> {
+    const variables: Record<string, unknown> = { login: this.login };
+    if (params?.from) variables.from = params.from;
+    if (params?.to) variables.to = params.to;
+
+    const query = `
+      query($login: String!, $from: DateTime, $to: DateTime) {
+        user(login: $login) {
+          contributionsCollection(from: $from, to: $to) {
+            contributionCalendar {
+              totalContributions
+              weeks {
+                contributionDays {
+                  date
+                  contributionCount
+                  color
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    const result = await this.graphql<{
+      user: { contributionsCollection: { contributionCalendar: ContributionCalendar } };
+    }>(query, variables, signal);
+
+    return result.user.contributionsCollection.contributionCalendar;
   }
 }

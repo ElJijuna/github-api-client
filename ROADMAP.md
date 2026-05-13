@@ -15,6 +15,7 @@
 | `org(name)` | — chainable | ✅ |
 | `repo(owner, name)` | — chainable | ✅ |
 | `searchRepos(params)` | `GET /search/repositories` | ✅ |
+| `graphql<T>(query, variables?)` | `POST /graphql` | ✅ |
 
 ---
 
@@ -40,6 +41,7 @@
 | `followers(params?)` | `GET /users/{username}/followers` | ✅ |
 | `following(params?)` | `GET /users/{username}/following` | ✅ |
 | `publicEvents(params?)` | `GET /users/{username}/events/public` | ✅ |
+| `contributionMap(params?)` | `POST /graphql` — `contributionCalendar` | ✅ |
 
 ---
 
@@ -151,3 +153,51 @@
 | Feature | Scope | Status |
 |---------|-------|--------|
 | `AbortSignal` support | All resource methods (pass `signal` to `fetch`) | ✅ |
+
+---
+
+## GraphQL API — Pending
+
+Data available via `POST /graphql` that can be added as dedicated methods.
+The generic `gh.graphql<T>()` escape hatch already works for all of these.
+
+### UserResource — contributions
+
+| Method (proposed) | GraphQL field | Notes |
+|---|---|---|
+| `contributionMap(params?)` | `contributionsCollection.contributionCalendar` | ✅ Implemented |
+| `commitContributionsByRepo(params?)` | `contributionsCollection.commitContributionsByRepository` | Commits per repo with counts |
+| `pullRequestContributionsByRepo(params?)` | `contributionsCollection.pullRequestContributionsByRepository` | PRs opened per repo |
+| `reviewContributionsByRepo(params?)` | `contributionsCollection.pullRequestReviewContributionsByRepository` | Reviews per repo |
+| `issueContributionsByRepo(params?)` | `contributionsCollection.issueContributionsByRepository` | Issues opened per repo |
+| `pinnedItems()` | `user.pinnedItems` | Pinned repos/gists on profile (up to 6) |
+| `starredRepositories(params?)` | `user.starredRepositories` | Repos starred by the user, cursor-paginated |
+| `watching(params?)` | `user.watching` | Repos the user is watching |
+| `sponsoring(params?)` | `user.sponsorshipsAsSponsor` | Users/orgs the user sponsors |
+| `sponsors(params?)` | `user.sponsorshipsAsMaintainer` | Users who sponsor this user |
+
+### RepositoryResource — GraphQL-only data
+
+| Method (proposed) | GraphQL field | Notes |
+|---|---|---|
+| `languageBreakdown()` | `repository.languages` | Byte count per language (REST only gives primary language) |
+| `discussions(params?)` | `repository.discussions` | GitHub Discussions — not available in REST |
+| `discussionCategories()` | `repository.discussionCategories` | Categories for discussions |
+| `milestones(params?)` | `repository.milestones` | Milestones with issue/PR counts |
+| `labels(params?)` | `repository.labels` | All labels with color and description |
+| `deployments(params?)` | `repository.deployments` | Deployments with environment and state |
+| `environments(params?)` | `repository.environments` | Deployment environments |
+| `dependencyManifests()` | `repository.dependencyGraphManifests` | Dependency graph (requires `repo` scope) |
+| `vulnerabilityAlerts(params?)` | `repository.vulnerabilityAlerts` | Dependabot alerts |
+| `codeOfConduct()` | `repository.codeOfConduct` | CoC name and URL |
+| `licenseInfo()` | `repository.licenseInfo` | Full license details beyond REST |
+
+### OrganizationResource — GraphQL-only data
+
+| Method (proposed) | GraphQL field | Notes |
+|---|---|---|
+| `teams(params?)` | `organization.teams` | Org teams with members (not available anonymously) |
+| `projectsV2(params?)` | `organization.projectsV2` | GitHub Projects v2 |
+| `packages(params?)` | `organization.packages` | GitHub Packages published by the org |
+| `sponsoring(params?)` | `organization.sponsorshipsAsSponsor` | Orgs/users the org sponsors |
+| `sponsors(params?)` | `organization.sponsorshipsAsMaintainer` | Sponsors of the org |

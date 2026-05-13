@@ -5,7 +5,7 @@
 [![GitHub Actions](https://github.com/ElJijuna/github-api-client/actions/workflows/ci.yml/badge.svg)](https://github.com/ElJijuna/github-api-client/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-TypeScript client for the [GitHub REST API](https://docs.github.com/en/rest).
+TypeScript client for the [GitHub REST API](https://docs.github.com/en/rest) and [GraphQL API](https://docs.github.com/en/graphql).
 Works in **Node.js** and the **browser** (isomorphic). Fully typed, zero runtime dependencies.
 
 ---
@@ -385,6 +385,54 @@ const updated = await gh.repo('octocat', 'Hello-World').updateAdvisory('GHSA-123
 const result = await gh.repo('octocat', 'Hello-World').requestCve('GHSA-1234-5678-9abc');
 ```
 
+### GraphQL
+
+The client exposes a `contributionMap()` method on `UserResource` that queries the GitHub GraphQL API to fetch the same annual contribution calendar shown on a user's profile. It also provides a generic `graphql<T>()` escape hatch for any other GraphQL query.
+
+> **Note:** The GraphQL API always requires authentication. Any valid token works to query another user's **public** contributions. To include private contributions you must use the queried user's own token.
+
+#### Contribution map (heatmap chart)
+
+```typescript
+// Last year (GitHub default)
+const calendar = await gh.user('octocat').contributionMap();
+
+console.log(calendar.totalContributions); // 847
+
+// Flatten to a list of days
+const days = calendar.weeks.flatMap(w => w.contributionDays);
+// [{ date: '2024-01-01', contributionCount: 3, color: '#216e39' }, ...]
+
+// Specific date range
+const q1 = await gh.user('octocat').contributionMap({
+  from: '2024-01-01T00:00:00Z',
+  to:   '2024-03-31T23:59:59Z',
+});
+```
+
+Each `ContributionDay` contains:
+
+| Field | Type | Description |
+|---|---|---|
+| `date` | `string` | ISO date, e.g. `'2024-01-15'` |
+| `contributionCount` | `number` | Number of contributions on that day |
+| `color` | `string` | Hex intensity color, e.g. `'#216e39'` |
+
+#### Generic GraphQL escape hatch
+
+```typescript
+const result = await gh.graphql<{ viewer: { login: string } }>(`
+  query { viewer { login } }
+`);
+console.log(result.viewer.login);
+
+// With variables
+const result = await gh.graphql<{ user: { bio: string } }>(
+  `query($login: String!) { user(login: $login) { bio } }`,
+  { login: 'octocat' },
+);
+```
+
 ---
 
 ## Pagination
@@ -543,6 +591,8 @@ import type {
   GitHubAdvisory, GitHubAdvisoryVulnerability, AdvisoriesParams,
   GitHubRepositoryAdvisory, RepoAdvisoriesParams,
   AdvisoryVulnerabilityInput, CreateAdvisoryData, UpdateAdvisoryData,
+  // GraphQL / Contribution map
+  ContributionDay, ContributionCalendar, ContributionMapParams,
 } from 'gh-api-client';
 ```
 

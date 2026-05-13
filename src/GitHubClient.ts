@@ -1,7 +1,7 @@
 import { Security } from './security/Security';
 import { GitHubApiError } from './errors/GitHubApiError';
 import { OrganizationResource } from './resources/OrganizationResource';
-import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestPutFn, RequestBodyPutFn } from './resources/OrganizationResource';
+import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestPutFn, RequestBodyPutFn, GraphQLFn } from './resources/OrganizationResource';
 import { RepositoryResource } from './resources/RepositoryResource';
 import { UserResource } from './resources/UserResource';
 import { GistResource } from './resources/GistResource';
@@ -372,6 +372,63 @@ export class GitHubClient {
       this.requestBodyPut<T>(path, body, signal);
   }
 
+  private async requestGraphQL<T>(query: string, variables?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
+    const url = `${this.security.getApiUrl()}/graphql`;
+    const startedAt = new Date();
+    let statusCode: number | undefined;
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: this.security.getHeaders(),
+        body: JSON.stringify({ query, variables }),
+        signal,
+      });
+      statusCode = response.status;
+      if (!response.ok) {
+        throw new GitHubApiError(response.status, response.statusText);
+      }
+      const json = await response.json() as { data?: T; errors?: Array<{ message: string }> };
+      if (json.errors?.length) {
+        throw new Error(json.errors.map(e => e.message).join('; '));
+      }
+      this.emit('request', { url, method: 'POST', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      return json.data as T;
+    } catch (err) {
+      const finishedAt = new Date();
+      this.emit('request', { url, method: 'POST', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      throw err;
+    }
+  }
+
+  private makeGraphQLFn(): GraphQLFn {
+    return <T>(query: string, variables?: Record<string, unknown>, signal?: AbortSignal) =>
+      this.requestGraphQL<T>(query, variables, signal);
+  }
+
+  /**
+   * Executes an arbitrary GitHub GraphQL query.
+   *
+   * `POST https://api.github.com/graphql`
+   *
+   * @param query - The GraphQL query string
+   * @param variables - Optional query variables
+   * @param signal - Optional AbortSignal
+   * @returns The `data` field of the GraphQL response
+   * @throws {Error} If the response contains GraphQL errors
+   * @throws {GitHubApiError} If the HTTP request fails
+   *
+   * @example
+   * ```typescript
+   * const result = await gh.graphql<{ viewer: { login: string } }>(`
+   *   query { viewer { login } }
+   * `);
+   * console.log(result.viewer.login);
+   * ```
+   */
+  async graphql<T>(query: string, variables?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
+    return this.requestGraphQL<T>(query, variables, signal);
+  }
+
   /**
    * Fetches the authenticated user's profile.
    *
@@ -415,6 +472,7 @@ export class GitHubClient {
       this.makeRequestPatchFn(),
       this.makeRequestDeleteFn(),
       this.makeRequestBodyPutFn(),
+      this.makeGraphQLFn(),
       login,
     );
   }

@@ -16,6 +16,7 @@ import type { GitHubCommitStatus, GitHubCombinedStatus, GitHubCommitComment } fr
 import type { GitHubIssue } from '../src/domain/Issue';
 import type { GitHubEvent } from '../src/domain/Event';
 import type { GitHubAdvisory, GitHubRepositoryAdvisory } from '../src/domain/Advisory';
+import type { ContributionCalendar } from '../src/domain/Contribution';
 
 const API_URL = 'https://api.github.com';
 const TOKEN = 'ghp_myToken';
@@ -1732,5 +1733,121 @@ describe('GitHubClient.advisoryByCve()', () => {
     mockErrorResponse(500, 'Internal Server Error');
 
     await expect(gh.advisoryByCve('CVE-2023-12345')).rejects.toThrow(GitHubApiError);
+  });
+});
+
+const mockContributionCalendar: ContributionCalendar = {
+  totalContributions: 42,
+  weeks: [
+    {
+      contributionDays: [
+        { date: '2024-01-01', contributionCount: 3, color: '#216e39' },
+        { date: '2024-01-02', contributionCount: 0, color: '#ebedf0' },
+      ],
+    },
+    {
+      contributionDays: [
+        { date: '2024-01-08', contributionCount: 5, color: '#39d353' },
+      ],
+    },
+  ],
+};
+
+describe('UserResource.contributionMap()', () => {
+  it('returns the contribution calendar for a user', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse({
+      data: {
+        user: {
+          contributionsCollection: {
+            contributionCalendar: mockContributionCalendar,
+          },
+        },
+      },
+    }, 200);
+
+    const result = await gh.user('octocat').contributionMap();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/graphql`,
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringContaining('contributionCalendar'),
+      }),
+    );
+    expect(result.totalContributions).toBe(42);
+    expect(result.weeks).toHaveLength(2);
+    expect(result.weeks[0].contributionDays[0].date).toBe('2024-01-01');
+    expect(result.weeks[0].contributionDays[0].contributionCount).toBe(3);
+  });
+
+  it('sends from/to variables when params are provided', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse({ data: { user: { contributionsCollection: { contributionCalendar: mockContributionCalendar } } } }, 200);
+
+    await gh.user('octocat').contributionMap({
+      from: '2024-01-01T00:00:00Z',
+      to: '2024-12-31T23:59:59Z',
+    });
+
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    expect(body.variables.login).toBe('octocat');
+    expect(body.variables.from).toBe('2024-01-01T00:00:00Z');
+    expect(body.variables.to).toBe('2024-12-31T23:59:59Z');
+  });
+
+  it('omits from/to variables when no params are given', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse({ data: { user: { contributionsCollection: { contributionCalendar: mockContributionCalendar } } } }, 200);
+
+    await gh.user('octocat').contributionMap();
+
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    expect(body.variables.login).toBe('octocat');
+    expect(body.variables.from).toBeUndefined();
+    expect(body.variables.to).toBeUndefined();
+  });
+
+  it('throws on GraphQL errors', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse({ errors: [{ message: 'Could not resolve to a User' }] }, 200);
+
+    await expect(gh.user('octocat').contributionMap()).rejects.toThrow('Could not resolve to a User');
+  });
+
+  it('throws GitHubApiError on HTTP error', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockErrorResponse(401, 'Unauthorized');
+
+    await expect(gh.user('octocat').contributionMap()).rejects.toThrow(GitHubApiError);
+  });
+});
+
+describe('GitHubClient.graphql()', () => {
+  it('executes an arbitrary GraphQL query and returns data', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse({ data: { viewer: { login: 'octocat' } } }, 200);
+
+    const result = await gh.graphql<{ viewer: { login: string } }>('query { viewer { login } }');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/graphql`,
+      expect.objectContaining({ method: 'POST' }),
+    );
+    expect(result.viewer.login).toBe('octocat');
+  });
+
+  it('throws when the response contains GraphQL errors', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse({ errors: [{ message: 'Field does not exist' }] }, 200);
+
+    await expect(gh.graphql('query { badField }')).rejects.toThrow('Field does not exist');
+  });
+
+  it('throws GitHubApiError on HTTP error', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockErrorResponse(403, 'Forbidden');
+
+    await expect(gh.graphql('query { viewer { login } }')).rejects.toThrow(GitHubApiError);
   });
 });

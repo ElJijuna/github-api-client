@@ -26,3 +26,4 @@ export type { GitHubIssue, GitHubIssueComment, IssuesParams, CreateIssueData } f
 export type { GitHubGist, GistFile, GistCommit, GistFork, GistComment, GistsParams, CreateGistData, UpdateGistData, GistCommentData } from './domain/Gist';
 export type { GitHubAdvisory, GitHubAdvisoryVulnerability, AdvisoriesParams, GitHubRepositoryAdvisory, RepoAdvisoriesParams, AdvisoryVulnerabilityInput, CreateAdvisoryData, UpdateAdvisoryData } from './domain/Advisory';
 export type { PaginationParams, GitHubPagedResponse } from './domain/Pagination';
+export type { ContributionDay, ContributionCalendar, ContributionMapParams } from './domain/Contribution';
