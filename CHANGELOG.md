@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/ElJijuna/github-api-client/compare/v1.9.1...v1.10.0) (2026-05-13)
+
+
+### Features
+
+* add GitHub GraphQL API support with contributionMap() ([00d3560](https://github.com/ElJijuna/github-api-client/commit/00d3560dc88f800162624285fed997c161a3a3be))
+
 ## [1.9.1](https://github.com/ElJijuna/github-api-client/compare/v1.9.0...v1.9.1) (2026-05-11)
 
 
