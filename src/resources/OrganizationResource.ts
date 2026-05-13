@@ -48,6 +48,9 @@ export type RequestPutFn = (path: string, signal?: AbortSignal) => Promise<void>
 /** @internal */
 export type RequestBodyPutFn = <T>(path: string, body: unknown, signal?: AbortSignal) => Promise<T>;
 
+/** @internal */
+export type GraphQLFn = <T>(query: string, variables?: Record<string, unknown>, signal?: AbortSignal) => Promise<T>;
+
 /**
  * Represents a GitHub organization resource with chainable async methods.
  *
