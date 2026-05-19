@@ -1851,3 +1851,280 @@ describe('GitHubClient.graphql()', () => {
     await expect(gh.graphql('query { viewer { login } }')).rejects.toThrow(GitHubApiError);
   });
 });
+
+// ─── Notifications ───────────────────────────────────────────────────────────
+
+const mockNotification = {
+  id: '1',
+  unread: true,
+  reason: 'mention' as const,
+  subject: {
+    title: 'Found a bug',
+    url: `${API_URL}/repos/octocat/Hello-World/issues/1`,
+    latest_comment_url: null,
+    type: 'Issue' as const,
+  },
+  repository: {
+    id: 1296269,
+    name: 'Hello-World',
+    full_name: 'octocat/Hello-World',
+    html_url: 'https://github.com/octocat/Hello-World',
+    private: false,
+  },
+  updated_at: '2024-01-01T00:00:00Z',
+  last_read_at: null,
+  url: `${API_URL}/notifications/threads/1`,
+  subscription_url: `${API_URL}/notifications/threads/1/subscription`,
+};
+
+describe('GitHubClient.notifications()', () => {
+  it('fetches unread notifications by default', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse([mockNotification]);
+
+    const result = await gh.notifications();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/notifications`,
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }) }),
+    );
+    expect(result.values).toHaveLength(1);
+    expect(result.values[0].id).toBe('1');
+    expect(result.values[0].reason).toBe('mention');
+  });
+
+  it('passes params as query string', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse([mockNotification]);
+
+    await gh.notifications({ all: true, per_page: 50 });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/notifications?all=true&per_page=50`,
+      expect.anything(),
+    );
+  });
+
+  it('parses pagination from Link header', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse([mockNotification], { link: makeLinkHeader(2) });
+
+    const result = await gh.notifications();
+
+    expect(result.hasNextPage).toBe(true);
+    expect(result.nextPage).toBe(2);
+  });
+
+  it('throws GitHubApiError on 401', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockErrorResponse(401, 'Unauthorized');
+
+    await expect(gh.notifications()).rejects.toThrow(GitHubApiError);
+  });
+});
+
+describe('GitHubClient.markNotificationRead()', () => {
+  it('sends PATCH to the correct thread URL', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockDeleteResponse(205);
+
+    await gh.markNotificationRead('123456');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/notifications/threads/123456`,
+      expect.objectContaining({ method: 'PATCH' }),
+    );
+  });
+
+  it('throws GitHubApiError on non-2xx response', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockErrorResponse(403, 'Forbidden');
+
+    await expect(gh.markNotificationRead('1')).rejects.toThrow(GitHubApiError);
+  });
+});
+
+describe('GitHubClient.markAllNotificationsRead()', () => {
+  it('sends PUT /notifications', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockDeleteResponse(205);
+
+    await gh.markAllNotificationsRead();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/notifications`,
+      expect.objectContaining({ method: 'PUT' }),
+    );
+  });
+
+  it('throws GitHubApiError on non-2xx response', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockErrorResponse(422, 'Unprocessable Entity');
+
+    await expect(gh.markAllNotificationsRead()).rejects.toThrow(GitHubApiError);
+  });
+});
+
+// ─── Cross-repo issues ────────────────────────────────────────────────────────
+
+describe('GitHubClient.issues()', () => {
+  it('fetches cross-repo issues without params', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse([mockIssue]);
+
+    const result = await gh.issues();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/issues`,
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }) }),
+    );
+    expect(result.values[0].number).toBe(1);
+  });
+
+  it('passes filter and state as query params', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse([mockIssue]);
+
+    await gh.issues({ filter: 'all', state: 'open', per_page: 100 });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/issues?filter=all&state=open&per_page=100`,
+      expect.anything(),
+    );
+  });
+
+  it('parses Link header for pagination', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse([mockIssue], { link: makeLinkHeader(3) });
+
+    const result = await gh.issues({ per_page: 1 });
+
+    expect(result.hasNextPage).toBe(true);
+    expect(result.nextPage).toBe(3);
+  });
+
+  it('throws GitHubApiError on 401', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockErrorResponse(401, 'Unauthorized');
+
+    await expect(gh.issues()).rejects.toThrow(GitHubApiError);
+  });
+});
+
+// ─── Search issues ────────────────────────────────────────────────────────────
+
+describe('GitHubClient.searchIssues()', () => {
+  it('searches issues and returns totalCount', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse({ total_count: 1, incomplete_results: false, items: [mockIssue] });
+
+    const result = await gh.searchIssues({ q: 'is:issue is:open author:octocat' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/search/issues?q=is%3Aissue+is%3Aopen+author%3Aoctocat`,
+      expect.anything(),
+    );
+    expect(result.values[0].number).toBe(1);
+    expect(result.totalCount).toBe(1);
+    expect(result.hasNextPage).toBe(false);
+  });
+
+  it('searches PRs with is:pr qualifier', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse({ total_count: 5, incomplete_results: false, items: [mockIssue] });
+
+    const result = await gh.searchIssues({ q: 'is:pr is:open author:octocat', sort: 'updated', per_page: 50 });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/search/issues'),
+      expect.anything(),
+    );
+    expect(result.totalCount).toBe(5);
+  });
+
+  it('parses Link header on search results', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(
+      { total_count: 100, incomplete_results: false, items: [mockIssue] },
+      { link: makeLinkHeader(2) },
+    );
+
+    const result = await gh.searchIssues({ q: 'is:issue is:open', per_page: 1 });
+
+    expect(result.hasNextPage).toBe(true);
+    expect(result.nextPage).toBe(2);
+    expect(result.totalCount).toBe(100);
+  });
+
+  it('throws GitHubApiError on 422 (invalid query)', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockErrorResponse(422, 'Unprocessable Entity');
+
+    await expect(gh.searchIssues({ q: '' })).rejects.toThrow(GitHubApiError);
+  });
+});
+
+// ─── Workflow runs ────────────────────────────────────────────────────────────
+
+const mockWorkflowRun = {
+  id: 1,
+  name: 'CI',
+  run_number: 42,
+  status: 'completed' as const,
+  conclusion: 'success' as const,
+  head_branch: 'main',
+  head_sha: 'abc123',
+  event: 'push',
+  html_url: 'https://github.com/octocat/Hello-World/actions/runs/1',
+  created_at: '2024-01-01T00:00:00Z',
+  updated_at: '2024-01-01T00:05:00Z',
+  run_started_at: '2024-01-01T00:01:00Z',
+};
+
+describe('RepositoryResource.workflowRuns()', () => {
+  it('fetches workflow runs for a repository', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse({ total_count: 1, workflow_runs: [mockWorkflowRun] });
+
+    const result = await gh.repo('octocat', 'Hello-World').workflowRuns({ per_page: 10 });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/actions/runs?per_page=10`,
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }) }),
+    );
+    expect(result.total_count).toBe(1);
+    expect(result.workflow_runs[0].conclusion).toBe('success');
+  });
+
+  it('filters by branch', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse({ total_count: 1, workflow_runs: [mockWorkflowRun] });
+
+    await gh.repo('octocat', 'Hello-World').workflowRuns({ branch: 'main' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/actions/runs?branch=main`,
+      expect.anything(),
+    );
+  });
+
+  it('fetches workflow runs without params', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse({ total_count: 0, workflow_runs: [] });
+
+    const result = await gh.repo('octocat', 'Hello-World').workflowRuns();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/actions/runs`,
+      expect.anything(),
+    );
+    expect(result.workflow_runs).toHaveLength(0);
+  });
+
+  it('throws GitHubApiError on 404', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockErrorResponse(404, 'Not Found');
+
+    await expect(gh.repo('octocat', 'nonexistent').workflowRuns()).rejects.toThrow(GitHubApiError);
+  });
+});

@@ -27,3 +27,6 @@ export type { GitHubGist, GistFile, GistCommit, GistFork, GistComment, GistsPara
 export type { GitHubAdvisory, GitHubAdvisoryVulnerability, AdvisoriesParams, GitHubRepositoryAdvisory, RepoAdvisoriesParams, AdvisoryVulnerabilityInput, CreateAdvisoryData, UpdateAdvisoryData } from './domain/Advisory';
 export type { PaginationParams, GitHubPagedResponse } from './domain/Pagination';
 export type { ContributionDay, ContributionCalendar, ContributionMapParams } from './domain/Contribution';
+export type { GitHubNotification, NotificationSubject, NotificationRepository, NotificationReason, NotificationSubjectType, NotificationsParams } from './domain/Notification';
+export type { GitHubWorkflowRun, GitHubWorkflowRunsResponse, WorkflowRunsParams, WorkflowRunStatus, WorkflowRunConclusion } from './domain/WorkflowRun';
+export type { SearchIssuesParams } from './domain/SearchIssue';

@@ -1,4 +1,4 @@
-import type { GitHubRepository, ReposParams, ForksParams, CreateForkData } from '../domain/Repository';
+import type { GitHubRepository, ForksParams, CreateForkData } from '../domain/Repository';
 import type { GitHubPullRequest, PullRequestsParams } from '../domain/PullRequest';
 import type { GitHubCommit, CommitsParams } from '../domain/Commit';
 import type { GitHubBranch, BranchesParams } from '../domain/Branch';
@@ -9,6 +9,7 @@ import type { GitHubContent, ContentParams } from '../domain/Content';
 import type { GitHubIssue, IssuesParams, CreateIssueData } from '../domain/Issue';
 import type { GitHubRepositoryAdvisory, RepoAdvisoriesParams, CreateAdvisoryData, UpdateAdvisoryData } from '../domain/Advisory';
 import type { GitHubPagedResponse, PaginationParams } from '../domain/Pagination';
+import type { GitHubWorkflowRunsResponse, WorkflowRunsParams } from '../domain/WorkflowRun';
 import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestBodyPutFn } from './OrganizationResource';
 import { PullRequestResource } from './PullRequestResource';
 import { CommitResource } from './CommitResource';
@@ -551,5 +552,32 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    */
   async requestCve(ghsaId: string, signal?: AbortSignal): Promise<GitHubRepositoryAdvisory> {
     return this.requestBody<GitHubRepositoryAdvisory>(`${this.basePath}/security-advisories/${ghsaId}/cve`, {}, signal);
+  }
+
+  /**
+   * Lists workflow runs for this repository.
+   *
+   * `GET /repos/{owner}/{repo}/actions/runs`
+   *
+   * Returns the raw GitHub Actions response envelope including `total_count`
+   * and the `workflow_runs` array. Use `params.per_page` to limit how many
+   * runs are fetched (default GitHub: 30, max: 100).
+   *
+   * @param params - Optional filters: `branch`, `event`, `status`, `actor`, `created`, `per_page`, `page`
+   * @returns Response envelope with `total_count` and `workflow_runs`
+   *
+   * @example
+   * ```typescript
+   * const { total_count, workflow_runs } = await gh.repo('octocat', 'Hello-World').workflowRuns({ per_page: 10 });
+   * const lastRun = workflow_runs[0];
+   * console.log(lastRun.conclusion); // 'success' | 'failure' | null ...
+   * ```
+   */
+  async workflowRuns(params?: WorkflowRunsParams, signal?: AbortSignal): Promise<GitHubWorkflowRunsResponse> {
+    return this.request<GitHubWorkflowRunsResponse>(
+      `${this.basePath}/actions/runs`,
+      params as Record<string, string | number | boolean>,
+      signal,
+    );
   }
 }

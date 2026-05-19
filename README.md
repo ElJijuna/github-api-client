@@ -279,6 +279,34 @@ const newIssue = await gh.repo('octocat', 'Hello-World').createIssue({
   body:  'Steps to reproduce...',
   labels: ['bug'],
 });
+
+// List issues across all repositories the authenticated user has access to
+const { values } = await gh.issues({ filter: 'all', state: 'open', per_page: 100 });
+
+// GitHub returns PRs mixed with issues — filter them out by checking pull_request
+const realIssues = values.filter(i => !i.pull_request);
+
+// filter values: 'assigned' | 'created' | 'mentioned' | 'subscribed' | 'repos' | 'all'
+```
+
+### Issue & PR search
+
+```typescript
+// Search issues and PRs using GitHub's search syntax
+const results = await gh.searchIssues({ q: 'is:issue is:open label:bug' });
+
+console.log(`Found ${results.totalCount} issues`);
+results.values; // GitHubIssue[]
+
+// Search for open PRs authored by a user
+const prs = await gh.searchIssues({ q: 'is:pr is:open author:octocat', sort: 'updated' });
+
+// Search stale issues not updated in 30+ days
+const stale = await gh.searchIssues({
+  q:     'is:issue is:open updated:<2024-01-01',
+  sort:  'updated',
+  order: 'asc',
+});
 ```
 
 ### Gists
@@ -338,6 +366,51 @@ const results = await gh.searchRepos({ q: 'user:octocat', sort: 'stars', order: 
 
 console.log(`Found ${results.totalCount} repositories`);
 results.values; // GitHubRepository[]
+```
+
+### Notifications
+
+```typescript
+// List unread notification threads for the authenticated user
+const { values } = await gh.notifications();
+
+// Include already-read notifications
+const { values } = await gh.notifications({ all: true });
+
+// Only notifications the user participates in or is mentioned
+const { values } = await gh.notifications({ participating: true, per_page: 50 });
+
+// Each notification has: id, reason, unread, subject (title, url, type), repository, updated_at
+const notification = values[0];
+console.log(notification.reason);       // 'mention' | 'review_requested' | 'assign' | ...
+console.log(notification.subject.type); // 'Issue' | 'PullRequest' | 'Release' | 'CheckSuite'
+
+// Mark a single thread as read (returns void, GitHub responds 205 No Content)
+await gh.markNotificationRead('123456789');
+
+// Mark all notifications as read
+await gh.markAllNotificationsRead();
+```
+
+### GitHub Actions — Workflow runs
+
+```typescript
+// List workflow runs for a repository (latest first by default)
+const { total_count, workflow_runs } = await gh.repo('octocat', 'Hello-World').workflowRuns();
+
+// Filter by branch, status, or event
+const { workflow_runs } = await gh.repo('octocat', 'Hello-World').workflowRuns({
+  branch:   'main',
+  status:   'completed',
+  per_page: 10,
+});
+
+const lastRun = workflow_runs[0];
+console.log(lastRun.conclusion); // 'success' | 'failure' | 'cancelled' | null ...
+console.log(lastRun.status);     // 'completed' | 'in_progress' | 'queued' | ...
+
+// Compute success rate across recent runs
+const rate = workflow_runs.filter(r => r.conclusion === 'success').length / workflow_runs.length;
 ```
 
 ### Security advisories
@@ -584,6 +657,14 @@ import type {
   GitHubEvent, GitHubActor, EventsParams,
   // Issues
   GitHubIssue, GitHubIssueComment, IssuesParams, CreateIssueData,
+  // Issue & PR search
+  SearchIssuesParams,
+  // Notifications
+  GitHubNotification, NotificationSubject, NotificationRepository,
+  NotificationReason, NotificationSubjectType, NotificationsParams,
+  // GitHub Actions
+  GitHubWorkflowRun, GitHubWorkflowRunsResponse,
+  WorkflowRunsParams, WorkflowRunStatus, WorkflowRunConclusion,
   // Gists
   GitHubGist, GistFile, GistCommit, GistFork, GistComment,
   GistsParams, CreateGistData, UpdateGistData, GistCommentData,

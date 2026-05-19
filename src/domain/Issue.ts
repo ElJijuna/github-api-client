@@ -74,9 +74,19 @@ export interface GitHubIssueComment {
 /**
  * Query parameters for listing issues.
  *
+ * Works for both per-repository (`GET /repos/{owner}/{repo}/issues`) and
+ * cross-repository (`GET /issues`) endpoints. The `filter` field is only
+ * meaningful for the cross-repository endpoint.
+ *
  * @see {@link https://docs.github.com/en/rest/issues/issues#list-repository-issues}
+ * @see {@link https://docs.github.com/en/rest/issues/issues#list-issues-assigned-to-the-authenticated-user}
  */
 export interface IssuesParams extends PaginationParams {
+  /**
+   * Which issues to show. Only applies to the cross-repository `GET /issues` endpoint.
+   * Ignored by the per-repository endpoint.
+   */
+  filter?: 'assigned' | 'created' | 'mentioned' | 'subscribed' | 'repos' | 'all';
   /** Filter by milestone number, `'*'` (any), or `'none'` */
   milestone?: string | number;
   /** Filter by state */

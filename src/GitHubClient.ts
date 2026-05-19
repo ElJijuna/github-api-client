@@ -10,6 +10,9 @@ import type { GitHubRepository, SearchReposParams } from './domain/Repository';
 import type { GitHubGist, GistsParams, CreateGistData } from './domain/Gist';
 import type { GitHubAdvisory, AdvisoriesParams } from './domain/Advisory';
 import type { GitHubPagedResponse } from './domain/Pagination';
+import type { GitHubIssue, IssuesParams } from './domain/Issue';
+import type { GitHubNotification, NotificationsParams } from './domain/Notification';
+import type { SearchIssuesParams } from './domain/SearchIssue';
 
 /**
  * Payload emitted on every HTTP request made by {@link GitHubClient}.
@@ -679,6 +682,156 @@ export class GitHubClient {
   async advisoryByCve(cveId: string, signal?: AbortSignal): Promise<GitHubAdvisory | null> {
     const result = await this.requestList<GitHubAdvisory>('/advisories', { cve_id: cveId }, signal);
     return result.values[0] ?? null;
+  }
+
+  /**
+   * Performs a PATCH request that returns 205 No Content (no response body).
+   * Used for endpoints like marking a notification thread as read.
+   * @internal
+   */
+  private async requestPatchVoid(path: string, signal?: AbortSignal): Promise<void> {
+    const url = `${this.security.getApiUrl()}${path}`;
+    const startedAt = new Date();
+    let statusCode: number | undefined;
+    try {
+      const response = await fetch(url, {
+        method: 'PATCH',
+        headers: this.security.getHeaders(),
+        signal,
+      });
+      statusCode = response.status;
+      if (!response.ok) {
+        throw new GitHubApiError(response.status, response.statusText);
+      }
+      this.emit('request', { url, method: 'PATCH', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+    } catch (err) {
+      const finishedAt = new Date();
+      this.emit('request', { url, method: 'PATCH', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      throw err;
+    }
+  }
+
+  /**
+   * Lists notifications for the authenticated user.
+   *
+   * `GET /notifications`
+   *
+   * @param params - Optional filters: `all`, `participating`, `since`, `before`, `per_page`, `page`
+   * @returns A paged response of notification threads
+   *
+   * @example
+   * ```typescript
+   * // Only unread notifications
+   * const { values } = await gh.notifications();
+   *
+   * // All notifications including already-read ones
+   * const { values } = await gh.notifications({ all: true });
+   * ```
+   */
+  async notifications(params?: NotificationsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubNotification>> {
+    return this.requestList<GitHubNotification>('/notifications', params as Record<string, string | number | boolean>, signal);
+  }
+
+  /**
+   * Marks a single notification thread as read.
+   *
+   * `PATCH /notifications/threads/{thread_id}`
+   *
+   * Returns `void` — GitHub responds with 205 No Content on success.
+   *
+   * @param threadId - The numeric thread ID (from `GitHubNotification.id`)
+   *
+   * @example
+   * ```typescript
+   * await gh.markNotificationRead('123456789');
+   * ```
+   */
+  async markNotificationRead(threadId: string, signal?: AbortSignal): Promise<void> {
+    return this.requestPatchVoid(`/notifications/threads/${threadId}`, signal);
+  }
+
+  /**
+   * Marks all notifications as read.
+   *
+   * `PUT /notifications`
+   *
+   * Returns `void` — GitHub responds with 205 No Content on success.
+   *
+   * @example
+   * ```typescript
+   * await gh.markAllNotificationsRead();
+   * ```
+   */
+  async markAllNotificationsRead(signal?: AbortSignal): Promise<void> {
+    return this.requestPut('/notifications', signal);
+  }
+
+  /**
+   * Lists issues assigned to the authenticated user across all repositories.
+   *
+   * `GET /issues`
+   *
+   * Note: GitHub returns pull requests as issues in this endpoint.
+   * Filter them out by checking for the absence of `pull_request` on each item.
+   *
+   * @param params - Optional filters: `filter`, `state`, `labels`, `sort`, `direction`, `since`, `per_page`, `page`
+   * @returns A paged response of issues
+   *
+   * @example
+   * ```typescript
+   * // All open issues across all repos the user has access to
+   * const { values } = await gh.issues({ filter: 'all', state: 'open' });
+   * const realIssues = values.filter(i => !i.pull_request);
+   * ```
+   */
+  async issues(params?: IssuesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubIssue>> {
+    return this.requestList<GitHubIssue>('/issues', params as Record<string, string | number | boolean>, signal);
+  }
+
+  /**
+   * Searches for issues and pull requests using GitHub's search syntax.
+   *
+   * `GET /search/issues`
+   *
+   * @param params - Search query and optional sort/order. `q` is required.
+   * @returns A paged response of issues/PRs with `totalCount`
+   *
+   * @example
+   * ```typescript
+   * // Open PRs authored by a user
+   * const results = await gh.searchIssues({ q: 'is:pr is:open author:octocat' });
+   * console.log(`Found ${results.totalCount} pull requests`);
+   *
+   * // Stale issues not updated in 30+ days
+   * const stale = await gh.searchIssues({ q: 'is:issue is:open updated:<2024-01-01', sort: 'updated' });
+   * ```
+   */
+  async searchIssues(params: SearchIssuesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubIssue>> {
+    const base = `${this.security.getApiUrl()}/search/issues`;
+    const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
+    const startedAt = new Date();
+    let statusCode: number | undefined;
+    try {
+      const response = await fetch(url, { headers: this.security.getHeaders(), signal });
+      statusCode = response.status;
+      if (!response.ok) {
+        throw new GitHubApiError(response.status, response.statusText);
+      }
+      const data = await response.json() as SearchResult<GitHubIssue>;
+      const linkHeader = response.headers.get('Link');
+      const nextPage = parseNextPage(linkHeader);
+      this.emit('request', { url, method: 'GET', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      return {
+        values: data.items,
+        hasNextPage: nextPage !== undefined,
+        nextPage,
+        totalCount: data.total_count,
+      };
+    } catch (err) {
+      const finishedAt = new Date();
+      this.emit('request', { url, method: 'GET', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      throw err;
+    }
   }
 }
 
