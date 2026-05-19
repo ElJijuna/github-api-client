@@ -1,11 +1,13 @@
 # [1.11.0](https://github.com/ElJijuna/github-api-client/compare/v1.10.0...v1.11.0) (2026-05-19)
 # [1.10.0](https://github.com/ElJijuna/github-api-client/compare/v1.9.1...v1.10.0) (2026-05-13)
+# [1.11.0](https://github.com/ElJijuna/github-api-client/compare/v1.10.0...v1.11.0) (2026-05-19)
 
-
+s
 ### Features
 
 * add notifications, cross-repo issues, issue search, and workflow runs ([c06f729](https://github.com/ElJijuna/github-api-client/commit/c06f729b7037b04fc14e43d45949b02dd045a8ca))
 * add GitHub GraphQL API support with contributionMap() ([00d3560](https://github.com/ElJijuna/github-api-client/commit/00d3560dc88f800162624285fed997c161a3a3be))
+* add notifications, cross-repo issues, issue search, and workflow runs ([c06f729](https://github.com/ElJijuna/github-api-client/commit/c06f729b7037b04fc14e43d45949b02dd045a8ca))
 
 ## [1.9.1](https://github.com/ElJijuna/github-api-client/compare/v1.9.0...v1.9.1) (2026-05-11)
 
