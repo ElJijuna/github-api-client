@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/ElJijuna/github-api-client/compare/v1.11.0...v1.12.0) (2026-05-23)
+
+
+### Features
+
+* add new method multipleRaw ([cbf8a61](https://github.com/ElJijuna/github-api-client/commit/cbf8a61b6697d0cf7ebbc1f72fb37f868b08df27))
+
 # [1.11.0](https://github.com/ElJijuna/github-api-client/compare/v1.10.0...v1.11.0) (2026-05-19)
 # [1.10.0](https://github.com/ElJijuna/github-api-client/compare/v1.9.1...v1.10.0) (2026-05-13)
 
