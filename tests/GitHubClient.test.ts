@@ -881,6 +881,47 @@ describe('RepositoryResource', () => {
     });
   });
 
+  describe('multipleRaw()', () => {
+    it('fetches multiple raw files and maps content by file path', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockTextResponse('# Hello World');
+      mockTextResponse('export const ok = true;');
+
+      const content = await gh.repo('octocat', 'Hello-World').multipleRaw(
+        ['README.md', 'src/index.ts'],
+        { ref: 'main' },
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/contents/README.md?ref=main`,
+        expect.objectContaining({
+          headers: expect.objectContaining({ Accept: 'application/vnd.github.raw+json' }),
+        }),
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/contents/src/index.ts?ref=main`,
+        expect.objectContaining({
+          headers: expect.objectContaining({ Accept: 'application/vnd.github.raw+json' }),
+        }),
+      );
+      expect(content).toEqual({
+        'README.md': '# Hello World',
+        'src/index.ts': 'export const ok = true;',
+      });
+    });
+
+    it('omits files that fail to fetch', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockTextResponse('# Hello World');
+      mockTextResponse('not found', 404);
+
+      const content = await gh.repo('octocat', 'Hello-World').multipleRaw(['README.md', 'missing.md']);
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(content).toEqual({ 'README.md': '# Hello World' });
+    });
+  });
+
   describe('topics()', () => {
     it('fetches repository topics', async () => {
       const gh = new GitHubClient({ token: TOKEN });

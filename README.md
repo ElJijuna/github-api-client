@@ -118,6 +118,13 @@ const contributors = await gh.repo('octocat', 'Hello-World').contributors();
 const content = await gh.repo('octocat', 'Hello-World').raw('README.md');
 const content = await gh.repo('octocat', 'Hello-World').raw('src/index.ts', { ref: 'main' });
 
+// Multiple raw files (returns Record<filePath, string>)
+const files = await gh.repo('octocat', 'Hello-World').multipleRaw([
+  'README.md',
+  'src/index.ts',
+], { ref: 'main' });
+// { 'README.md': '# Hello World', 'src/index.ts': '...' }
+
 // File/directory contents (returns GitHubContent or GitHubContent[])
 const file = await gh.repo('octocat', 'Hello-World').contents('README.md');
 const dir  = await gh.repo('octocat', 'Hello-World').contents('src');

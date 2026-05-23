@@ -377,6 +377,32 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
   }
 
   /**
+   * Fetches the raw text content of multiple files in this repository.
+   *
+   * Uses `Accept: application/vnd.github.raw+json` for each file request.
+   *
+   * Files are fetched concurrently. If an individual file request fails, that
+   * file is omitted from the returned record and the remaining files are still
+   * returned.
+   *
+   * @param filePaths - Paths to the files (e.g., `['README.md', 'src/index.ts']`)
+   * @param params - Optional: `ref` (branch, tag, or commit SHA)
+   * @returns A record mapping each fetched file path to its raw content
+   */
+  async multipleRaw(filePaths: string[], params?: ContentParams, signal?: AbortSignal): Promise<Record<string, string>> {
+    const result = await Promise.allSettled(
+      filePaths.map((p) => this.raw(p, params, signal))
+    );
+
+    return result.reduce((acc, res, index) => {
+      if (res.status === 'fulfilled') {
+        acc[filePaths[index]] = res.value;
+      }
+      return acc;
+    }, {} as Record<string, string>);
+  }
+
+  /**
    * Fetches the repository topics.
    *
    * `GET /repos/{owner}/{repo}/topics`
