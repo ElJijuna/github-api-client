@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/ElJijuna/github-api-client/compare/v1.13.0...v1.14.0) (2026-05-24)
+
+
+### Features
+
+* add socialAccounts() method to UserResource ([9a1185c](https://github.com/ElJijuna/github-api-client/commit/9a1185c1708bfc888c3976d0f5253d36e98501da))
+
 # [1.13.0](https://github.com/ElJijuna/github-api-client/compare/v1.12.0...v1.13.0) (2026-05-24)
 
 
