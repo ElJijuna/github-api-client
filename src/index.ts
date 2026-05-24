@@ -9,7 +9,7 @@ export { CommitResource } from './resources/CommitResource';
 export { UserResource } from './resources/UserResource';
 export { IssueResource } from './resources/IssueResource';
 export { GistResource } from './resources/GistResource';
-export type { GitHubUser, UsersParams, SearchUsersParams } from './domain/User';
+export type { GitHubUser, UsersParams, SearchUsersParams, SocialAccount } from './domain/User';
 export type { GitHubOrganization, OrgMembersParams, CreateOrgRepoData } from './domain/Organization';
 export type { GitHubRepository, ReposParams, ForksParams, SearchReposParams, CreateForkData } from './domain/Repository';
 export type { GitHubPullRequest, GitHubRef, GitHubLabel, GitHubMilestone, PullRequestsParams } from './domain/PullRequest';

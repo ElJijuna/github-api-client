@@ -17,6 +17,7 @@ import type { GitHubIssue } from '../src/domain/Issue';
 import type { GitHubEvent } from '../src/domain/Event';
 import type { GitHubAdvisory, GitHubRepositoryAdvisory } from '../src/domain/Advisory';
 import type { ContributionCalendar } from '../src/domain/Contribution';
+import type { SocialAccount } from '../src/domain/User';
 
 const API_URL = 'https://api.github.com';
 const TOKEN = 'ghp_myToken';
@@ -1323,7 +1324,7 @@ describe('Request event emission', () => {
     const events: unknown[] = [];
     gh.on('request', (event) => events.push(event));
 
-    await gh.currentUser().catch(() => {});
+    await gh.currentUser().catch(() => { });
 
     expect(events).toHaveLength(1);
     const event = events[0] as { error: Error; statusCode: number };
@@ -1346,7 +1347,7 @@ describe('Request event emission', () => {
 
   it('on() returns the client for chaining', () => {
     const gh = new GitHubClient({ token: TOKEN });
-    const result = gh.on('request', () => {});
+    const result = gh.on('request', () => { });
     expect(result).toBe(gh);
   });
 });
@@ -2167,5 +2168,51 @@ describe('RepositoryResource.workflowRuns()', () => {
     mockErrorResponse(404, 'Not Found');
 
     await expect(gh.repo('octocat', 'nonexistent').workflowRuns()).rejects.toThrow(GitHubApiError);
+  });
+});
+
+// ─── Social accounts ──────────────────────────────────────────────────────────
+
+const mockSocialAccounts: SocialAccount[] = [
+  { provider: 'linkedin', url: 'https://www.linkedin.com/in/pilmee' },
+  { provider: 'npm', url: 'https://www.npmjs.com/~pilmee' },
+];
+
+describe('UserResource.socialAccounts()', () => {
+  it('fetches social accounts for a user', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(mockSocialAccounts);
+
+    const result = await gh.user('ElJijuna').socialAccounts();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/users/ElJijuna/social_accounts`,
+      expect.anything(),
+    );
+    expect(result).toHaveLength(2);
+    expect(result[0].provider).toBe('linkedin');
+    expect(result[0].url).toBe('https://www.linkedin.com/in/pilmee');
+    expect(result[1].provider).toBe('npm');
+    expect(result[1].url).toBe('https://www.npmjs.com/~pilmee');
+  });
+
+  it('returns an empty array when the user has no social accounts', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse([]);
+
+    const result = await gh.user('octocat').socialAccounts();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/users/octocat/social_accounts`,
+      expect.anything(),
+    );
+    expect(result).toEqual([]);
+  });
+
+  it('throws GitHubApiError on 404 (user not found)', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockErrorResponse(404, 'Not Found');
+
+    await expect(gh.user('ghost-user').socialAccounts()).rejects.toThrow(GitHubApiError);
   });
 });

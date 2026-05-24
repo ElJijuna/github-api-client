@@ -1,4 +1,4 @@
-import type { GitHubUser } from '../domain/User';
+import type { GitHubUser, SocialAccount } from '../domain/User';
 import type { GitHubRepository, ReposParams } from '../domain/Repository';
 import type { GitHubEvent, EventsParams } from '../domain/Event';
 import type { GitHubPagedResponse } from '../domain/Pagination';
@@ -151,6 +151,28 @@ export class UserResource implements PromiseLike<GitHubUser> {
       params as Record<string, string | number | boolean>,
       signal,
     );
+  }
+
+  /**
+   * Lists the social accounts configured on this user's GitHub profile.
+   *
+   * `GET /users/{username}/social_accounts`
+   *
+   * @returns Array of social accounts with `provider` and `url` fields
+   *
+   * @example
+   * ```typescript
+   * const accounts = await gh.user('ElJijuna').socialAccounts();
+   * // [{ provider: 'linkedin', url: 'https://...' }, { provider: 'npm', url: 'https://...' }]
+   * ```
+   */
+  async socialAccounts(signal?: AbortSignal): Promise<SocialAccount[]> {
+    const response = await this.requestList<SocialAccount>(
+      `${this.basePath}/social_accounts`,
+      undefined,
+      signal,
+    );
+    return response.values;
   }
 
   /**

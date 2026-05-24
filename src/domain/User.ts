@@ -42,6 +42,18 @@ export interface GitHubUser {
 }
 
 /**
+ * A social account linked to a GitHub user profile.
+ *
+ * @see {@link https://docs.github.com/en/rest/users/social-accounts}
+ */
+export interface SocialAccount {
+  /** The social network provider (e.g. `'linkedin'`, `'npm'`, `'twitter'`) */
+  provider: string;
+  /** The full URL of the social account */
+  url: string;
+}
+
+/**
  * Query parameters accepted by `GET /users` (list all users).
  *
  * @see {@link https://docs.github.com/en/rest/users/users#list-users}

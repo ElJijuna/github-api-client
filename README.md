@@ -69,6 +69,10 @@ const following = await gh.user('octocat').following();
 // List public events performed by a user
 const events = await gh.user('octocat').publicEvents();
 const events = await gh.user('octocat').publicEvents({ per_page: 30 });
+
+// List social accounts configured on a user's profile (LinkedIn, npm, Twitter, etc.)
+const accounts = await gh.user('octocat').socialAccounts();
+// [{ provider: 'linkedin', url: 'https://linkedin.com/in/octocat' }, { provider: 'npm', url: 'https://npmjs.com/~octocat' }]
 ```
 
 ### Organizations
@@ -509,7 +513,7 @@ const q1 = await gh.user('octocat').contributionMap({
 Each `ContributionDay` contains:
 
 | Field | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `date` | `string` | ISO date, e.g. `'2024-01-15'` |
 | `contributionCount` | `number` | Number of contributions on that day |
 | `color` | `string` | Hex intensity color, e.g. `'#216e39'` |
@@ -576,7 +580,7 @@ gh.on('request', (event) => {
 The `event` object contains:
 
 | Field | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `url` | `string` | Full URL that was requested |
 | `method` | `'GET' \| 'POST' \| 'PATCH' \| 'DELETE' \| 'PUT'` | HTTP method used |
 | `startedAt` | `Date` | When the request started |
@@ -654,7 +658,7 @@ import type {
   // Client
   GitHubClientOptions, RequestEvent, GitHubClientEvents,
   // Users & Orgs
-  GitHubUser, UsersParams, SearchUsersParams,
+  GitHubUser, UsersParams, SearchUsersParams, SocialAccount,
   GitHubOrganization, OrgMembersParams,
   // Repositories
   GitHubRepository, ReposParams, ForksParams, SearchReposParams,
