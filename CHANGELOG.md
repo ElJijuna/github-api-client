@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/ElJijuna/github-api-client/compare/v1.12.0...v1.13.0) (2026-05-24)
+
+
+### Features
+
+* add GitTrees methods to return tree repository from github repo ([9341427](https://github.com/ElJijuna/github-api-client/commit/9341427b29a2e43f452b11884349bd993a725d07))
+
 # [1.12.0](https://github.com/ElJijuna/github-api-client/compare/v1.11.0...v1.12.0) (2026-05-23)
 
 
