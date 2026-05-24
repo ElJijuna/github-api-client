@@ -10,6 +10,7 @@ import type { GitHubIssue, IssuesParams, CreateIssueData } from '../domain/Issue
 import type { GitHubRepositoryAdvisory, RepoAdvisoriesParams, CreateAdvisoryData, UpdateAdvisoryData } from '../domain/Advisory';
 import type { GitHubPagedResponse, PaginationParams } from '../domain/Pagination';
 import type { GitHubWorkflowRunsResponse, WorkflowRunsParams } from '../domain/WorkflowRun';
+import type { GitHubTree, GitTreeParams } from '../domain/GitTree';
 import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestBodyPutFn } from './OrganizationResource';
 import { PullRequestResource } from './PullRequestResource';
 import { CommitResource } from './CommitResource';
@@ -602,6 +603,35 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
   async workflowRuns(params?: WorkflowRunsParams, signal?: AbortSignal): Promise<GitHubWorkflowRunsResponse> {
     return this.request<GitHubWorkflowRunsResponse>(
       `${this.basePath}/actions/runs`,
+      params as Record<string, string | number | boolean>,
+      signal,
+    );
+  }
+
+  /**
+   * Fetches a git tree for this repository.
+   *
+   * `GET /repos/{owner}/{repo}/git/trees/{tree_sha}`
+   *
+   * The `treeSha` parameter accepts a tree SHA, a branch name, or a tag name.
+   *
+   * @param treeSha - Tree SHA, branch name (e.g. `'main'`), or tag name
+   * @param params - Optional: `recursive: '1'` to fetch the full tree recursively
+   * @returns The tree object with its entries
+   *
+   * @example
+   * ```typescript
+   * // Get the tree of the 'main' branch
+   * const tree = await gh.repo('octocat', 'Hello-World').gitTree('main');
+   *
+   * // Get the full recursive tree for a specific SHA
+   * const fullTree = await gh.repo('octocat', 'Hello-World').gitTree('abc123', { recursive: '1' });
+   * console.log(fullTree.tree.map(item => item.path));
+   * ```
+   */
+  async gitTree(treeSha: string, params?: GitTreeParams, signal?: AbortSignal): Promise<GitHubTree> {
+    return this.request<GitHubTree>(
+      `${this.basePath}/git/trees/${treeSha}`,
       params as Record<string, string | number | boolean>,
       signal,
     );

@@ -203,6 +203,22 @@ const comment = await gh.repo('octocat', 'Hello-World').commit('abc123').addComm
 });
 ```
 
+### Git trees
+
+```typescript
+// Get the tree of a branch (shallow — top-level entries only)
+const tree = await gh.repo('octocat', 'Hello-World').gitTree('main');
+
+// Get the full recursive tree (all files and folders)
+const fullTree = await gh.repo('octocat', 'Hello-World').gitTree('main', { recursive: '1' });
+console.log(fullTree.tree.map(item => item.path));
+// ['src/index.ts', 'src/utils/helper.ts', ...]
+
+// Also accepts a tree SHA or tag name
+const tree = await gh.repo('octocat', 'Hello-World').gitTree('v1.0.0');
+const tree = await gh.repo('octocat', 'Hello-World').gitTree('9fb037999f264ba9a7fc6274d15fa3ae2ab98312');
+```
+
 ### Pull requests
 
 ```typescript

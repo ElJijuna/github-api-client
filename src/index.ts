@@ -30,3 +30,4 @@ export type { ContributionDay, ContributionCalendar, ContributionMapParams } fro
 export type { GitHubNotification, NotificationSubject, NotificationRepository, NotificationReason, NotificationSubjectType, NotificationsParams } from './domain/Notification';
 export type { GitHubWorkflowRun, GitHubWorkflowRunsResponse, WorkflowRunsParams, WorkflowRunStatus, WorkflowRunConclusion } from './domain/WorkflowRun';
 export type { SearchIssuesParams } from './domain/SearchIssue';
+export type { GitHubTree, GitHubTreeItem, GitTreeParams } from './domain/GitTree';

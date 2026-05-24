@@ -39,7 +39,8 @@
     "pull requests",
     "github api client",
     "github api wrapper",
-    "github api library"
+    "github api library",
+    "git trees"
   ],
   "license": "MIT",
   "homepage": "https://github.com/ElJijuna/github-api-client",
