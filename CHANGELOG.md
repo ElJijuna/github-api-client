@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/ElJijuna/github-api-client/compare/v1.14.0...v1.15.0) (2026-05-24)
+
+
+### Features
+
+* add orgnizations from user ([a540a9e](https://github.com/ElJijuna/github-api-client/commit/a540a9e294247e22c63cb9b8f75ed4e7f33b9d95))
+
 # [1.14.0](https://github.com/ElJijuna/github-api-client/compare/v1.13.0...v1.14.0) (2026-05-24)
 
 
