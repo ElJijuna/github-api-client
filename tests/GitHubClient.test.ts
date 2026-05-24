@@ -2216,3 +2216,34 @@ describe('UserResource.socialAccounts()', () => {
     await expect(gh.user('ghost-user').socialAccounts()).rejects.toThrow(GitHubApiError);
   });
 });
+
+describe('UserResource.organizations()', () => {
+  it('fetches organizations for a user', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(pagedOf(mockOrg));
+
+    const result = await gh.user('octocat').organizations();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/users/octocat/orgs`,
+      expect.anything(),
+    );
+    expect(result.values[0].login).toBe('github');
+  });
+
+  it('returns an empty list when the user has no public organizations', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(pagedOf());
+
+    const result = await gh.user('octocat').organizations();
+
+    expect(result.values).toHaveLength(0);
+  });
+
+  it('throws GitHubApiError on 404 (user not found)', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockErrorResponse(404, 'Not Found');
+
+    await expect(gh.user('ghost-user').organizations()).rejects.toThrow(GitHubApiError);
+  });
+});

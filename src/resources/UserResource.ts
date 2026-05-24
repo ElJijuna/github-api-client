@@ -1,4 +1,5 @@
 import type { GitHubUser, SocialAccount } from '../domain/User';
+import type { GitHubOrganization } from '../domain/Organization';
 import type { GitHubRepository, ReposParams } from '../domain/Repository';
 import type { GitHubEvent, EventsParams } from '../domain/Event';
 import type { GitHubPagedResponse } from '../domain/Pagination';
@@ -148,6 +149,21 @@ export class UserResource implements PromiseLike<GitHubUser> {
   async publicEvents(params?: EventsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubEvent>> {
     return this.requestList<GitHubEvent>(
       `${this.basePath}/events/public`,
+      params as Record<string, string | number | boolean>,
+      signal,
+    );
+  }
+
+  /**
+   * Lists public organizations for this user.
+   *
+   * `GET /users/{username}/orgs`
+   *
+   * @returns A paged response of organizations
+   */
+  async organizations(params?: { per_page?: number; page?: number }, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubOrganization>> {
+    return this.requestList<GitHubOrganization>(
+      `${this.basePath}/orgs`,
       params as Record<string, string | number | boolean>,
       signal,
     );

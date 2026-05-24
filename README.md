@@ -73,6 +73,10 @@ const events = await gh.user('octocat').publicEvents({ per_page: 30 });
 // List social accounts configured on a user's profile (LinkedIn, npm, Twitter, etc.)
 const accounts = await gh.user('octocat').socialAccounts();
 // [{ provider: 'linkedin', url: 'https://linkedin.com/in/octocat' }, { provider: 'npm', url: 'https://npmjs.com/~octocat' }]
+
+// List public organizations a user belongs to
+const orgs = await gh.user('octocat').organizations();
+const orgs = await gh.user('octocat').organizations({ per_page: 50 });
 ```
 
 ### Organizations
