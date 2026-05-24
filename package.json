@@ -24,6 +24,7 @@
     "build": "tsup",
     "docs": "typedoc",
     "test": "jest",
+    "test:performance": "jest --config jest.performance.config.ts --runInBand",
     "test:coverage": "jest --coverage",
     "test:client": "npm run build && node test-client/test.js"
   },
