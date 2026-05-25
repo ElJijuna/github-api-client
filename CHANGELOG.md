@@ -1,3 +1,18 @@
+# [1.16.0](https://github.com/ElJijuna/github-api-client/compare/v1.15.0...v1.16.0) (2026-05-25)
+
+
+### Features
+
+* add addComment and update methods to IssueResource ([ebded81](https://github.com/ElJijuna/github-api-client/commit/ebded81f59eec31d4c667de2b22e555ca53eb847))
+* add api method to obtainer languages composition from repository ([259e8fe](https://github.com/ElJijuna/github-api-client/commit/259e8fe1aa9a3538fc07c936ef6158283293c804))
+* add collaborator management methods to RepositoryResource ([08a39c0](https://github.com/ElJijuna/github-api-client/commit/08a39c026a9cf3a9d4bf5fc52761a4bde0e1c4d8))
+* add contribution breakdown GraphQL methods to UserResource ([7485c5e](https://github.com/ElJijuna/github-api-client/commit/7485c5e4111586128caa1f28bfd21dd96e926b8e))
+* add label CRUD methods to RepositoryResource ([882337b](https://github.com/ElJijuna/github-api-client/commit/882337b9aa51a1519a68b5906a2252b26a96aadc))
+* add milestone CRUD methods to RepositoryResource ([b84d506](https://github.com/ElJijuna/github-api-client/commit/b84d50649160ba309ef5b3f4c6e0e4592e4dd0de))
+* add release CRUD methods to RepositoryResource ([4688662](https://github.com/ElJijuna/github-api-client/commit/468866243ecbf7ce5e4584335acf3cf5fbd22a37))
+* add searchUsers and searchCode methods to GitHubClient ([1813e8a](https://github.com/ElJijuna/github-api-client/commit/1813e8aa453de75a6cb60b9404abb789644cb8d5))
+* add workflow management methods to RepositoryResource ([5205160](https://github.com/ElJijuna/github-api-client/commit/5205160a4b367869a5e0aed0c6a3490741f899fc))
+
 # [1.15.0](https://github.com/ElJijuna/github-api-client/compare/v1.14.0...v1.15.0) (2026-05-24)
 
 
