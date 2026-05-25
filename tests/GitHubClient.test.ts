@@ -7,7 +7,7 @@ import type { GitHubPullRequest } from '../src/domain/PullRequest';
 import type { GitHubCommit } from '../src/domain/Commit';
 import type { GitHubBranch } from '../src/domain/Branch';
 import type { GitHubTag } from '../src/domain/Tag';
-import type { GitHubRelease } from '../src/domain/Release';
+import type { GitHubRelease, CreateReleaseData } from '../src/domain/Release';
 import type { GitHubWebhook } from '../src/domain/Webhook';
 import type { GitHubReview, GitHubReviewComment } from '../src/domain/Review';
 import type { MergeResult } from '../src/domain/PullRequest';
@@ -840,6 +840,72 @@ describe('RepositoryResource', () => {
         expect.anything(),
       );
       expect(result.tag_name).toBe('v1.0.0');
+    });
+  });
+
+  describe('release()', () => {
+    it('fetches a release by id', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockJsonResponse(mockRelease);
+
+      const result = await gh.repo('octocat', 'Hello-World').release(1);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/releases/1`,
+        expect.anything(),
+      );
+      expect(result.tag_name).toBe('v1.0.0');
+    });
+  });
+
+  describe('createRelease()', () => {
+    it('creates a release', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      const data: CreateReleaseData = { tag_name: 'v1.1.0', name: 'v1.1.0', body: 'Changelog' };
+      mockPostResponse({ ...mockRelease, tag_name: 'v1.1.0' });
+
+      const result = await gh.repo('octocat', 'Hello-World').createRelease(data);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/releases`,
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+      );
+      expect(result.tag_name).toBe('v1.1.0');
+    });
+  });
+
+  describe('updateRelease()', () => {
+    it('updates a release', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockJsonResponse({ ...mockRelease, draft: false });
+
+      const result = await gh.repo('octocat', 'Hello-World').updateRelease(1, { draft: false });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/releases/1`,
+        expect.objectContaining({
+          method: 'PATCH',
+          body: JSON.stringify({ draft: false }),
+        }),
+      );
+      expect(result.draft).toBe(false);
+    });
+  });
+
+  describe('deleteRelease()', () => {
+    it('deletes a release', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockDeleteResponse();
+
+      await gh.repo('octocat', 'Hello-World').deleteRelease(1);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/releases/1`,
+        expect.objectContaining({ method: 'DELETE' }),
+      );
     });
   });
 

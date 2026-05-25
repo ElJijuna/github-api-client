@@ -3,7 +3,7 @@ import type { GitHubPullRequest, PullRequestsParams } from '../domain/PullReques
 import type { GitHubCommit, CommitsParams } from '../domain/Commit';
 import type { GitHubBranch, BranchesParams } from '../domain/Branch';
 import type { GitHubTag, TagsParams } from '../domain/Tag';
-import type { GitHubRelease, ReleasesParams } from '../domain/Release';
+import type { GitHubRelease, ReleasesParams, CreateReleaseData, UpdateReleaseData } from '../domain/Release';
 import type { GitHubWebhook, WebhooksParams, CreateWebhookData, UpdateWebhookData } from '../domain/Webhook';
 import type { GitHubContent, ContentParams } from '../domain/Content';
 import type { GitHubIssue, IssuesParams, CreateIssueData } from '../domain/Issue';
@@ -240,6 +240,86 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    */
   async latestRelease(signal?: AbortSignal): Promise<GitHubRelease> {
     return this.request<GitHubRelease>(`${this.basePath}/releases/latest`, undefined, signal);
+  }
+
+  /**
+   * Fetches a single release by its numeric ID.
+   *
+   * `GET /repos/{owner}/{repo}/releases/{release_id}`
+   *
+   * @param releaseId - The release ID
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns The release object
+   * @throws {GitHubApiError} If the release is not found or access is denied
+   *
+   * @example
+   * ```typescript
+   * const release = await gh.repo('octocat', 'Hello-World').release(1);
+   * ```
+   */
+  async release(releaseId: number, signal?: AbortSignal): Promise<GitHubRelease> {
+    return this.request<GitHubRelease>(`${this.basePath}/releases/${releaseId}`, undefined, signal);
+  }
+
+  /**
+   * Creates a new release.
+   *
+   * `POST /repos/{owner}/{repo}/releases`
+   *
+   * @param data - Release data: `tag_name` (required), `name`, `body`, `draft`, `prerelease`, `target_commitish`
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns The created release
+   * @throws {GitHubApiError} If the tag already has a release or access is denied
+   *
+   * @example
+   * ```typescript
+   * const release = await gh.repo('octocat', 'Hello-World').createRelease({
+   *   tag_name: 'v1.2.0',
+   *   name:     'v1.2.0',
+   *   body:     '## Changelog\n- Fix bug #42',
+   * });
+   * ```
+   */
+  async createRelease(data: CreateReleaseData, signal?: AbortSignal): Promise<GitHubRelease> {
+    return this.requestBody<GitHubRelease>(`${this.basePath}/releases`, data, signal);
+  }
+
+  /**
+   * Updates an existing release.
+   *
+   * `PATCH /repos/{owner}/{repo}/releases/{release_id}`
+   *
+   * @param releaseId - The release ID to update
+   * @param data - Fields to update: `tag_name`, `name`, `body`, `draft`, `prerelease`
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns The updated release
+   * @throws {GitHubApiError} If the release is not found or access is denied
+   *
+   * @example
+   * ```typescript
+   * await gh.repo('octocat', 'Hello-World').updateRelease(1, { draft: false });
+   * ```
+   */
+  async updateRelease(releaseId: number, data: UpdateReleaseData, signal?: AbortSignal): Promise<GitHubRelease> {
+    return this.requestPatch<GitHubRelease>(`${this.basePath}/releases/${releaseId}`, data, signal);
+  }
+
+  /**
+   * Deletes a release.
+   *
+   * `DELETE /repos/{owner}/{repo}/releases/{release_id}`
+   *
+   * @param releaseId - The release ID to delete
+   * @param signal - Optional AbortSignal to cancel the request
+   * @throws {GitHubApiError} If the release is not found or access is denied
+   *
+   * @example
+   * ```typescript
+   * await gh.repo('octocat', 'Hello-World').deleteRelease(1);
+   * ```
+   */
+  async deleteRelease(releaseId: number, signal?: AbortSignal): Promise<void> {
+    return this.requestDelete(`${this.basePath}/releases/${releaseId}`, signal);
   }
 
   /**

@@ -165,6 +165,22 @@ const releases = await gh.repo('octocat', 'Hello-World').releases();
 
 // Get the latest published release
 const latest = await gh.repo('octocat', 'Hello-World').latestRelease();
+
+// Get a release by ID
+const release = await gh.repo('octocat', 'Hello-World').release(1);
+
+// Create a release
+const newRelease = await gh.repo('octocat', 'Hello-World').createRelease({
+  tag_name: 'v1.2.0',
+  name:     'v1.2.0',
+  body:     '## Changelog\n- Fix bug #42',
+});
+
+// Publish a draft release
+await gh.repo('octocat', 'Hello-World').updateRelease(1, { draft: false });
+
+// Delete a release
+await gh.repo('octocat', 'Hello-World').deleteRelease(1);
 ```
 
 ### Languages

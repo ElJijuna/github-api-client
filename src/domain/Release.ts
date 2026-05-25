@@ -67,3 +67,43 @@ export interface GitHubRelease {
  * @see {@link https://docs.github.com/en/rest/releases/releases#list-releases}
  */
 export interface ReleasesParams extends PaginationParams {}
+
+/**
+ * Request body for creating a release.
+ *
+ * @see {@link https://docs.github.com/en/rest/releases/releases#create-a-release}
+ */
+export interface CreateReleaseData {
+  /** Tag name to create or use (e.g., `'v1.0.0'`) */
+  tag_name: string;
+  /** Release title */
+  name?: string;
+  /** Release description / changelog */
+  body?: string;
+  /** Whether this is a draft release */
+  draft?: boolean;
+  /** Whether this is a pre-release */
+  prerelease?: boolean;
+  /** Commitish to tag from (branch name, SHA, etc.) — defaults to the default branch */
+  target_commitish?: string;
+  /** Whether to automatically generate release notes */
+  generate_release_notes?: boolean;
+}
+
+/**
+ * Request body for updating a release.
+ *
+ * @see {@link https://docs.github.com/en/rest/releases/releases#update-a-release}
+ */
+export interface UpdateReleaseData {
+  /** New tag name */
+  tag_name?: string;
+  /** New release title */
+  name?: string;
+  /** New release description */
+  body?: string;
+  /** Whether this is a draft release */
+  draft?: boolean;
+  /** Whether this is a pre-release */
+  prerelease?: boolean;
+}
