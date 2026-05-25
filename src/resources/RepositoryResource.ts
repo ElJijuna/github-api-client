@@ -1,5 +1,6 @@
 import type { GitHubRepository, ForksParams, CreateForkData, RepoLanguages } from '../domain/Repository';
-import type { GitHubPullRequest, PullRequestsParams } from '../domain/PullRequest';
+import type { GitHubPullRequest, PullRequestsParams, GitHubLabel } from '../domain/PullRequest';
+import type { LabelsParams, CreateLabelData, UpdateLabelData } from '../domain/Label';
 import type { GitHubCommit, CommitsParams } from '../domain/Commit';
 import type { GitHubBranch, BranchesParams } from '../domain/Branch';
 import type { GitHubTag, TagsParams } from '../domain/Tag';
@@ -594,6 +595,103 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    */
   async createIssue(data: CreateIssueData, signal?: AbortSignal): Promise<GitHubIssue> {
     return this.requestBody<GitHubIssue>(`${this.basePath}/issues`, data, signal);
+  }
+
+  /**
+   * Lists labels for this repository.
+   *
+   * `GET /repos/{owner}/{repo}/labels`
+   *
+   * @param params - Optional pagination: `per_page`, `page`
+   * @returns A paged response of labels
+   *
+   * @example
+   * ```typescript
+   * const labels = await gh.repo('octocat', 'Hello-World').labels();
+   * ```
+   */
+  async labels(params?: LabelsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubLabel>> {
+    return this.requestList<GitHubLabel>(
+      `${this.basePath}/labels`,
+      params as Record<string, string | number | boolean>,
+      signal,
+    );
+  }
+
+  /**
+   * Fetches a single label by name.
+   *
+   * `GET /repos/{owner}/{repo}/labels/{name}`
+   *
+   * @param name - The label name
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns The label object
+   * @throws {GitHubApiError} If the label is not found
+   *
+   * @example
+   * ```typescript
+   * const label = await gh.repo('octocat', 'Hello-World').label('bug');
+   * ```
+   */
+  async label(name: string, signal?: AbortSignal): Promise<GitHubLabel> {
+    return this.request<GitHubLabel>(`${this.basePath}/labels/${encodeURIComponent(name)}`, undefined, signal);
+  }
+
+  /**
+   * Creates a label in this repository.
+   *
+   * `POST /repos/{owner}/{repo}/labels`
+   *
+   * @param data - Label data: `name` and `color` are required
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns The created label
+   * @throws {GitHubApiError} If a label with that name already exists
+   *
+   * @example
+   * ```typescript
+   * const label = await gh.repo('octocat', 'Hello-World').createLabel({ name: 'enhancement', color: '84b6eb' });
+   * ```
+   */
+  async createLabel(data: CreateLabelData, signal?: AbortSignal): Promise<GitHubLabel> {
+    return this.requestBody<GitHubLabel>(`${this.basePath}/labels`, data, signal);
+  }
+
+  /**
+   * Updates a label.
+   *
+   * `PATCH /repos/{owner}/{repo}/labels/{name}`
+   *
+   * @param name - The current label name
+   * @param data - Fields to update: `name`, `color`, `description`
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns The updated label
+   * @throws {GitHubApiError} If the label is not found
+   *
+   * @example
+   * ```typescript
+   * await gh.repo('octocat', 'Hello-World').updateLabel('bug', { color: 'ee0701' });
+   * ```
+   */
+  async updateLabel(name: string, data: UpdateLabelData, signal?: AbortSignal): Promise<GitHubLabel> {
+    return this.requestPatch<GitHubLabel>(`${this.basePath}/labels/${encodeURIComponent(name)}`, data, signal);
+  }
+
+  /**
+   * Deletes a label.
+   *
+   * `DELETE /repos/{owner}/{repo}/labels/{name}`
+   *
+   * @param name - The label name to delete
+   * @param signal - Optional AbortSignal to cancel the request
+   * @throws {GitHubApiError} If the label is not found
+   *
+   * @example
+   * ```typescript
+   * await gh.repo('octocat', 'Hello-World').deleteLabel('wontfix');
+   * ```
+   */
+  async deleteLabel(name: string, signal?: AbortSignal): Promise<void> {
+    return this.requestDelete(`${this.basePath}/labels/${encodeURIComponent(name)}`, signal);
   }
 
   /**

@@ -1647,6 +1647,92 @@ describe('RepositoryResource.createIssue()', () => {
   });
 });
 
+describe('RepositoryResource.labels()', () => {
+  const mockLabel = { id: 1, name: 'bug', color: 'ee0701', description: 'Something broken', default: true };
+
+  it('fetches labels', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(pagedOf(mockLabel));
+
+    const result = await gh.repo('octocat', 'Hello-World').labels();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/labels`,
+      expect.anything(),
+    );
+    expect(result.values[0].name).toBe('bug');
+  });
+
+  it('fetches a single label by name', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(mockLabel);
+
+    const result = await gh.repo('octocat', 'Hello-World').label('bug');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/labels/bug`,
+      expect.anything(),
+    );
+    expect(result.color).toBe('ee0701');
+  });
+
+  it('creates a label', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse(mockLabel);
+
+    const result = await gh.repo('octocat', 'Hello-World').createLabel({ name: 'bug', color: 'ee0701' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/labels`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ name: 'bug', color: 'ee0701' }),
+      }),
+    );
+    expect(result.name).toBe('bug');
+  });
+
+  it('updates a label', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse({ ...mockLabel, color: 'ff0000' });
+
+    const result = await gh.repo('octocat', 'Hello-World').updateLabel('bug', { color: 'ff0000' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/labels/bug`,
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ color: 'ff0000' }),
+      }),
+    );
+    expect(result.color).toBe('ff0000');
+  });
+
+  it('deletes a label', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockDeleteResponse();
+
+    await gh.repo('octocat', 'Hello-World').deleteLabel('wontfix');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/labels/wontfix`,
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
+
+  it('encodes label name with spaces in URL', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse({ ...mockLabel, name: 'good first issue' });
+
+    await gh.repo('octocat', 'Hello-World').label('good first issue');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/labels/good%20first%20issue`,
+      expect.anything(),
+    );
+  });
+});
+
 describe('IssueResource', () => {
   describe('get()', () => {
     it('fetches the issue when awaited directly', async () => {

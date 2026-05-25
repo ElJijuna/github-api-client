@@ -13,7 +13,7 @@ import type { GitHubPagedResponse } from './domain/Pagination';
 import type { GitHubIssue, IssuesParams } from './domain/Issue';
 import type { GitHubNotification, NotificationsParams } from './domain/Notification';
 import type { SearchIssuesParams } from './domain/SearchIssue';
-import type { SearchUsersParams } from './domain/SearchUser';
+import type { SearchUsersParams } from './domain/User';
 import type { SearchCodeParams, GitHubCodeResult } from './domain/SearchCode';
 
 /**

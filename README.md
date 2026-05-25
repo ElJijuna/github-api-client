@@ -342,7 +342,30 @@ await gh.repo('octocat', 'Hello-World').issue(1).update({ state: 'closed', state
 
 // Rename and reassign
 await gh.repo('octocat', 'Hello-World').issue(1).update({ title: 'New title', assignees: ['octocat'] });
+```
 
+### Labels
+
+```typescript
+// List labels
+const labels = await gh.repo('octocat', 'Hello-World').labels();
+
+// Get a single label
+const label = await gh.repo('octocat', 'Hello-World').label('bug');
+
+// Create a label
+await gh.repo('octocat', 'Hello-World').createLabel({ name: 'enhancement', color: '84b6eb' });
+
+// Update a label
+await gh.repo('octocat', 'Hello-World').updateLabel('bug', { color: 'ee0701', description: 'Something is broken' });
+
+// Delete a label
+await gh.repo('octocat', 'Hello-World').deleteLabel('wontfix');
+```
+
+### Cross-repository issues
+
+```typescript
 // List issues across all repositories the authenticated user has access to
 const { values } = await gh.issues({ filter: 'all', state: 'open', per_page: 100 });
 

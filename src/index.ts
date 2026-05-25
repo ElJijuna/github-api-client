@@ -19,10 +19,12 @@ export type { GitHubCommit, GitHubCommitFile, CommitsParams } from './domain/Com
 export type { GitHubCommitStatus, GitHubCombinedStatus, GitHubCheckRun, CommitStatusesParams, CheckRunsParams } from './domain/CommitStatus';
 export type { GitHubBranch, BranchesParams } from './domain/Branch';
 export type { GitHubTag, TagsParams } from './domain/Tag';
-export type { GitHubRelease, GitHubReleaseAsset, ReleasesParams } from './domain/Release';
+export type { GitHubRelease, GitHubReleaseAsset, ReleasesParams, CreateReleaseData, UpdateReleaseData } from './domain/Release';
+export type { GitHubCodeResult, SearchCodeParams } from './domain/SearchCode';
 export type { GitHubWebhook, WebhooksParams, CreateWebhookData, UpdateWebhookData } from './domain/Webhook';
 export type { GitHubContent, ContentParams } from './domain/Content';
-export type { GitHubIssue, GitHubIssueComment, IssuesParams, CreateIssueData } from './domain/Issue';
+export type { GitHubIssue, GitHubIssueComment, IssuesParams, CreateIssueData, UpdateIssueData } from './domain/Issue';
+export type { LabelsParams, CreateLabelData, UpdateLabelData } from './domain/Label';
 export type { GitHubGist, GistFile, GistCommit, GistFork, GistComment, GistsParams, CreateGistData, UpdateGistData, GistCommentData } from './domain/Gist';
 export type { GitHubAdvisory, GitHubAdvisoryVulnerability, AdvisoriesParams, GitHubRepositoryAdvisory, RepoAdvisoriesParams, AdvisoryVulnerabilityInput, CreateAdvisoryData, UpdateAdvisoryData } from './domain/Advisory';
 export type { PaginationParams, GitHubPagedResponse } from './domain/Pagination';
