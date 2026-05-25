@@ -2572,6 +2572,95 @@ describe('RepositoryResource.workflowRuns()', () => {
   });
 });
 
+describe('RepositoryResource.workflows()', () => {
+  const mockWorkflow = {
+    id: 1,
+    name: 'CI',
+    path: '.github/workflows/ci.yml',
+    state: 'active' as const,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+    html_url: 'https://github.com/octocat/Hello-World/actions/workflows/ci.yml',
+    badge_url: 'https://github.com/octocat/Hello-World/actions/workflows/ci.yml/badge.svg',
+  };
+
+  it('lists workflows', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse({ total_count: 1, workflows: [mockWorkflow] });
+
+    const result = await gh.repo('octocat', 'Hello-World').workflows();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/actions/workflows`,
+      expect.anything(),
+    );
+    expect(result.total_count).toBe(1);
+    expect(result.workflows[0].name).toBe('CI');
+  });
+});
+
+describe('RepositoryResource.workflowRun()', () => {
+  it('fetches a single workflow run by id', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(mockWorkflowRun);
+
+    const result = await gh.repo('octocat', 'Hello-World').workflowRun(1);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/actions/runs/1`,
+      expect.anything(),
+    );
+    expect(result.id).toBe(1);
+    expect(result.conclusion).toBe('success');
+  });
+});
+
+describe('RepositoryResource.cancelWorkflowRun()', () => {
+  it('cancels a workflow run', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse({});
+
+    await gh.repo('octocat', 'Hello-World').cancelWorkflowRun(1);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/actions/runs/1/cancel`,
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+});
+
+describe('RepositoryResource.triggerWorkflow()', () => {
+  it('triggers a workflow dispatch by file name', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 204, headers: { get: () => null } });
+
+    await gh.repo('octocat', 'Hello-World').triggerWorkflow('ci.yml', { ref: 'main' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/actions/workflows/ci.yml/dispatches`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ ref: 'main' }),
+      }),
+    );
+  });
+
+  it('triggers a workflow dispatch with inputs', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 204, headers: { get: () => null } });
+
+    await gh.repo('octocat', 'Hello-World').triggerWorkflow(1, { ref: 'main', inputs: { environment: 'staging' } });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/actions/workflows/1/dispatches`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ ref: 'main', inputs: { environment: 'staging' } }),
+      }),
+    );
+  });
+});
+
 // ─── Social accounts ──────────────────────────────────────────────────────────
 
 const mockSocialAccounts: SocialAccount[] = [

@@ -11,7 +11,8 @@ import type { GitHubContent, ContentParams } from '../domain/Content';
 import type { GitHubIssue, IssuesParams, CreateIssueData } from '../domain/Issue';
 import type { GitHubRepositoryAdvisory, RepoAdvisoriesParams, CreateAdvisoryData, UpdateAdvisoryData } from '../domain/Advisory';
 import type { GitHubPagedResponse, PaginationParams } from '../domain/Pagination';
-import type { GitHubWorkflowRunsResponse, WorkflowRunsParams } from '../domain/WorkflowRun';
+import type { GitHubWorkflowRunsResponse, WorkflowRunsParams, GitHubWorkflowRun } from '../domain/WorkflowRun';
+import type { GitHubWorkflowsResponse, WorkflowsParams, TriggerWorkflowData } from '../domain/Workflow';
 import type { GitHubTree, GitTreeParams } from '../domain/GitTree';
 import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestBodyPutFn } from './OrganizationResource';
 import { PullRequestResource } from './PullRequestResource';
@@ -902,6 +903,84 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
       params as Record<string, string | number | boolean>,
       signal,
     );
+  }
+
+  /**
+   * Lists workflows defined in this repository.
+   *
+   * `GET /repos/{owner}/{repo}/actions/workflows`
+   *
+   * @param params - Optional pagination: `per_page`, `page`
+   * @returns Response envelope with `total_count` and `workflows`
+   *
+   * @example
+   * ```typescript
+   * const { workflows } = await gh.repo('octocat', 'Hello-World').workflows();
+   * ```
+   */
+  async workflows(params?: WorkflowsParams, signal?: AbortSignal): Promise<GitHubWorkflowsResponse> {
+    return this.request<GitHubWorkflowsResponse>(
+      `${this.basePath}/actions/workflows`,
+      params as Record<string, string | number | boolean>,
+      signal,
+    );
+  }
+
+  /**
+   * Fetches a single workflow run by its ID.
+   *
+   * `GET /repos/{owner}/{repo}/actions/runs/{run_id}`
+   *
+   * @param runId - The workflow run ID
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns The workflow run object
+   * @throws {GitHubApiError} If the run is not found
+   *
+   * @example
+   * ```typescript
+   * const run = await gh.repo('octocat', 'Hello-World').workflowRun(12345);
+   * ```
+   */
+  async workflowRun(runId: number, signal?: AbortSignal): Promise<GitHubWorkflowRun> {
+    return this.request<GitHubWorkflowRun>(`${this.basePath}/actions/runs/${runId}`, undefined, signal);
+  }
+
+  /**
+   * Cancels a workflow run in progress.
+   *
+   * `POST /repos/{owner}/{repo}/actions/runs/{run_id}/cancel`
+   *
+   * @param runId - The workflow run ID to cancel
+   * @param signal - Optional AbortSignal to cancel the request
+   * @throws {GitHubApiError} If the run is not found or cannot be cancelled
+   *
+   * @example
+   * ```typescript
+   * await gh.repo('octocat', 'Hello-World').cancelWorkflowRun(12345);
+   * ```
+   */
+  async cancelWorkflowRun(runId: number, signal?: AbortSignal): Promise<void> {
+    await this.requestBody<unknown>(`${this.basePath}/actions/runs/${runId}/cancel`, {}, signal);
+  }
+
+  /**
+   * Triggers a workflow dispatch event.
+   *
+   * `POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches`
+   *
+   * @param workflowId - The workflow ID (number) or file name (e.g., `'ci.yml'`)
+   * @param data - Dispatch data: `ref` is required; `inputs` are optional
+   * @param signal - Optional AbortSignal to cancel the request
+   * @throws {GitHubApiError} If the workflow is not found or `ref` is invalid
+   *
+   * @example
+   * ```typescript
+   * await gh.repo('octocat', 'Hello-World').triggerWorkflow('ci.yml', { ref: 'main' });
+   * await gh.repo('octocat', 'Hello-World').triggerWorkflow('ci.yml', { ref: 'main', inputs: { environment: 'staging' } });
+   * ```
+   */
+  async triggerWorkflow(workflowId: number | string, data: TriggerWorkflowData, signal?: AbortSignal): Promise<void> {
+    await this.requestBody<unknown>(`${this.basePath}/actions/workflows/${workflowId}/dispatches`, data, signal);
   }
 
   /**

@@ -535,6 +535,19 @@ console.log(lastRun.status);     // 'completed' | 'in_progress' | 'queued' | ...
 
 // Compute success rate across recent runs
 const rate = workflow_runs.filter(r => r.conclusion === 'success').length / workflow_runs.length;
+
+// List workflow definitions
+const { workflows } = await gh.repo('octocat', 'Hello-World').workflows();
+
+// Get a single run
+const run = await gh.repo('octocat', 'Hello-World').workflowRun(12345);
+
+// Cancel a run in progress
+await gh.repo('octocat', 'Hello-World').cancelWorkflowRun(12345);
+
+// Trigger a workflow dispatch
+await gh.repo('octocat', 'Hello-World').triggerWorkflow('ci.yml', { ref: 'main' });
+await gh.repo('octocat', 'Hello-World').triggerWorkflow('ci.yml', { ref: 'main', inputs: { environment: 'staging' } });
 ```
 
 ### Security advisories

@@ -32,5 +32,6 @@ export type { PaginationParams, GitHubPagedResponse } from './domain/Pagination'
 export type { ContributionDay, ContributionCalendar, ContributionMapParams } from './domain/Contribution';
 export type { GitHubNotification, NotificationSubject, NotificationRepository, NotificationReason, NotificationSubjectType, NotificationsParams } from './domain/Notification';
 export type { GitHubWorkflowRun, GitHubWorkflowRunsResponse, WorkflowRunsParams, WorkflowRunStatus, WorkflowRunConclusion } from './domain/WorkflowRun';
+export type { GitHubWorkflow, GitHubWorkflowsResponse, WorkflowsParams, TriggerWorkflowData } from './domain/Workflow';
 export type { SearchIssuesParams } from './domain/SearchIssue';
 export type { GitHubTree, GitHubTreeItem, GitTreeParams } from './domain/GitTree';
