@@ -318,6 +318,15 @@ const newIssue = await gh.repo('octocat', 'Hello-World').createIssue({
   labels: ['bug'],
 });
 
+// Add a comment
+const comment = await gh.repo('octocat', 'Hello-World').issue(1).addComment('Thanks for the report!');
+
+// Update an issue (close it)
+await gh.repo('octocat', 'Hello-World').issue(1).update({ state: 'closed', state_reason: 'completed' });
+
+// Rename and reassign
+await gh.repo('octocat', 'Hello-World').issue(1).update({ title: 'New title', assignees: ['octocat'] });
+
 // List issues across all repositories the authenticated user has access to
 const { values } = await gh.issues({ filter: 'all', state: 'open', per_page: 100 });
 

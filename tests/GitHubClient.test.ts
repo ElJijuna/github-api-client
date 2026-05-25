@@ -1619,6 +1619,65 @@ describe('IssueResource', () => {
       expect(result.values[0].body).toBe('Me too!');
     });
   });
+
+  describe('addComment()', () => {
+    it('posts a comment to the issue', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      const mockComment = {
+        id: 42,
+        body: 'Thanks for the report!',
+        user: mockUser,
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        html_url: 'https://github.com/octocat/Hello-World/issues/1#issuecomment-42',
+      };
+      mockPostResponse(mockComment);
+
+      const result = await gh.repo('octocat', 'Hello-World').issue(1).addComment('Thanks for the report!');
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/issues/1/comments`,
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ body: 'Thanks for the report!' }),
+        }),
+      );
+      expect(result.body).toBe('Thanks for the report!');
+    });
+  });
+
+  describe('update()', () => {
+    it('closes an issue', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockJsonResponse({ ...mockIssue, state: 'closed' });
+
+      const result = await gh.repo('octocat', 'Hello-World').issue(1).update({ state: 'closed', state_reason: 'completed' });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/issues/1`,
+        expect.objectContaining({
+          method: 'PATCH',
+          body: JSON.stringify({ state: 'closed', state_reason: 'completed' }),
+        }),
+      );
+      expect(result.state).toBe('closed');
+    });
+
+    it('updates title and assignees', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockJsonResponse({ ...mockIssue, title: 'New title' });
+
+      await gh.repo('octocat', 'Hello-World').issue(1).update({ title: 'New title', assignees: ['octocat'] });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/issues/1`,
+        expect.objectContaining({
+          method: 'PATCH',
+          body: JSON.stringify({ title: 'New title', assignees: ['octocat'] }),
+        }),
+      );
+    });
+  });
 });
 
 describe('GitHubClient.advisories()', () => {

@@ -1,6 +1,6 @@
-import type { GitHubIssue, GitHubIssueComment, IssuesParams } from '../domain/Issue';
+import type { GitHubIssue, GitHubIssueComment, UpdateIssueData } from '../domain/Issue';
 import type { GitHubPagedResponse, PaginationParams } from '../domain/Pagination';
-import type { RequestFn, RequestListFn } from './OrganizationResource';
+import type { RequestFn, RequestListFn, RequestBodyFn, RequestPatchFn } from './OrganizationResource';
 
 /**
  * Represents a GitHub issue resource with chainable async methods.
@@ -24,6 +24,8 @@ export class IssueResource implements PromiseLike<GitHubIssue> {
   constructor(
     private readonly request: RequestFn,
     private readonly requestList: RequestListFn,
+    private readonly requestBody: RequestBodyFn,
+    private readonly requestPatch: RequestPatchFn,
     owner: string,
     repo: string,
     issueNumber: number,
@@ -67,5 +69,47 @@ export class IssueResource implements PromiseLike<GitHubIssue> {
       params as Record<string, string | number | boolean>,
       signal,
     );
+  }
+
+  /**
+   * Adds a comment to this issue.
+   *
+   * `POST /repos/{owner}/{repo}/issues/{issue_number}/comments`
+   *
+   * @param body - The comment text
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns The created comment
+   * @throws {GitHubApiError} If the issue is not found or access is denied
+   *
+   * @example
+   * ```typescript
+   * const comment = await gh.repo('octocat', 'Hello-World').issue(1).addComment('Thanks for the report!');
+   * ```
+   */
+  async addComment(body: string, signal?: AbortSignal): Promise<GitHubIssueComment> {
+    return this.requestBody<GitHubIssueComment>(`${this.basePath}/comments`, { body }, signal);
+  }
+
+  /**
+   * Updates this issue.
+   *
+   * `PATCH /repos/{owner}/{repo}/issues/{issue_number}`
+   *
+   * @param data - Fields to update: `title`, `body`, `state`, `state_reason`, `assignees`, `labels`, `milestone`
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns The updated issue
+   * @throws {GitHubApiError} If the issue is not found or access is denied
+   *
+   * @example
+   * ```typescript
+   * // Close an issue
+   * await gh.repo('octocat', 'Hello-World').issue(1).update({ state: 'closed', state_reason: 'completed' });
+   *
+   * // Rename and reassign
+   * await gh.repo('octocat', 'Hello-World').issue(1).update({ title: 'New title', assignees: ['octocat'] });
+   * ```
+   */
+  async update(data: UpdateIssueData, signal?: AbortSignal): Promise<GitHubIssue> {
+    return this.requestPatch<GitHubIssue>(this.basePath, data, signal);
   }
 }

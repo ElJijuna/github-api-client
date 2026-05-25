@@ -487,6 +487,8 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
     return new IssueResource(
       this.request,
       this.requestList,
+      this.requestBody,
+      this.requestPatch,
       this.owner,
       this.repo,
       issueNumber,

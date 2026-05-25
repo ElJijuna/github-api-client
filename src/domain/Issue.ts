@@ -124,3 +124,25 @@ export interface CreateIssueData {
   /** Label names */
   labels?: string[];
 }
+
+/**
+ * Request body for updating an issue.
+ *
+ * @see {@link https://docs.github.com/en/rest/issues/issues#update-an-issue}
+ */
+export interface UpdateIssueData {
+  /** New title */
+  title?: string;
+  /** New body */
+  body?: string;
+  /** New state */
+  state?: 'open' | 'closed';
+  /** Reason for closing (required when state is 'closed') */
+  state_reason?: 'completed' | 'not_planned' | 'reopened';
+  /** Assignee logins (replaces existing assignees) */
+  assignees?: string[];
+  /** Label names (replaces existing labels) */
+  labels?: string[];
+  /** Milestone number, or null to unset */
+  milestone?: number | null;
+}
