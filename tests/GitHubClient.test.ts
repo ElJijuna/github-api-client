@@ -2,7 +2,7 @@ import { GitHubClient } from '../src/GitHubClient';
 import { GitHubApiError } from '../src/errors/GitHubApiError';
 import type { GitHubUser } from '../src/domain/User';
 import type { GitHubOrganization } from '../src/domain/Organization';
-import type { GitHubRepository } from '../src/domain/Repository';
+import type { GitHubRepository, RepoLanguages } from '../src/domain/Repository';
 import type { GitHubPullRequest } from '../src/domain/PullRequest';
 import type { GitHubCommit } from '../src/domain/Commit';
 import type { GitHubBranch } from '../src/domain/Branch';
@@ -53,6 +53,11 @@ const mockOrg: GitHubOrganization = {
   created_at: '2008-05-11T04:37:31Z',
   updated_at: '2014-03-03T18:58:10Z',
   type: 'Organization',
+};
+
+const mockLanguages: RepoLanguages = {
+  TypeScript: 123456,
+  JavaScript: 78901,
 };
 
 const mockRepo: GitHubRepository = {
@@ -718,6 +723,21 @@ describe('RepositoryResource', () => {
         expect.anything(),
       );
       expect(result.values[0].number).toBe(1);
+    });
+  });
+
+  describe('languages()', () => {
+    it('fetches repo languages', async () => {
+      const gh = new GitHubClient({ token: TOKEN });
+      mockJsonResponse(mockLanguages);
+
+      const result = await gh.repo('octocat', 'Hello-World').languages();
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${API_URL}/repos/octocat/Hello-World/languages`,
+        expect.anything(),
+      );
+      expect(result).toEqual(mockLanguages);
     });
   });
 

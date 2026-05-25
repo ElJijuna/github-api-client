@@ -167,6 +167,13 @@ const releases = await gh.repo('octocat', 'Hello-World').releases();
 const latest = await gh.repo('octocat', 'Hello-World').latestRelease();
 ```
 
+### Languages
+
+```typescript
+const langs = await gh.repo('octocat', 'Hello-World').languages();
+// { JavaScript: 1234567, TypeScript: 89012, CSS: 34567 }
+```
+
 ### Commits
 
 ```typescript

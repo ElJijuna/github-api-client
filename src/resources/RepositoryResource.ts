@@ -1,4 +1,4 @@
-import type { GitHubRepository, ForksParams, CreateForkData } from '../domain/Repository';
+import type { GitHubRepository, ForksParams, CreateForkData, RepoLanguages } from '../domain/Repository';
 import type { GitHubPullRequest, PullRequestsParams } from '../domain/PullRequest';
 import type { GitHubCommit, CommitsParams } from '../domain/Commit';
 import type { GitHubBranch, BranchesParams } from '../domain/Branch';
@@ -82,6 +82,25 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    */
   async get(signal?: AbortSignal): Promise<GitHubRepository> {
     return this.request<GitHubRepository>(this.basePath, undefined, signal);
+  }
+
+  /**
+   * Returns the programming languages used in the repository and the number of bytes of code written in each language.
+   *
+   * `GET /repos/{owner}/{repo}/languages`
+   *
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns Object mapping language names to byte counts
+   * @throws {GitHubApiError} If the repository is not found or access is denied
+   *
+   * @example
+   * ```typescript
+   * const langs = await gh.repo('facebook', 'react').languages();
+   * // { JavaScript: 1234567, TypeScript: 89012 }
+   * ```
+   */
+  async languages(signal?: AbortSignal): Promise<RepoLanguages> {
+    return this.request<RepoLanguages>(`${this.basePath}/languages`, undefined, signal);
   }
 
   /**

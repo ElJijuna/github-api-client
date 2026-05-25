@@ -118,3 +118,10 @@ export interface SearchReposParams extends PaginationParams {
   /** Sort direction */
   order?: 'asc' | 'desc';
 }
+
+/**
+ * Maps programming language names to the number of bytes of code written in that language.
+ *
+ * @see {@link https://docs.github.com/en/rest/repos/repos#list-repository-languages}
+ */
+export type RepoLanguages = Record<string, number>;
