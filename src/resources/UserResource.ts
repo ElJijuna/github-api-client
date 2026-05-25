@@ -3,7 +3,7 @@ import type { GitHubOrganization } from '../domain/Organization';
 import type { GitHubRepository, ReposParams } from '../domain/Repository';
 import type { GitHubEvent, EventsParams } from '../domain/Event';
 import type { GitHubPagedResponse } from '../domain/Pagination';
-import type { ContributionCalendar, ContributionMapParams } from '../domain/Contribution';
+import type { ContributionCalendar, ContributionMapParams, RepoContribution, PinnedItem } from '../domain/Contribution';
 import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestBodyPutFn, GraphQLFn } from './OrganizationResource';
 import { RepositoryResource } from './RepositoryResource';
 
@@ -249,5 +249,166 @@ export class UserResource implements PromiseLike<GitHubUser> {
     }>(query, variables, signal);
 
     return result.user.contributionsCollection.contributionCalendar;
+  }
+
+  /**
+   * Returns the repositories this user committed to, with commit counts, using the GitHub GraphQL API.
+   *
+   * `POST https://api.github.com/graphql`
+   *
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns Array of repositories with their commit contribution counts
+   *
+   * @example
+   * ```typescript
+   * const contribs = await gh.user('octocat').commitContributionsByRepo();
+   * // [{ repository: { nameWithOwner: 'octocat/Hello-World', url: '...' }, totalCount: 42 }, ...]
+   * ```
+   */
+  async commitContributionsByRepo(signal?: AbortSignal): Promise<RepoContribution[]> {
+    const query = `
+      query($login: String!) {
+        user(login: $login) {
+          contributionsCollection {
+            commitContributionsByRepository {
+              repository { nameWithOwner url }
+              contributions { totalCount }
+            }
+          }
+        }
+      }
+    `;
+    const result = await this.graphql<{
+      user: { contributionsCollection: { commitContributionsByRepository: Array<{ repository: { nameWithOwner: string; url: string }; contributions: { totalCount: number } }> } };
+    }>(query, { login: this.login }, signal);
+
+    return result.user.contributionsCollection.commitContributionsByRepository.map(r => ({
+      repository: r.repository,
+      totalCount: r.contributions.totalCount,
+    }));
+  }
+
+  /**
+   * Returns the repositories this user opened pull requests in, with PR counts, using the GitHub GraphQL API.
+   *
+   * `POST https://api.github.com/graphql`
+   *
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns Array of repositories with their pull request contribution counts
+   *
+   * @example
+   * ```typescript
+   * const contribs = await gh.user('octocat').pullRequestContributionsByRepo();
+   * ```
+   */
+  async pullRequestContributionsByRepo(signal?: AbortSignal): Promise<RepoContribution[]> {
+    const query = `
+      query($login: String!) {
+        user(login: $login) {
+          contributionsCollection {
+            pullRequestContributionsByRepository {
+              repository { nameWithOwner url }
+              contributions { totalCount }
+            }
+          }
+        }
+      }
+    `;
+    const result = await this.graphql<{
+      user: { contributionsCollection: { pullRequestContributionsByRepository: Array<{ repository: { nameWithOwner: string; url: string }; contributions: { totalCount: number } }> } };
+    }>(query, { login: this.login }, signal);
+
+    return result.user.contributionsCollection.pullRequestContributionsByRepository.map(r => ({
+      repository: r.repository,
+      totalCount: r.contributions.totalCount,
+    }));
+  }
+
+  /**
+   * Returns the repositories this user opened issues in, with issue counts, using the GitHub GraphQL API.
+   *
+   * `POST https://api.github.com/graphql`
+   *
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns Array of repositories with their issue contribution counts
+   *
+   * @example
+   * ```typescript
+   * const contribs = await gh.user('octocat').issueContributionsByRepo();
+   * ```
+   */
+  async issueContributionsByRepo(signal?: AbortSignal): Promise<RepoContribution[]> {
+    const query = `
+      query($login: String!) {
+        user(login: $login) {
+          contributionsCollection {
+            issueContributionsByRepository {
+              repository { nameWithOwner url }
+              contributions { totalCount }
+            }
+          }
+        }
+      }
+    `;
+    const result = await this.graphql<{
+      user: { contributionsCollection: { issueContributionsByRepository: Array<{ repository: { nameWithOwner: string; url: string }; contributions: { totalCount: number } }> } };
+    }>(query, { login: this.login }, signal);
+
+    return result.user.contributionsCollection.issueContributionsByRepository.map(r => ({
+      repository: r.repository,
+      totalCount: r.contributions.totalCount,
+    }));
+  }
+
+  /**
+   * Returns the pinned items (repositories and gists) on this user's GitHub profile, using the GitHub GraphQL API.
+   *
+   * Returns up to 6 items, matching what GitHub shows on a user's profile page.
+   *
+   * `POST https://api.github.com/graphql`
+   *
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns Array of pinned items — each is either a {@link PinnedRepository} or a {@link PinnedGist}
+   *
+   * @example
+   * ```typescript
+   * const pinned = await gh.user('octocat').pinnedItems();
+   * for (const item of pinned) {
+   *   if ('nameWithOwner' in item) {
+   *     console.log(item.nameWithOwner, item.stargazerCount); // repository
+   *   } else {
+   *     console.log(item.name); // gist
+   *   }
+   * }
+   * ```
+   */
+  async pinnedItems(signal?: AbortSignal): Promise<PinnedItem[]> {
+    const query = `
+      query($login: String!) {
+        user(login: $login) {
+          pinnedItems(first: 6) {
+            nodes {
+              ... on Repository {
+                nameWithOwner
+                description
+                url
+                stargazerCount
+                primaryLanguage { name }
+              }
+              ... on Gist {
+                name
+                description
+                url
+              }
+            }
+          }
+        }
+      }
+    `;
+    const result = await this.graphql<{
+      user: { pinnedItems: { nodes: PinnedItem[] } };
+    }>(query, { login: this.login }, signal);
+
+    return result.user.pinnedItems.nodes;
   }
 }

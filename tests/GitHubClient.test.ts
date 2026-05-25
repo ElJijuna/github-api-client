@@ -2182,6 +2182,105 @@ describe('UserResource.contributionMap()', () => {
   });
 });
 
+describe('UserResource.commitContributionsByRepo()', () => {
+  const mockContribs = [
+    { repository: { nameWithOwner: 'octocat/Hello-World', url: 'https://github.com/octocat/Hello-World' }, contributions: { totalCount: 42 } },
+  ];
+
+  it('returns commit contributions by repository', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse({ data: { user: { contributionsCollection: { commitContributionsByRepository: mockContribs } } } }, 200);
+
+    const result = await gh.user('octocat').commitContributionsByRepo();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/graphql`,
+      expect.objectContaining({ method: 'POST', body: expect.stringContaining('commitContributionsByRepository') }),
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].repository.nameWithOwner).toBe('octocat/Hello-World');
+    expect(result[0].totalCount).toBe(42);
+  });
+});
+
+describe('UserResource.pullRequestContributionsByRepo()', () => {
+  const mockContribs = [
+    { repository: { nameWithOwner: 'octocat/Hello-World', url: 'https://github.com/octocat/Hello-World' }, contributions: { totalCount: 5 } },
+  ];
+
+  it('returns pull request contributions by repository', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse({ data: { user: { contributionsCollection: { pullRequestContributionsByRepository: mockContribs } } } }, 200);
+
+    const result = await gh.user('octocat').pullRequestContributionsByRepo();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/graphql`,
+      expect.objectContaining({ body: expect.stringContaining('pullRequestContributionsByRepository') }),
+    );
+    expect(result[0].totalCount).toBe(5);
+  });
+});
+
+describe('UserResource.issueContributionsByRepo()', () => {
+  const mockContribs = [
+    { repository: { nameWithOwner: 'octocat/Hello-World', url: 'https://github.com/octocat/Hello-World' }, contributions: { totalCount: 3 } },
+  ];
+
+  it('returns issue contributions by repository', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse({ data: { user: { contributionsCollection: { issueContributionsByRepository: mockContribs } } } }, 200);
+
+    const result = await gh.user('octocat').issueContributionsByRepo();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/graphql`,
+      expect.objectContaining({ body: expect.stringContaining('issueContributionsByRepository') }),
+    );
+    expect(result[0].totalCount).toBe(3);
+  });
+});
+
+describe('UserResource.pinnedItems()', () => {
+  it('returns pinned repositories and gists', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse({
+      data: {
+        user: {
+          pinnedItems: {
+            nodes: [
+              { nameWithOwner: 'octocat/Hello-World', description: 'My repo', url: 'https://github.com/octocat/Hello-World', stargazerCount: 100, primaryLanguage: { name: 'TypeScript' } },
+              { name: 'abc123', description: 'My gist', url: 'https://gist.github.com/octocat/abc123' },
+            ],
+          },
+        },
+      },
+    }, 200);
+
+    const result = await gh.user('octocat').pinnedItems();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/graphql`,
+      expect.objectContaining({ body: expect.stringContaining('pinnedItems') }),
+    );
+    expect(result).toHaveLength(2);
+    const repo = result[0] as { nameWithOwner: string; stargazerCount: number };
+    expect(repo.nameWithOwner).toBe('octocat/Hello-World');
+    expect(repo.stargazerCount).toBe(100);
+    const gist = result[1] as { name: string };
+    expect(gist.name).toBe('abc123');
+  });
+
+  it('returns empty array when no items are pinned', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse({ data: { user: { pinnedItems: { nodes: [] } } } }, 200);
+
+    const result = await gh.user('octocat').pinnedItems();
+
+    expect(result).toHaveLength(0);
+  });
+});
+
 describe('GitHubClient.graphql()', () => {
   it('executes an arbitrary GraphQL query and returns data', async () => {
     const gh = new GitHubClient({ token: TOKEN });

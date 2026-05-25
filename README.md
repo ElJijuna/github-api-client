@@ -628,6 +628,35 @@ Each `ContributionDay` contains:
 | `contributionCount` | `number` | Number of contributions on that day |
 | `color` | `string` | Hex intensity color, e.g. `'#216e39'` |
 
+#### Contributions by repository
+
+```typescript
+// Repos the user committed to (current year)
+const commits = await gh.user('octocat').commitContributionsByRepo();
+// [{ repository: { nameWithOwner: 'octocat/Hello-World', url: '...' }, totalCount: 42 }, ...]
+
+// Repos where the user opened pull requests
+const prs = await gh.user('octocat').pullRequestContributionsByRepo();
+
+// Repos where the user opened issues
+const issues = await gh.user('octocat').issueContributionsByRepo();
+```
+
+#### Pinned items
+
+```typescript
+const pinned = await gh.user('octocat').pinnedItems();
+// Up to 6 items — each is a PinnedRepository or PinnedGist
+
+for (const item of pinned) {
+  if ('nameWithOwner' in item) {
+    console.log(item.nameWithOwner, item.stargazerCount); // repository
+  } else {
+    console.log(item.name); // gist
+  }
+}
+```
+
 #### Generic GraphQL escape hatch
 
 ```typescript

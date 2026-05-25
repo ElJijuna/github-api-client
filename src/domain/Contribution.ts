@@ -22,6 +22,55 @@ export interface ContributionCalendar {
 }
 
 /**
+ * A repository and the number of contributions a user made to it in a period.
+ */
+export interface RepoContribution {
+  /** Repository info */
+  repository: {
+    /** Full name including owner, e.g. `'octocat/Hello-World'` */
+    nameWithOwner: string;
+    /** URL to the repository on GitHub */
+    url: string;
+  };
+  /** Total number of contributions to this repository */
+  totalCount: number;
+}
+
+/**
+ * A pinned repository on a user's GitHub profile.
+ */
+export interface PinnedRepository {
+  /** Full name including owner, e.g. `'octocat/Hello-World'` */
+  nameWithOwner: string;
+  /** Repository description */
+  description: string | null;
+  /** URL to the repository on GitHub */
+  url: string;
+  /** Number of stars */
+  stargazerCount: number;
+  /** Primary programming language, or null if none detected */
+  primaryLanguage: { name: string } | null;
+}
+
+/**
+ * A pinned gist on a user's GitHub profile.
+ */
+export interface PinnedGist {
+  /** Gist short ID */
+  name: string;
+  /** Gist description */
+  description: string | null;
+  /** URL to the gist on GitHub */
+  url: string;
+}
+
+/**
+ * A pinned item — either a repository or a gist.
+ * Discriminate with `'nameWithOwner' in item` (repository) or `'name' in item` (gist).
+ */
+export type PinnedItem = PinnedRepository | PinnedGist;
+
+/**
  * Query parameters for {@link UserResource.contributionMap}.
  */
 export interface ContributionMapParams {
