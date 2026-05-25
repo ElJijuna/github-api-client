@@ -431,6 +431,25 @@ console.log(`Found ${results.totalCount} repositories`);
 results.values; // GitHubRepository[]
 ```
 
+### User search
+
+```typescript
+const results = await gh.searchUsers({ q: 'location:Berlin language:typescript', sort: 'followers' });
+
+console.log(`Found ${results.totalCount} users`);
+results.values; // GitHubUser[]
+```
+
+### Code search
+
+```typescript
+const results = await gh.searchCode({ q: 'addClass repo:jquery/jquery' });
+const results = await gh.searchCode({ q: 'useState language:typescript', sort: 'indexed' });
+
+console.log(`Found ${results.totalCount} files`);
+results.values; // GitHubCodeResult[] — each has name, path, sha, html_url, repository
+```
+
 ### Notifications
 
 ```typescript

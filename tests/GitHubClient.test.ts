@@ -2251,6 +2251,90 @@ describe('GitHubClient.searchIssues()', () => {
   });
 });
 
+describe('GitHubClient.searchUsers()', () => {
+  it('searches users and returns totalCount', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse({ total_count: 1, incomplete_results: false, items: [mockUser] });
+
+    const result = await gh.searchUsers({ q: 'location:Berlin language:typescript' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/search/users?q=location%3ABerlin+language%3Atypescript`,
+      expect.anything(),
+    );
+    expect(result.values[0].login).toBe('octocat');
+    expect(result.totalCount).toBe(1);
+    expect(result.hasNextPage).toBe(false);
+  });
+
+  it('passes sort and order params', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse({ total_count: 5, incomplete_results: false, items: [mockUser] });
+
+    await gh.searchUsers({ q: 'type:user', sort: 'followers', order: 'desc' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/search/users'),
+      expect.anything(),
+    );
+  });
+
+  it('throws GitHubApiError on 422', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockErrorResponse(422, 'Unprocessable Entity');
+
+    await expect(gh.searchUsers({ q: '' })).rejects.toThrow(GitHubApiError);
+  });
+});
+
+describe('GitHubClient.searchCode()', () => {
+  const mockCodeResult = {
+    name: 'index.ts',
+    path: 'src/index.ts',
+    sha: 'abc123',
+    url: 'https://api.github.com/repos/octocat/Hello-World/git/blobs/abc123',
+    html_url: 'https://github.com/octocat/Hello-World/blob/main/src/index.ts',
+    repository: mockRepo,
+  };
+
+  it('searches code and returns totalCount', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse({ total_count: 1, incomplete_results: false, items: [mockCodeResult] });
+
+    const result = await gh.searchCode({ q: 'addClass repo:jquery/jquery' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/search/code?q=addClass+repo%3Ajquery%2Fjquery`,
+      expect.anything(),
+    );
+    expect(result.values[0].name).toBe('index.ts');
+    expect(result.values[0].path).toBe('src/index.ts');
+    expect(result.totalCount).toBe(1);
+    expect(result.hasNextPage).toBe(false);
+  });
+
+  it('parses Link header for pagination', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(
+      { total_count: 100, incomplete_results: false, items: [mockCodeResult] },
+      { link: makeLinkHeader(2) },
+    );
+
+    const result = await gh.searchCode({ q: 'useState', per_page: 1 });
+
+    expect(result.hasNextPage).toBe(true);
+    expect(result.nextPage).toBe(2);
+    expect(result.totalCount).toBe(100);
+  });
+
+  it('throws GitHubApiError on 422', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockErrorResponse(422, 'Unprocessable Entity');
+
+    await expect(gh.searchCode({ q: '' })).rejects.toThrow(GitHubApiError);
+  });
+});
+
 // ─── Workflow runs ────────────────────────────────────────────────────────────
 
 const mockWorkflowRun = {

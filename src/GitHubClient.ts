@@ -13,6 +13,8 @@ import type { GitHubPagedResponse } from './domain/Pagination';
 import type { GitHubIssue, IssuesParams } from './domain/Issue';
 import type { GitHubNotification, NotificationsParams } from './domain/Notification';
 import type { SearchIssuesParams } from './domain/SearchIssue';
+import type { SearchUsersParams } from './domain/SearchUser';
+import type { SearchCodeParams, GitHubCodeResult } from './domain/SearchCode';
 
 /**
  * Payload emitted on every HTTP request made by {@link GitHubClient}.
@@ -818,6 +820,91 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
       const data = await response.json() as SearchResult<GitHubIssue>;
+      const linkHeader = response.headers.get('Link');
+      const nextPage = parseNextPage(linkHeader);
+      this.emit('request', { url, method: 'GET', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      return {
+        values: data.items,
+        hasNextPage: nextPage !== undefined,
+        nextPage,
+        totalCount: data.total_count,
+      };
+    } catch (err) {
+      const finishedAt = new Date();
+      this.emit('request', { url, method: 'GET', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      throw err;
+    }
+  }
+
+  /**
+   * Searches for users using GitHub's search syntax.
+   *
+   * `GET /search/users`
+   *
+   * @param params - Search query and optional sort/order. `q` is required.
+   * @returns A paged response of users with `totalCount`
+   *
+   * @example
+   * ```typescript
+   * const results = await gh.searchUsers({ q: 'location:Berlin language:typescript', sort: 'followers' });
+   * console.log(`Found ${results.totalCount} users`);
+   * ```
+   */
+  async searchUsers(params: SearchUsersParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubUser>> {
+    const base = `${this.security.getApiUrl()}/search/users`;
+    const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
+    const startedAt = new Date();
+    let statusCode: number | undefined;
+    try {
+      const response = await fetch(url, { headers: this.security.getHeaders(), signal });
+      statusCode = response.status;
+      if (!response.ok) {
+        throw new GitHubApiError(response.status, response.statusText);
+      }
+      const data = await response.json() as SearchResult<GitHubUser>;
+      const linkHeader = response.headers.get('Link');
+      const nextPage = parseNextPage(linkHeader);
+      this.emit('request', { url, method: 'GET', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      return {
+        values: data.items,
+        hasNextPage: nextPage !== undefined,
+        nextPage,
+        totalCount: data.total_count,
+      };
+    } catch (err) {
+      const finishedAt = new Date();
+      this.emit('request', { url, method: 'GET', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      throw err;
+    }
+  }
+
+  /**
+   * Searches for code using GitHub's search syntax.
+   *
+   * `GET /search/code`
+   *
+   * @param params - Search query and optional sort/order. `q` is required.
+   * @returns A paged response of code results with `totalCount`
+   *
+   * @example
+   * ```typescript
+   * const results = await gh.searchCode({ q: 'addClass repo:jquery/jquery' });
+   * console.log(`Found ${results.totalCount} files`);
+   * results.values; // GitHubCodeResult[]
+   * ```
+   */
+  async searchCode(params: SearchCodeParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubCodeResult>> {
+    const base = `${this.security.getApiUrl()}/search/code`;
+    const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
+    const startedAt = new Date();
+    let statusCode: number | undefined;
+    try {
+      const response = await fetch(url, { headers: this.security.getHeaders(), signal });
+      statusCode = response.status;
+      if (!response.ok) {
+        throw new GitHubApiError(response.status, response.statusText);
+      }
+      const data = await response.json() as SearchResult<GitHubCodeResult>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
       this.emit('request', { url, method: 'GET', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
