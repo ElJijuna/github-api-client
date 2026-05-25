@@ -2,6 +2,8 @@ import type { GitHubRepository, ForksParams, CreateForkData, RepoLanguages } fro
 import type { GitHubPullRequest, PullRequestsParams, GitHubLabel, GitHubMilestone } from '../domain/PullRequest';
 import type { LabelsParams, CreateLabelData, UpdateLabelData } from '../domain/Label';
 import type { MilestonesParams, CreateMilestoneData, UpdateMilestoneData } from '../domain/Milestone';
+import type { CollaboratorsParams, AddCollaboratorData } from '../domain/Collaborator';
+import type { GitHubUser } from '../domain/User';
 import type { GitHubCommit, CommitsParams } from '../domain/Commit';
 import type { GitHubBranch, BranchesParams } from '../domain/Branch';
 import type { GitHubTag, TagsParams } from '../domain/Tag';
@@ -790,6 +792,69 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    */
   async deleteMilestone(milestoneNumber: number, signal?: AbortSignal): Promise<void> {
     return this.requestDelete(`${this.basePath}/milestones/${milestoneNumber}`, signal);
+  }
+
+  /**
+   * Lists collaborators for this repository.
+   *
+   * `GET /repos/{owner}/{repo}/collaborators`
+   *
+   * @param params - Optional filters: `affiliation`, `permission`, `per_page`, `page`
+   * @returns A paged response of users who are collaborators
+   *
+   * @example
+   * ```typescript
+   * const collabs = await gh.repo('octocat', 'Hello-World').collaborators();
+   * const outside = await gh.repo('octocat', 'Hello-World').collaborators({ affiliation: 'outside' });
+   * ```
+   */
+  async collaborators(params?: CollaboratorsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubUser>> {
+    return this.requestList<GitHubUser>(
+      `${this.basePath}/collaborators`,
+      params as Record<string, string | number | boolean>,
+      signal,
+    );
+  }
+
+  /**
+   * Adds a collaborator to this repository.
+   *
+   * `PUT /repos/{owner}/{repo}/collaborators/{username}`
+   *
+   * Sends an invitation if the user is not yet a collaborator, or updates
+   * their permission level if they already are. Returns `void` in both cases.
+   *
+   * @param username - The GitHub login of the user to add
+   * @param data - Optional permission level (defaults to `'push'`)
+   * @param signal - Optional AbortSignal to cancel the request
+   * @throws {GitHubApiError} If the user is not found or access is denied
+   *
+   * @example
+   * ```typescript
+   * await gh.repo('octocat', 'Hello-World').addCollaborator('hubot');
+   * await gh.repo('octocat', 'Hello-World').addCollaborator('hubot', { permission: 'maintain' });
+   * ```
+   */
+  async addCollaborator(username: string, data?: AddCollaboratorData, signal?: AbortSignal): Promise<void> {
+    await this.requestBodyPut<unknown>(`${this.basePath}/collaborators/${username}`, data ?? {}, signal);
+  }
+
+  /**
+   * Removes a collaborator from this repository.
+   *
+   * `DELETE /repos/{owner}/{repo}/collaborators/{username}`
+   *
+   * @param username - The GitHub login of the user to remove
+   * @param signal - Optional AbortSignal to cancel the request
+   * @throws {GitHubApiError} If the user is not found or access is denied
+   *
+   * @example
+   * ```typescript
+   * await gh.repo('octocat', 'Hello-World').removeCollaborator('hubot');
+   * ```
+   */
+  async removeCollaborator(username: string, signal?: AbortSignal): Promise<void> {
+    return this.requestDelete(`${this.basePath}/collaborators/${username}`, signal);
   }
 
   /**

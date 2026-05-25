@@ -1819,6 +1819,72 @@ describe('RepositoryResource.milestones()', () => {
   });
 });
 
+describe('RepositoryResource.collaborators()', () => {
+  it('lists collaborators', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(pagedOf(mockUser));
+
+    const result = await gh.repo('octocat', 'Hello-World').collaborators();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/collaborators`,
+      expect.anything(),
+    );
+    expect(result.values[0].login).toBe('octocat');
+  });
+
+  it('filters by affiliation', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(pagedOf(mockUser));
+
+    await gh.repo('octocat', 'Hello-World').collaborators({ affiliation: 'outside' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/collaborators?affiliation=outside`,
+      expect.anything(),
+    );
+  });
+
+  it('adds a collaborator', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 204, headers: { get: () => null } });
+
+    await gh.repo('octocat', 'Hello-World').addCollaborator('hubot');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/collaborators/hubot`,
+      expect.objectContaining({ method: 'PUT' }),
+    );
+  });
+
+  it('adds a collaborator with a permission level', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 201, json: async () => ({}), headers: { get: () => null } });
+
+    await gh.repo('octocat', 'Hello-World').addCollaborator('hubot', { permission: 'maintain' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/collaborators/hubot`,
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ permission: 'maintain' }),
+      }),
+    );
+  });
+
+  it('removes a collaborator', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockDeleteResponse();
+
+    await gh.repo('octocat', 'Hello-World').removeCollaborator('hubot');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/collaborators/hubot`,
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
+});
+
 describe('IssueResource', () => {
   describe('get()', () => {
     it('fetches the issue when awaited directly', async () => {

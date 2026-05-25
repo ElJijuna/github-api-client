@@ -382,6 +382,21 @@ await gh.repo('octocat', 'Hello-World').updateMilestone(1, { state: 'closed' });
 await gh.repo('octocat', 'Hello-World').deleteMilestone(1);
 ```
 
+### Collaborators
+
+```typescript
+// List collaborators
+const collabs = await gh.repo('octocat', 'Hello-World').collaborators();
+const outside = await gh.repo('octocat', 'Hello-World').collaborators({ affiliation: 'outside' });
+
+// Add a collaborator (sends an invitation if not already a collaborator)
+await gh.repo('octocat', 'Hello-World').addCollaborator('hubot');
+await gh.repo('octocat', 'Hello-World').addCollaborator('hubot', { permission: 'maintain' });
+
+// Remove a collaborator
+await gh.repo('octocat', 'Hello-World').removeCollaborator('hubot');
+```
+
 ### Cross-repository issues
 
 ```typescript

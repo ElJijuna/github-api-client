@@ -362,7 +362,7 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
-      const data = await response.json() as T;
+      const data = response.status !== 204 ? await response.json() as T : undefined as unknown as T;
       this.emit('request', { url, method: 'PUT', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
       return data;
     } catch (err) {
