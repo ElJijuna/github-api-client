@@ -363,6 +363,25 @@ await gh.repo('octocat', 'Hello-World').updateLabel('bug', { color: 'ee0701', de
 await gh.repo('octocat', 'Hello-World').deleteLabel('wontfix');
 ```
 
+### Milestones
+
+```typescript
+// List milestones
+const milestones = await gh.repo('octocat', 'Hello-World').milestones({ state: 'open' });
+
+// Get a single milestone
+const ms = await gh.repo('octocat', 'Hello-World').milestone(1);
+
+// Create a milestone
+await gh.repo('octocat', 'Hello-World').createMilestone({ title: 'v2.0', due_on: '2025-12-31T00:00:00Z' });
+
+// Close a milestone
+await gh.repo('octocat', 'Hello-World').updateMilestone(1, { state: 'closed' });
+
+// Delete a milestone
+await gh.repo('octocat', 'Hello-World').deleteMilestone(1);
+```
+
 ### Cross-repository issues
 
 ```typescript

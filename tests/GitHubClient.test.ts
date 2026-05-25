@@ -1733,6 +1733,92 @@ describe('RepositoryResource.labels()', () => {
   });
 });
 
+describe('RepositoryResource.milestones()', () => {
+  const mockMilestone = {
+    id: 1,
+    number: 1,
+    title: 'v1.0',
+    description: 'First release',
+    state: 'open' as const,
+    due_on: '2025-12-31T00:00:00Z',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+    closed_at: null,
+    open_issues: 5,
+    closed_issues: 2,
+  };
+
+  it('fetches milestones', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(pagedOf(mockMilestone));
+
+    const result = await gh.repo('octocat', 'Hello-World').milestones({ state: 'open' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/milestones?state=open`,
+      expect.anything(),
+    );
+    expect(result.values[0].title).toBe('v1.0');
+  });
+
+  it('fetches a single milestone by number', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse(mockMilestone);
+
+    const result = await gh.repo('octocat', 'Hello-World').milestone(1);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/milestones/1`,
+      expect.anything(),
+    );
+    expect(result.number).toBe(1);
+  });
+
+  it('creates a milestone', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockPostResponse(mockMilestone);
+
+    const result = await gh.repo('octocat', 'Hello-World').createMilestone({ title: 'v1.0', due_on: '2025-12-31T00:00:00Z' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/milestones`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ title: 'v1.0', due_on: '2025-12-31T00:00:00Z' }),
+      }),
+    );
+    expect(result.title).toBe('v1.0');
+  });
+
+  it('updates a milestone', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockJsonResponse({ ...mockMilestone, state: 'closed' });
+
+    const result = await gh.repo('octocat', 'Hello-World').updateMilestone(1, { state: 'closed' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/milestones/1`,
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ state: 'closed' }),
+      }),
+    );
+    expect(result.state).toBe('closed');
+  });
+
+  it('deletes a milestone', async () => {
+    const gh = new GitHubClient({ token: TOKEN });
+    mockDeleteResponse();
+
+    await gh.repo('octocat', 'Hello-World').deleteMilestone(1);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/repos/octocat/Hello-World/milestones/1`,
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
+});
+
 describe('IssueResource', () => {
   describe('get()', () => {
     it('fetches the issue when awaited directly', async () => {

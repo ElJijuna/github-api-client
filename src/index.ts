@@ -25,6 +25,7 @@ export type { GitHubWebhook, WebhooksParams, CreateWebhookData, UpdateWebhookDat
 export type { GitHubContent, ContentParams } from './domain/Content';
 export type { GitHubIssue, GitHubIssueComment, IssuesParams, CreateIssueData, UpdateIssueData } from './domain/Issue';
 export type { LabelsParams, CreateLabelData, UpdateLabelData } from './domain/Label';
+export type { MilestonesParams, CreateMilestoneData, UpdateMilestoneData } from './domain/Milestone';
 export type { GitHubGist, GistFile, GistCommit, GistFork, GistComment, GistsParams, CreateGistData, UpdateGistData, GistCommentData } from './domain/Gist';
 export type { GitHubAdvisory, GitHubAdvisoryVulnerability, AdvisoriesParams, GitHubRepositoryAdvisory, RepoAdvisoriesParams, AdvisoryVulnerabilityInput, CreateAdvisoryData, UpdateAdvisoryData } from './domain/Advisory';
 export type { PaginationParams, GitHubPagedResponse } from './domain/Pagination';

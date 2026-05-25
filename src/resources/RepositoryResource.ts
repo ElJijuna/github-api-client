@@ -1,6 +1,7 @@
 import type { GitHubRepository, ForksParams, CreateForkData, RepoLanguages } from '../domain/Repository';
-import type { GitHubPullRequest, PullRequestsParams, GitHubLabel } from '../domain/PullRequest';
+import type { GitHubPullRequest, PullRequestsParams, GitHubLabel, GitHubMilestone } from '../domain/PullRequest';
 import type { LabelsParams, CreateLabelData, UpdateLabelData } from '../domain/Label';
+import type { MilestonesParams, CreateMilestoneData, UpdateMilestoneData } from '../domain/Milestone';
 import type { GitHubCommit, CommitsParams } from '../domain/Commit';
 import type { GitHubBranch, BranchesParams } from '../domain/Branch';
 import type { GitHubTag, TagsParams } from '../domain/Tag';
@@ -692,6 +693,102 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    */
   async deleteLabel(name: string, signal?: AbortSignal): Promise<void> {
     return this.requestDelete(`${this.basePath}/labels/${encodeURIComponent(name)}`, signal);
+  }
+
+  /**
+   * Lists milestones for this repository.
+   *
+   * `GET /repos/{owner}/{repo}/milestones`
+   *
+   * @param params - Optional filters: `state`, `sort`, `direction`, `per_page`, `page`
+   * @returns A paged response of milestones
+   *
+   * @example
+   * ```typescript
+   * const milestones = await gh.repo('octocat', 'Hello-World').milestones({ state: 'open' });
+   * ```
+   */
+  async milestones(params?: MilestonesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubMilestone>> {
+    return this.requestList<GitHubMilestone>(
+      `${this.basePath}/milestones`,
+      params as Record<string, string | number | boolean>,
+      signal,
+    );
+  }
+
+  /**
+   * Fetches a single milestone by number.
+   *
+   * `GET /repos/{owner}/{repo}/milestones/{milestone_number}`
+   *
+   * @param milestoneNumber - The milestone number
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns The milestone object
+   * @throws {GitHubApiError} If the milestone is not found
+   *
+   * @example
+   * ```typescript
+   * const milestone = await gh.repo('octocat', 'Hello-World').milestone(1);
+   * ```
+   */
+  async milestone(milestoneNumber: number, signal?: AbortSignal): Promise<GitHubMilestone> {
+    return this.request<GitHubMilestone>(`${this.basePath}/milestones/${milestoneNumber}`, undefined, signal);
+  }
+
+  /**
+   * Creates a milestone in this repository.
+   *
+   * `POST /repos/{owner}/{repo}/milestones`
+   *
+   * @param data - Milestone data: `title` is required
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns The created milestone
+   *
+   * @example
+   * ```typescript
+   * const ms = await gh.repo('octocat', 'Hello-World').createMilestone({ title: 'v2.0', due_on: '2025-12-31T00:00:00Z' });
+   * ```
+   */
+  async createMilestone(data: CreateMilestoneData, signal?: AbortSignal): Promise<GitHubMilestone> {
+    return this.requestBody<GitHubMilestone>(`${this.basePath}/milestones`, data, signal);
+  }
+
+  /**
+   * Updates a milestone.
+   *
+   * `PATCH /repos/{owner}/{repo}/milestones/{milestone_number}`
+   *
+   * @param milestoneNumber - The milestone number to update
+   * @param data - Fields to update: `title`, `state`, `description`, `due_on`
+   * @param signal - Optional AbortSignal to cancel the request
+   * @returns The updated milestone
+   * @throws {GitHubApiError} If the milestone is not found
+   *
+   * @example
+   * ```typescript
+   * await gh.repo('octocat', 'Hello-World').updateMilestone(1, { state: 'closed' });
+   * ```
+   */
+  async updateMilestone(milestoneNumber: number, data: UpdateMilestoneData, signal?: AbortSignal): Promise<GitHubMilestone> {
+    return this.requestPatch<GitHubMilestone>(`${this.basePath}/milestones/${milestoneNumber}`, data, signal);
+  }
+
+  /**
+   * Deletes a milestone.
+   *
+   * `DELETE /repos/{owner}/{repo}/milestones/{milestone_number}`
+   *
+   * @param milestoneNumber - The milestone number to delete
+   * @param signal - Optional AbortSignal to cancel the request
+   * @throws {GitHubApiError} If the milestone is not found
+   *
+   * @example
+   * ```typescript
+   * await gh.repo('octocat', 'Hello-World').deleteMilestone(1);
+   * ```
+   */
+  async deleteMilestone(milestoneNumber: number, signal?: AbortSignal): Promise<void> {
+    return this.requestDelete(`${this.basePath}/milestones/${milestoneNumber}`, signal);
   }
 
   /**
