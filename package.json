@@ -26,7 +26,13 @@
     "test": "jest",
     "test:performance": "jest --config jest.performance.config.ts --runInBand",
     "test:coverage": "jest --coverage",
-    "test:client": "npm run build && node test-client/test.js"
+    "test:client": "npm run build && node test-client/test.js",
+    "bench:throughput": "jest --config jest.performance.config.ts --runInBand --testPathPattern=throughput",
+    "bench:concurrent": "jest --config jest.performance.config.ts --runInBand --testPathPattern=concurrent",
+    "bench:all": "jest --config jest.performance.config.ts --runInBand",
+    "bench:heap": "TS_NODE_PROJECT=tsconfig.benchmark-node.json node --expose-gc --loader ts-node/esm --no-warnings benchmarks/heap-pressure.ts",
+    "bench:eventloop": "TS_NODE_PROJECT=tsconfig.benchmark-node.json node --loader ts-node/esm --no-warnings benchmarks/event-loop-lag.ts",
+    "bench": "npm run bench:all && npm run bench:heap && npm run bench:eventloop"
   },
   "keywords": [
     "github",
