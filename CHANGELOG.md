@@ -1,3 +1,10 @@
+## [1.16.1](https://github.com/ElJijuna/github-api-client/compare/v1.16.0...v1.16.1) (2026-05-26)
+
+
+### Performance Improvements
+
+* add comprehensive benchmark suite for heap, event loop and throughput ([50c845b](https://github.com/ElJijuna/github-api-client/commit/50c845b0158355a517f577911c1158c531f94ab5))
+
 # [1.16.0](https://github.com/ElJijuna/github-api-client/compare/v1.15.0...v1.16.0) (2026-05-25)
 
 
