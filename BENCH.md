@@ -13,6 +13,33 @@ requests, paginated list requests, raw text requests, body requests, void
 requests, GraphQL requests, header creation, and URL construction with query
 parameters.
 
+## Test Environment
+
+Performance numbers in this document were collected on the following system.
+This information matters because microbenchmarks can vary noticeably across CPU,
+kernel, Node.js/V8 version, power mode, scheduler behavior, and background load.
+
+| Item | Value |
+| --- | --- |
+| OS | Fedora Linux 44 (Workstation Edition) |
+| Kernel | Linux 7.0.9-205.fc44.x86_64 |
+| Architecture | x86_64 |
+| CPU | Intel Core i5-6267U @ 2.90GHz |
+| CPU topology | 2 cores / 4 threads |
+| CPU max frequency | 3.30GHz |
+| Memory | 15GiB RAM, 8.0GiB swap |
+| Node.js | v22.22.2 |
+| V8 | 12.4.254.21-node.39 |
+| libuv | 1.51.0 |
+| npm | 10.9.7 |
+
+Recommended when repeating these benchmarks on another machine:
+
+- Record OS, kernel, CPU model/topology, RAM, Node.js, V8, and npm versions.
+- Run each benchmark more than once and compare medians instead of single runs.
+- Keep power mode, thermal state, and background workload as stable as possible.
+- Treat Jest-based microbenchmarks as trend indicators, not absolute truth.
+
 ## Baseline
 
 Initial benchmark results before the optimization:
