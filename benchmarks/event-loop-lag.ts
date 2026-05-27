@@ -1,6 +1,7 @@
 // Run with:
 //   node --loader ts-node/esm --no-warnings benchmarks/event-loop-lag.ts
 import { performance, monitorEventLoopDelay } from 'perf_hooks';
+import { setImmediate as yieldToEventLoop } from 'timers/promises';
 import { GitHubClient } from '../src/GitHubClient.js';
 import {
   installFetchMock,
@@ -38,6 +39,7 @@ async function measureEventLoopLag(
 
   const h = monitorEventLoopDelay({ resolution: EL_RESOLUTION_MS });
   h.enable();
+  await yieldToEventLoop();
   const t0 = performance.now();
 
   for (let i = 0; i < iterations; i++) {
@@ -45,6 +47,7 @@ async function measureEventLoopLag(
   }
 
   const elapsed = performance.now() - t0;
+  await yieldToEventLoop();
   h.disable();
 
   const result: ELResult = {
@@ -62,6 +65,7 @@ async function measureEventLoopLag(
   console.log(`\n--- ${label} ---`);
   console.log(`  iterations  : ${iterations.toLocaleString()}`);
   console.log(`  elapsed ms  : ${elapsed.toFixed(2)}`);
+  console.log(`  avg op ms   : ${(elapsed / iterations).toFixed(4)}`);
   const fmt = (v: number) => Number.isNaN(v) ? '<1ms' : v.toFixed(4);
   console.log(`  EL mean ms  : ${fmt(result.meanMs)}`);
   console.log(`  EL p50  ms  : ${fmt(result.p50Ms)}`);
@@ -70,7 +74,7 @@ async function measureEventLoopLag(
   console.log(`  EL max  ms  : ${fmt(result.maxMs)}`);
 
   if (result.exceededThreshold) {
-    console.warn(`  WARN: p99 (${result.p99Ms.toFixed(2)}ms) exceeds threshold (${MAX_P99_MS}ms)`);
+    console.log(`  WARN: p99 (${result.p99Ms.toFixed(2)}ms) exceeds threshold (${MAX_P99_MS}ms)`);
   }
 
   return result;
@@ -141,7 +145,7 @@ async function main(): Promise<void> {
     () => gh.currentUser(),
   );
 
-  // 7. Empty listeners — isolates Map iteration from serialization cost
+  // 7. Empty listeners — isolates listener fanout from serialization cost
   installFetchMock(() => makeJsonResponse(mockUserFixture));
   gh = new GitHubClient({ token: MOCK_TOKEN });
   for (let i = 0; i < 10; i++) {
@@ -150,7 +154,7 @@ async function main(): Promise<void> {
     });
   }
   await measureEventLoopLag(
-    'EL: GET /user with 10 empty listeners (Map iteration only)',
+    'EL: GET /user with 10 empty listeners (array fanout only)',
     () => gh.currentUser(),
   );
 

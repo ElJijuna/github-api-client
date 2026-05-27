@@ -296,3 +296,57 @@ implementation keeps that fanout below the benchmark threshold.
 JSON-serializing listeners remain much more expensive than empty listeners, as
 expected. Users should avoid heavy synchronous logging callbacks if they care
 about high-throughput mocked or local workloads.
+
+## Event Loop Lag Benchmark Notes
+
+Command used:
+
+```sh
+npm run bench:eventloop
+```
+
+The event-loop benchmark uses Node's `monitorEventLoopDelay()` to detect how
+long a benchmark scenario monopolizes the current event-loop turn. The harness
+now yields once after enabling the monitor and once after the workload before
+reading the histogram; without those yields, very fast promise/microtask-heavy
+workloads could finish before the monitor had a chance to sample.
+
+The output also includes `avg op ms` to make the warnings easier to interpret.
+For example, a p99 warning around 20ms may represent 3,000 mocked operations
+executed back-to-back, not a single slow client call.
+
+### Results
+
+| Case | Elapsed | Avg op | Event-loop p99 |
+| --- | ---: | ---: | ---: |
+| Serial GET `/user` baseline | 8.70 ms | 0.0029 ms | 0.0005 ms |
+| Serial GET list with `Link` header | 20.15 ms | 0.0067 ms | 20.7749 ms |
+| Serial GET list without `Link` header | 14.02 ms | 0.0047 ms | 14.6801 ms |
+| URL construction, 5 query params | 26.06 ms | 0.0087 ms | 26.1489 ms |
+| `Promise.all(10)` concurrent GET batches | 14.35 ms | 0.0478 ms | 16.8591 ms |
+| `Promise.all(50)` concurrent GET batches | 6.83 ms | 0.1138 ms | 7.2212 ms |
+| `Promise.all(100)` concurrent GET batches | 4.18 ms | 0.0836 ms | 4.2312 ms |
+| GET `/user` with 10 JSON-serializing listeners | 162.07 ms | 0.0540 ms | 162.1361 ms |
+| GET `/user` with 10 empty listeners | 10.65 ms | 0.0036 ms | 10.6988 ms |
+
+### Analysis
+
+The client does not show a single-request event-loop problem. Per-operation
+costs remain tiny in the mocked environment.
+
+Warnings appear when many immediately-resolved operations run back-to-back in
+one event-loop turn. This is most visible in:
+
+- URL/list scenarios, where thousands of synchronous URL/header/list operations
+  run without a macrotask yield.
+- JSON-serializing request listeners, which add real synchronous CPU work on
+  every request event.
+
+The largest risk remains user-provided listener work, not the core client.
+Ten empty listeners cost about 0.0036ms per request, while ten JSON-serializing
+listeners cost about 0.0540ms per request and can monopolize the event loop for
+over 160ms when repeated 3,000 times in a tight mocked loop.
+
+Recommendation: keep request listeners synchronous and lightweight. If logging
+does expensive serialization or I/O preparation, batch it, sample it, or defer
+it outside the hot request path.
