@@ -85,6 +85,45 @@ interface SearchResult<T> {
 export class GitHubClient {
   private readonly security: Security;
   private readonly listeners: Map<keyof GitHubClientEvents, GitHubClientEvents[keyof GitHubClientEvents][]> = new Map();
+  private readonly requestFn: RequestFn = <T>(
+    path: string,
+    params?: Record<string, string | number | boolean>,
+    signal?: AbortSignal,
+  ) => this.request<T>(path, params, { signal });
+  private readonly requestListFn: RequestListFn = <T>(
+    path: string,
+    params?: Record<string, string | number | boolean>,
+    signal?: AbortSignal,
+  ) => this.requestList<T>(path, params, signal);
+  private readonly requestTextFn: RequestTextFn = (
+    path: string,
+    params?: Record<string, string | number | boolean>,
+    signal?: AbortSignal,
+  ) => this.requestText(path, params, signal);
+  private readonly requestBodyFn: RequestBodyFn = <T>(
+    path: string,
+    body: unknown,
+    signal?: AbortSignal,
+  ) => this.requestPost<T>(path, body, signal);
+  private readonly requestPatchFn: RequestPatchFn = <T>(
+    path: string,
+    body: unknown,
+    signal?: AbortSignal,
+  ) => this.requestPatch<T>(path, body, signal);
+  private readonly requestDeleteFn: RequestDeleteFn = (path: string, signal?: AbortSignal) =>
+    this.requestDelete(path, signal);
+  private readonly requestPutFn: RequestPutFn = (path: string, signal?: AbortSignal) =>
+    this.requestPut(path, signal);
+  private readonly requestBodyPutFn: RequestBodyPutFn = <T>(
+    path: string,
+    body: unknown,
+    signal?: AbortSignal,
+  ) => this.requestBodyPut<T>(path, body, signal);
+  private readonly graphQLFn: GraphQLFn = <T>(
+    query: string,
+    variables?: Record<string, unknown>,
+    signal?: AbortSignal,
+  ) => this.requestGraphQL<T>(query, variables, signal);
 
   /**
    * @param options - Authentication and connection options
@@ -122,6 +161,30 @@ export class GitHubClient {
     }
   }
 
+  private startRequestEvent(): Date | undefined {
+    return this.listeners.has('request') ? new Date() : undefined;
+  }
+
+  private emitRequestEvent(
+    method: RequestEvent['method'],
+    url: string,
+    startedAt: Date | undefined,
+    statusCode?: number,
+    error?: Error,
+  ): void {
+    if (!startedAt) return;
+    const finishedAt = new Date();
+    this.emit('request', {
+      url,
+      method,
+      startedAt,
+      finishedAt,
+      durationMs: finishedAt.getTime() - startedAt.getTime(),
+      statusCode,
+      ...(error ? { error } : {}),
+    });
+  }
+
   /**
    * Performs an authenticated GET request returning a single JSON object.
    * @internal
@@ -133,7 +196,7 @@ export class GitHubClient {
   ): Promise<T> {
     const base = `${this.security.getApiUrl()}${path}`;
     const url = buildUrl(base, params);
-    const startedAt = new Date();
+    const startedAt = this.startRequestEvent();
     let statusCode: number | undefined;
     try {
       const headers = options?.headers ?? this.security.getHeaders();
@@ -143,11 +206,10 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
       const data = await response.json() as T;
-      this.emit('request', { url, method: 'GET', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      this.emitRequestEvent('GET', url, startedAt, statusCode);
       return data;
     } catch (err) {
-      const finishedAt = new Date();
-      this.emit('request', { url, method: 'GET', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }
@@ -164,7 +226,7 @@ export class GitHubClient {
   ): Promise<GitHubPagedResponse<T>> {
     const base = `${this.security.getApiUrl()}${path}`;
     const url = buildUrl(base, params);
-    const startedAt = new Date();
+    const startedAt = this.startRequestEvent();
     let statusCode: number | undefined;
     try {
       const response = await fetch(url, { headers: this.security.getHeaders(), signal });
@@ -175,15 +237,14 @@ export class GitHubClient {
       const data = await response.json() as T[];
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
-      this.emit('request', { url, method: 'GET', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      this.emitRequestEvent('GET', url, startedAt, statusCode);
       return {
         values: data,
         hasNextPage: nextPage !== undefined,
         nextPage,
       };
     } catch (err) {
-      const finishedAt = new Date();
-      this.emit('request', { url, method: 'GET', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }
@@ -200,7 +261,7 @@ export class GitHubClient {
   ): Promise<string> {
     const base = `${this.security.getApiUrl()}${path}`;
     const url = buildUrl(base, params);
-    const startedAt = new Date();
+    const startedAt = this.startRequestEvent();
     let statusCode: number | undefined;
     try {
       const response = await fetch(url, { headers: this.security.getRawHeaders(), signal });
@@ -209,33 +270,29 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
       const text = await response.text();
-      this.emit('request', { url, method: 'GET', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      this.emitRequestEvent('GET', url, startedAt, statusCode);
       return text;
     } catch (err) {
-      const finishedAt = new Date();
-      this.emit('request', { url, method: 'GET', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }
 
   private makeRequestFn(): RequestFn {
-    return <T>(path: string, params?: Record<string, string | number | boolean>, signal?: AbortSignal) =>
-      this.request<T>(path, params, { signal });
+    return this.requestFn;
   }
 
   private makeRequestListFn(): RequestListFn {
-    return <T>(path: string, params?: Record<string, string | number | boolean>, signal?: AbortSignal) =>
-      this.requestList<T>(path, params, signal);
+    return this.requestListFn;
   }
 
   private makeRequestTextFn(): RequestTextFn {
-    return (path: string, params?: Record<string, string | number | boolean>, signal?: AbortSignal) =>
-      this.requestText(path, params, signal);
+    return this.requestTextFn;
   }
 
   private async requestPost<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
     const url = `${this.security.getApiUrl()}${path}`;
-    const startedAt = new Date();
+    const startedAt = this.startRequestEvent();
     let statusCode: number | undefined;
     try {
       const response = await fetch(url, {
@@ -249,23 +306,21 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
       const data = response.status !== 204 ? await response.json() as T : undefined as unknown as T;
-      this.emit('request', { url, method: 'POST', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      this.emitRequestEvent('POST', url, startedAt, statusCode);
       return data;
     } catch (err) {
-      const finishedAt = new Date();
-      this.emit('request', { url, method: 'POST', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      this.emitRequestEvent('POST', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }
 
   private makeRequestBodyFn(): RequestBodyFn {
-    return <T>(path: string, body: unknown, signal?: AbortSignal) =>
-      this.requestPost<T>(path, body, signal);
+    return this.requestBodyFn;
   }
 
   private async requestPatch<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
     const url = `${this.security.getApiUrl()}${path}`;
-    const startedAt = new Date();
+    const startedAt = this.startRequestEvent();
     let statusCode: number | undefined;
     try {
       const response = await fetch(url, {
@@ -279,18 +334,17 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
       const data = await response.json() as T;
-      this.emit('request', { url, method: 'PATCH', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      this.emitRequestEvent('PATCH', url, startedAt, statusCode);
       return data;
     } catch (err) {
-      const finishedAt = new Date();
-      this.emit('request', { url, method: 'PATCH', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      this.emitRequestEvent('PATCH', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }
 
   private async requestDelete(path: string, signal?: AbortSignal): Promise<void> {
     const url = `${this.security.getApiUrl()}${path}`;
-    const startedAt = new Date();
+    const startedAt = this.startRequestEvent();
     let statusCode: number | undefined;
     try {
       const response = await fetch(url, {
@@ -302,27 +356,24 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
-      this.emit('request', { url, method: 'DELETE', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      this.emitRequestEvent('DELETE', url, startedAt, statusCode);
     } catch (err) {
-      const finishedAt = new Date();
-      this.emit('request', { url, method: 'DELETE', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      this.emitRequestEvent('DELETE', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }
 
   private makeRequestPatchFn(): RequestPatchFn {
-    return <T>(path: string, body: unknown, signal?: AbortSignal) =>
-      this.requestPatch<T>(path, body, signal);
+    return this.requestPatchFn;
   }
 
   private makeRequestDeleteFn(): RequestDeleteFn {
-    return (path: string, signal?: AbortSignal) =>
-      this.requestDelete(path, signal);
+    return this.requestDeleteFn;
   }
 
   private async requestPut(path: string, signal?: AbortSignal): Promise<void> {
     const url = `${this.security.getApiUrl()}${path}`;
-    const startedAt = new Date();
+    const startedAt = this.startRequestEvent();
     let statusCode: number | undefined;
     try {
       const response = await fetch(url, {
@@ -334,22 +385,20 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
-      this.emit('request', { url, method: 'PUT', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      this.emitRequestEvent('PUT', url, startedAt, statusCode);
     } catch (err) {
-      const finishedAt = new Date();
-      this.emit('request', { url, method: 'PUT', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      this.emitRequestEvent('PUT', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }
 
   private makeRequestPutFn(): RequestPutFn {
-    return (path: string, signal?: AbortSignal) =>
-      this.requestPut(path, signal);
+    return this.requestPutFn;
   }
 
   private async requestBodyPut<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
     const url = `${this.security.getApiUrl()}${path}`;
-    const startedAt = new Date();
+    const startedAt = this.startRequestEvent();
     let statusCode: number | undefined;
     try {
       const response = await fetch(url, {
@@ -363,23 +412,21 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
       const data = response.status !== 204 ? await response.json() as T : undefined as unknown as T;
-      this.emit('request', { url, method: 'PUT', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      this.emitRequestEvent('PUT', url, startedAt, statusCode);
       return data;
     } catch (err) {
-      const finishedAt = new Date();
-      this.emit('request', { url, method: 'PUT', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      this.emitRequestEvent('PUT', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }
 
   private makeRequestBodyPutFn(): RequestBodyPutFn {
-    return <T>(path: string, body: unknown, signal?: AbortSignal) =>
-      this.requestBodyPut<T>(path, body, signal);
+    return this.requestBodyPutFn;
   }
 
   private async requestGraphQL<T>(query: string, variables?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
     const url = `${this.security.getApiUrl()}/graphql`;
-    const startedAt = new Date();
+    const startedAt = this.startRequestEvent();
     let statusCode: number | undefined;
     try {
       const response = await fetch(url, {
@@ -396,18 +443,16 @@ export class GitHubClient {
       if (json.errors?.length) {
         throw new Error(json.errors.map(e => e.message).join('; '));
       }
-      this.emit('request', { url, method: 'POST', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      this.emitRequestEvent('POST', url, startedAt, statusCode);
       return json.data as T;
     } catch (err) {
-      const finishedAt = new Date();
-      this.emit('request', { url, method: 'POST', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      this.emitRequestEvent('POST', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }
 
   private makeGraphQLFn(): GraphQLFn {
-    return <T>(query: string, variables?: Record<string, unknown>, signal?: AbortSignal) =>
-      this.requestGraphQL<T>(query, variables, signal);
+    return this.graphQLFn;
   }
 
   /**
@@ -558,7 +603,7 @@ export class GitHubClient {
   async searchRepos(params: SearchReposParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubRepository>> {
     const base = `${this.security.getApiUrl()}/search/repositories`;
     const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
-    const startedAt = new Date();
+    const startedAt = this.startRequestEvent();
     let statusCode: number | undefined;
     try {
       const response = await fetch(url, { headers: this.security.getHeaders(), signal });
@@ -569,7 +614,7 @@ export class GitHubClient {
       const data = await response.json() as SearchResult<GitHubRepository>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
-      this.emit('request', { url, method: 'GET', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      this.emitRequestEvent('GET', url, startedAt, statusCode);
       return {
         values: data.items,
         hasNextPage: nextPage !== undefined,
@@ -577,8 +622,7 @@ export class GitHubClient {
         totalCount: data.total_count,
       };
     } catch (err) {
-      const finishedAt = new Date();
-      this.emit('request', { url, method: 'GET', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }
@@ -693,7 +737,7 @@ export class GitHubClient {
    */
   private async requestPatchVoid(path: string, signal?: AbortSignal): Promise<void> {
     const url = `${this.security.getApiUrl()}${path}`;
-    const startedAt = new Date();
+    const startedAt = this.startRequestEvent();
     let statusCode: number | undefined;
     try {
       const response = await fetch(url, {
@@ -705,10 +749,9 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
-      this.emit('request', { url, method: 'PATCH', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      this.emitRequestEvent('PATCH', url, startedAt, statusCode);
     } catch (err) {
-      const finishedAt = new Date();
-      this.emit('request', { url, method: 'PATCH', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      this.emitRequestEvent('PATCH', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }
@@ -811,7 +854,7 @@ export class GitHubClient {
   async searchIssues(params: SearchIssuesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubIssue>> {
     const base = `${this.security.getApiUrl()}/search/issues`;
     const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
-    const startedAt = new Date();
+    const startedAt = this.startRequestEvent();
     let statusCode: number | undefined;
     try {
       const response = await fetch(url, { headers: this.security.getHeaders(), signal });
@@ -822,7 +865,7 @@ export class GitHubClient {
       const data = await response.json() as SearchResult<GitHubIssue>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
-      this.emit('request', { url, method: 'GET', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      this.emitRequestEvent('GET', url, startedAt, statusCode);
       return {
         values: data.items,
         hasNextPage: nextPage !== undefined,
@@ -830,8 +873,7 @@ export class GitHubClient {
         totalCount: data.total_count,
       };
     } catch (err) {
-      const finishedAt = new Date();
-      this.emit('request', { url, method: 'GET', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }
@@ -853,7 +895,7 @@ export class GitHubClient {
   async searchUsers(params: SearchUsersParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubUser>> {
     const base = `${this.security.getApiUrl()}/search/users`;
     const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
-    const startedAt = new Date();
+    const startedAt = this.startRequestEvent();
     let statusCode: number | undefined;
     try {
       const response = await fetch(url, { headers: this.security.getHeaders(), signal });
@@ -864,7 +906,7 @@ export class GitHubClient {
       const data = await response.json() as SearchResult<GitHubUser>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
-      this.emit('request', { url, method: 'GET', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      this.emitRequestEvent('GET', url, startedAt, statusCode);
       return {
         values: data.items,
         hasNextPage: nextPage !== undefined,
@@ -872,8 +914,7 @@ export class GitHubClient {
         totalCount: data.total_count,
       };
     } catch (err) {
-      const finishedAt = new Date();
-      this.emit('request', { url, method: 'GET', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }
@@ -896,7 +937,7 @@ export class GitHubClient {
   async searchCode(params: SearchCodeParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubCodeResult>> {
     const base = `${this.security.getApiUrl()}/search/code`;
     const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
-    const startedAt = new Date();
+    const startedAt = this.startRequestEvent();
     let statusCode: number | undefined;
     try {
       const response = await fetch(url, { headers: this.security.getHeaders(), signal });
@@ -907,7 +948,7 @@ export class GitHubClient {
       const data = await response.json() as SearchResult<GitHubCodeResult>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
-      this.emit('request', { url, method: 'GET', startedAt, finishedAt: new Date(), durationMs: Date.now() - startedAt.getTime(), statusCode });
+      this.emitRequestEvent('GET', url, startedAt, statusCode);
       return {
         values: data.items,
         hasNextPage: nextPage !== undefined,
@@ -915,8 +956,7 @@ export class GitHubClient {
         totalCount: data.total_count,
       };
     } catch (err) {
-      const finishedAt = new Date();
-      this.emit('request', { url, method: 'GET', startedAt, finishedAt, durationMs: finishedAt.getTime() - startedAt.getTime(), statusCode, error: err instanceof Error ? err : new Error(String(err)) });
+      this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }
@@ -928,10 +968,15 @@ export class GitHubClient {
  */
 function buildUrl(base: string, params?: Record<string, string | number | boolean>): string {
   if (!params) return base;
-  const entries = Object.entries(params).filter(([, v]) => v !== undefined);
-  if (entries.length === 0) return base;
-  const search = new URLSearchParams(entries.map(([k, v]) => [k, String(v)]));
-  return `${base}?${search.toString()}`;
+  const search = new URLSearchParams();
+  for (const key in params) {
+    const value = params[key];
+    if (value !== undefined) {
+      search.append(key, String(value));
+    }
+  }
+  const query = search.toString();
+  return query ? `${base}?${query}` : base;
 }
 
 /**
