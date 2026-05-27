@@ -350,3 +350,81 @@ over 160ms when repeated 3,000 times in a tight mocked loop.
 Recommendation: keep request listeners synchronous and lightweight. If logging
 does expensive serialization or I/O preparation, batch it, sample it, or defer
 it outside the hot request path.
+
+## Heap Pressure Benchmark Notes
+
+Command used:
+
+```sh
+npm run bench:heap
+```
+
+The heap benchmark runs with `--expose-gc`, forces GC around measured sections,
+and reports retained heap after GC. This means the main signal is retained
+memory/leak risk, not total temporary allocation churn.
+
+### Initial Result
+
+Initial heap run:
+
+| Case | Throughput | Heap delta after GC |
+| --- | ---: | ---: |
+| GET `/user` | 319,522 ops/s | 22.2 KB |
+| GET list with `Link` header | 52,234 ops/s | 108.8 KB |
+| URL construction, 5 params | 172,152 ops/s | 44.8 KB |
+| GitHubClient constructor, 5,000x | n/a | 25.0 KB |
+| Leak detection, 5 epochs | n/a | 12.8 KB growth |
+| `Security.getHeaders()`, 25,000x | 6,798,823 ops/s | 1.6 KB |
+
+No leak was detected. Growth across leak-detection epochs stayed far below the
+500KB threshold.
+
+### Change Applied
+
+The only clear low-risk improvement was in `parseNextPage()`. The Link-header
+regex was defined inline inside the function. It is now hoisted to a module-level
+constant:
+
+```ts
+const NEXT_PAGE_RE = /<[^>]*[?&]page=(\d+)[^>]*>;\s*rel="next"/;
+```
+
+This avoids recreating the regular expression on each Link-header parse.
+
+The heap benchmark shared the same event-loop monitor timing issue as
+`bench:eventloop`, so the shared benchmark helper now yields once after enabling
+the monitor and once before disabling it. It also reports `avg op ms`.
+
+The constructor diagnostic text was updated to match the current implementation:
+request listeners are stored in an array, not a `Map`.
+
+### Final Result
+
+Final heap run:
+
+| Case | Throughput | Avg op | Heap delta after GC |
+| --- | ---: | ---: | ---: |
+| GET `/user` | 248,667 ops/s | 0.0040 ms | 31.5 KB |
+| GET list with `Link` header | 114,946 ops/s | 0.0087 ms | 79.1 KB |
+| URL construction, 5 params | 184,635 ops/s | 0.0054 ms | 43.3 KB |
+| GitHubClient constructor, 5,000x | n/a | n/a | 28.2 KB |
+| Leak detection, 5 epochs | n/a | n/a | 25.4 KB growth |
+| `Security.getHeaders()`, 25,000x | 7,703,303 ops/s | 130 ns/call | 2.0 KB |
+
+### Analysis
+
+Heap behavior is healthy. The benchmark does not show monotonic growth or
+retained memory near the leak threshold.
+
+The Link-header path improved after hoisting the regex:
+
+- Heap delta dropped from 108.8KB to 79.1KB.
+- Throughput improved from 52,234 ops/s to 114,946 ops/s in the measured run.
+
+The remaining heap deltas are small and consistent with retained runtime noise,
+JIT/runtime bookkeeping, and benchmark harness effects after forced GC.
+
+`Security.getHeaders()` still recreates a headers object per call, but the
+post-GC retained heap is tiny. Optimizing it would be more about temporary
+allocation/throughput than leak prevention, and caching headers would need a
+careful API decision because callers currently receive a fresh mutable object.

@@ -65,6 +65,8 @@ interface SearchResult<T> {
   items: T[];
 }
 
+const NEXT_PAGE_RE = /<[^>]*[?&]page=(\d+)[^>]*>;\s*rel="next"/;
+
 /**
  * Main entry point for the GitHub REST API client.
  *
@@ -982,6 +984,6 @@ function buildUrl(base: string, params?: Record<string, string | number | boolea
  */
 function parseNextPage(linkHeader: string | null): number | undefined {
   if (!linkHeader) return undefined;
-  const match = linkHeader.match(/<[^>]*[?&]page=(\d+)[^>]*>;\s*rel="next"/);
+  const match = linkHeader.match(NEXT_PAGE_RE);
   return match ? parseInt(match[1], 10) : undefined;
 }

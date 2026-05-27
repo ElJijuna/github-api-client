@@ -1,4 +1,5 @@
 import { PerformanceObserver, monitorEventLoopDelay, performance } from 'perf_hooks';
+import { setImmediate as yieldToEventLoop } from 'timers/promises';
 import v8 from 'v8';
 import { forceGc } from './bench-helpers.js';
 
@@ -112,11 +113,13 @@ export async function runBenchmark(
   const { gcStats, disconnect: gcDisconnect } = setupGcObserver();
   const elMonitor = setupEventLoopMonitor(1);
   const heapBefore = snapshotHeap();
+  await yieldToEventLoop();
   const t0 = performance.now();
 
   for (let i = 0; i < iterations; i++) await operation();
 
   const elapsedMs = performance.now() - t0;
+  await yieldToEventLoop();
   elMonitor.disable();
   gcDisconnect();
 
@@ -140,6 +143,7 @@ export function printResult(result: BenchmarkResult): void {
   console.log(`\n--- ${result.label} ---`);
   console.log(`  iterations  : ${result.iterations.toLocaleString()}`);
   console.log(`  elapsed ms  : ${result.elapsedMs.toFixed(2)}`);
+  console.log(`  avg op ms   : ${(result.elapsedMs / result.iterations).toFixed(4)}`);
   console.log(`  throughput  : ${result.throughputOpsPerSec.toLocaleString()} ops/s`);
   console.log(`  heap delta  : ${result.heapDeltaKb.toFixed(1)} KB`);
   console.log(`  GC minor    : ${result.gcStats.minorCount}`);

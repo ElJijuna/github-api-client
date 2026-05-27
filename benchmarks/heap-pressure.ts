@@ -85,7 +85,7 @@ async function benchHeapClientCreation(): Promise<void> {
   console.log(`  heap delta after GC: ${deltaKb.toFixed(1)} KB`);
   console.log(`  bytes per ctor     : ${bytesPerCtor.toFixed(1)}`);
   if (deltaKb > 0) {
-    console.log(`  Candidates: Map() for listeners, Security instance`);
+    console.log(`  Candidates: request listener array, cached request adapters, Security instance`);
   }
 }
 
