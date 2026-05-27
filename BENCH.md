@@ -455,3 +455,118 @@ JIT/runtime bookkeeping, and benchmark harness effects after forced GC.
 post-GC retained heap is tiny. Optimizing it would be more about temporary
 allocation/throughput than leak prevention, and caching headers would need a
 careful API decision because callers currently receive a fresh mutable object.
+
+## Node.js 25 Benchmark Rerun
+
+Command used:
+
+```sh
+source ~/.nvm/nvm.sh && nvm use 25 && npm run bench
+```
+
+Runtime used for this rerun:
+
+| Item | Value |
+| --- | --- |
+| Node.js | v25.9.0 |
+| npm | 11.12.1 |
+| V8 | 14.1.146.11-node.25 |
+| libuv | 1.51.0 |
+| platform | linux x64 |
+
+The shell did not inherit `nvm use 25` automatically, so the benchmark command
+explicitly sourced `~/.nvm/nvm.sh` before selecting Node 25.
+
+### Jest Performance Benchmarks
+
+All Jest performance suites passed:
+
+- 3 test suites passed.
+- 20 tests passed.
+
+Throughput results:
+
+| Case | Node 25 result |
+| --- | ---: |
+| GET `/user` | 319,223 ops/s |
+| GET list without `Link` header | 154,969 ops/s |
+| GET list with `Link` header | 131,481 ops/s |
+| GET raw text | 289,894 ops/s |
+| POST JSON body | 53,561 ops/s |
+| PATCH void | 376,500 ops/s |
+| DELETE void | 376,985 ops/s |
+| PUT void | 551,303 ops/s |
+| GraphQL POST | 303,595 ops/s |
+| `Security.getHeaders()` | 7,657,800 ops/s |
+| URL with 4 query params | 238,434 ops/s |
+
+Concurrent results:
+
+| Case | Node 25 result |
+| --- | ---: |
+| c=10 GET batches | 270,378 ops/s |
+| c=50 GET batches | 484,174 ops/s |
+| c=100 GET batches | 549,027 ops/s |
+| Mixed 100 concurrent ops | 0.75 ms total |
+| 0 request listeners | 398,106 ops/s |
+| 1 request listener | 248,567 ops/s |
+| 10 request listeners | 367,557 ops/s |
+| Telemetry activation cost, 0 to 1 listener | 37.6% |
+| Listener fanout degradation, 1 to 10 listeners | -47.9% |
+| 3 JSON listeners | 54,529 ops/s |
+| AbortSignal per request | 500,190 ops/s |
+
+The negative fanout degradation means the 10-listener run measured faster than
+the 1-listener run in this single sample. That is benchmark noise/JIT behavior,
+not evidence that more listeners are inherently faster. This reinforces that
+listener microbenchmarks should be repeated and compared by medians.
+
+### Heap Benchmark
+
+Heap results under Node 25:
+
+| Case | Throughput | Avg op | Heap delta after GC |
+| --- | ---: | ---: | ---: |
+| GET `/user` | 626,234 ops/s | 0.0016 ms | 29.5 KB |
+| GET list with `Link` header | 192,781 ops/s | 0.0052 ms | 75.5 KB |
+| URL construction, 5 params | 141,219 ops/s | 0.0071 ms | 17.3 KB |
+| GitHubClient constructor, 5,000x | n/a | n/a | 18.0 KB |
+| Leak detection, 5 epochs | n/a | n/a | -1.3 KB growth |
+| `Security.getHeaders()`, 25,000x | 5,972,086 ops/s | 167 ns/call | 5.2 KB |
+
+No leak was detected. Heap remained stable across epochs.
+
+### Event Loop Benchmark
+
+Event-loop results under Node 25:
+
+| Case | Elapsed | Avg op | Event-loop p99 |
+| --- | ---: | ---: | ---: |
+| Serial GET `/user` baseline | 6.49 ms | 0.0022 ms | 7.6759 ms |
+| Serial GET list with `Link` header | 19.71 ms | 0.0066 ms | 20.0376 ms |
+| Serial GET list without `Link` header | 6.32 ms | 0.0021 ms | 6.3816 ms |
+| URL construction, 5 query params | 12.32 ms | 0.0041 ms | 12.3781 ms |
+| `Promise.all(10)` concurrent GET batches | 4.09 ms | 0.0136 ms | 4.3459 ms |
+| `Promise.all(50)` concurrent GET batches | 3.34 ms | 0.0556 ms | 3.3751 ms |
+| `Promise.all(100)` concurrent GET batches | 7.61 ms | 0.1522 ms | 7.8193 ms |
+| GET `/user` with 10 JSON-serializing listeners | 112.97 ms | 0.0377 ms | 113.0496 ms |
+| GET `/user` with 10 empty listeners | 5.77 ms | 0.0019 ms | 5.8081 ms |
+
+### Node 25 Analysis
+
+Node 25 generally improves the benchmark profile on this machine:
+
+- Concurrency is notably stronger, especially c=50 and c=100 batches.
+- Event-loop elapsed time improves in most scenarios.
+- Heap leak detection remains clean.
+- Empty listener fanout is very cheap under Node 25.
+- JSON-serializing listeners are still the dominant synchronous event-loop cost.
+
+The main regressions/noisy spots in this single run:
+
+- POST throughput was lower than some Node 22 runs.
+- `Security.getHeaders()` isolated throughput was lower than some Node 22 runs.
+- Listener fanout metrics showed clear microbenchmark noise.
+
+Recommendation: use Node 25 results as a promising data point, but run each
+benchmark multiple times and compare medians before changing thresholds.
