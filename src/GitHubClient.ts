@@ -84,7 +84,7 @@ interface SearchResult<T> {
  */
 export class GitHubClient {
   private readonly security: Security;
-  private readonly listeners: Map<keyof GitHubClientEvents, GitHubClientEvents[keyof GitHubClientEvents][]> = new Map();
+  private readonly requestListeners: GitHubClientEvents['request'][] = [];
   private readonly requestFn: RequestFn = <T>(
     path: string,
     params?: Record<string, string | number | boolean>,
@@ -145,24 +145,14 @@ export class GitHubClient {
    * ```
    */
   on<K extends keyof GitHubClientEvents>(event: K, callback: GitHubClientEvents[K]): this {
-    const callbacks = this.listeners.get(event) ?? [];
-    callbacks.push(callback);
-    this.listeners.set(event, callbacks);
+    if (event === 'request') {
+      this.requestListeners.push(callback as GitHubClientEvents['request']);
+    }
     return this;
   }
 
-  private emit<K extends keyof GitHubClientEvents>(
-    event: K,
-    payload: Parameters<GitHubClientEvents[K]>[0],
-  ): void {
-    const callbacks = this.listeners.get(event) ?? [];
-    for (const cb of callbacks) {
-      (cb as (p: typeof payload) => void)(payload);
-    }
-  }
-
   private startRequestEvent(): Date | undefined {
-    return this.listeners.has('request') ? new Date() : undefined;
+    return this.requestListeners.length > 0 ? new Date() : undefined;
   }
 
   private emitRequestEvent(
@@ -174,7 +164,7 @@ export class GitHubClient {
   ): void {
     if (!startedAt) return;
     const finishedAt = new Date();
-    this.emit('request', {
+    const payload: RequestEvent = {
       url,
       method,
       startedAt,
@@ -182,7 +172,10 @@ export class GitHubClient {
       durationMs: finishedAt.getTime() - startedAt.getTime(),
       statusCode,
       ...(error ? { error } : {}),
-    });
+    };
+    for (const listener of this.requestListeners) {
+      listener(payload);
+    }
   }
 
   /**

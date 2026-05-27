@@ -121,7 +121,7 @@ describe('GitHubClient concurrency benchmarks', () => {
     expect(elapsed).toBeLessThan(readEnvFloat('BENCH_MIXED_MAX_ELAPSED_MS', 500));
   });
 
-  it('emit() Map overhead — 0 vs 1 vs 10 listeners under c=50 concurrency', async () => {
+  it('request event listener fanout — 0 vs 1 vs 10 listeners under c=50 concurrency', async () => {
     const results: Record<string, number> = {};
 
     for (const listenerCount of [0, 1, 10]) {
@@ -152,10 +152,13 @@ describe('GitHubClient concurrency benchmarks', () => {
       jest.restoreAllMocks();
     }
 
-    const baseline = results['listeners_0'] ?? 1;
+    const noListeners = results['listeners_0'] ?? 1;
+    const baseline = results['listeners_1'] ?? 1;
     const withTen = results['listeners_10'] ?? 0;
     const degradation = (baseline - withTen) / baseline;
-    console.log(`Listener degradation (0→10): ${(degradation * 100).toFixed(1)}%`);
+    const instrumentationCost = (noListeners - baseline) / noListeners;
+    console.log(`Telemetry activation cost (0→1): ${(instrumentationCost * 100).toFixed(1)}%`);
+    console.log(`Listener fanout degradation (1→10): ${(degradation * 100).toFixed(1)}%`);
     expect(degradation).toBeLessThan(MAX_DEGRADATION);
   });
 

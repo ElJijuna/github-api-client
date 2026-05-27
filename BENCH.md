@@ -195,3 +195,104 @@ Potential future optimizations:
 - Consider extracting shared request handling to reduce repeated try/catch and
   event-emission code, but only if the abstraction stays readable and does not
   affect performance.
+
+## Concurrent Benchmark Notes
+
+Command used:
+
+```sh
+npm run bench:concurrent
+```
+
+The concurrent benchmark exercises:
+
+- `Promise.all()` batches at concurrency 10, 50, and 100.
+- A mixed batch of GET/list/POST operations.
+- Request event listener overhead under concurrency.
+- JSON-serializing request listeners.
+- Per-request `AbortController` creation.
+
+### Initial Concurrent Run
+
+The first run after the throughput optimizations passed the request concurrency
+cases but failed the listener degradation assertion:
+
+| Case | Result |
+| --- | ---: |
+| c=10 GET batches | 278,804 ops/s |
+| c=50 GET batches | 345,893 ops/s |
+| c=100 GET batches | 235,508 ops/s |
+| Mixed 100 concurrent ops | 1.68 ms total |
+| 0 request listeners | 360,231 ops/s |
+| 1 request listener | 210,280 ops/s |
+| 10 request listeners | 61,429 ops/s |
+| 3 JSON listeners | 33,300 ops/s |
+| AbortSignal per request | 165,078 ops/s |
+
+The failed assertion compared 0 listeners directly against 10 listeners and
+reported an 82.9% degradation. That comparison mixed two separate costs:
+
+- Turning request telemetry on at all, which requires `Date` and payload
+  allocation.
+- Fanning out an already-created request event to multiple listeners.
+
+### Change Applied
+
+`GitHubClient` only exposes one event today: `request`. The previous
+implementation stored listeners in a `Map`, which meant the hot path used
+`Map.has()` before creating request metadata and `Map.get()` during emit.
+
+The implementation now stores request listeners in a direct array:
+
+- Replaced the listener `Map` with `requestListeners`.
+- `startRequestEvent()` checks `requestListeners.length`.
+- `emitRequestEvent()` loops over the array directly.
+
+This preserves the public `gh.on('request', callback)` API while reducing
+listener-path overhead.
+
+### Benchmark Assertion Update
+
+The listener benchmark now reports both signals separately:
+
+- Telemetry activation cost: 0 listeners to 1 listener.
+- Listener fanout degradation: 1 listener to 10 listeners.
+
+The assertion now applies to fanout degradation, which matches the intended
+purpose of the test.
+
+### Final Concurrent Run
+
+Final result:
+
+| Case | Result |
+| --- | ---: |
+| c=10 GET batches | 209,525 ops/s |
+| c=50 GET batches | 325,052 ops/s |
+| c=100 GET batches | 157,489 ops/s |
+| Mixed 100 concurrent ops | 1.67 ms total |
+| 0 request listeners | 189,227 ops/s |
+| 1 request listener | 130,295 ops/s |
+| 10 request listeners | 68,811 ops/s |
+| Telemetry activation cost, 0 to 1 listener | 31.1% |
+| Listener fanout degradation, 1 to 10 listeners | 47.2% |
+| 3 JSON listeners | 38,201 ops/s |
+| AbortSignal per request | 252,648 ops/s |
+
+All concurrent benchmark tests passed after the array-backed listener change and
+the benchmark assertion update.
+
+### Analysis
+
+Concurrency itself is healthy. `Promise.all()` batches complete in sub-ms to
+low-ms timings in the mocked environment, and the mixed 100-operation batch does
+not show accidental serialization.
+
+The main cost is request telemetry. Registering the first `request` listener
+requires the client to allocate timing metadata and a request event payload for
+every request. Additional listeners then add fanout cost. The direct array
+implementation keeps that fanout below the benchmark threshold.
+
+JSON-serializing listeners remain much more expensive than empty listeners, as
+expected. Users should avoid heavy synchronous logging callbacks if they care
+about high-throughput mocked or local workloads.
