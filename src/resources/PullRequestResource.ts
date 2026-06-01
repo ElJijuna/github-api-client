@@ -144,7 +144,8 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
       await this.request<never>(`${this.basePath}/merge`, undefined, signal);
       return true;
     } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') throw err;
+      if (err instanceof DOMException && err.name === 'AbortError') {throw err;}
+
       return false;
     }
   }

@@ -67,9 +67,9 @@ export function setupGcObserver(): { gcStats: GcStats; disconnect: () => void } 
     for (const entry of list.getEntries() as GcEntry[]) {
       const kind = entry.detail?.kind ?? 0;
       gcStats.totalDurationMs += entry.duration;
-      if (kind === GC_KIND_SCAVENGE) gcStats.minorCount++;
-      else if (kind === GC_KIND_MARK_COMPACT) gcStats.majorCount++;
-      else if (kind === GC_KIND_INCREMENTAL) gcStats.incrementalCount++;
+      if (kind === GC_KIND_SCAVENGE) {gcStats.minorCount++;}
+      else if (kind === GC_KIND_MARK_COMPACT) {gcStats.majorCount++;}
+      else if (kind === GC_KIND_INCREMENTAL) {gcStats.incrementalCount++;}
     }
   });
 
@@ -106,9 +106,9 @@ export async function runBenchmark(
 ): Promise<BenchmarkResult> {
   const { warmupIterations = 50, iterations, forceGcBeforeStart = false } = options;
 
-  for (let i = 0; i < warmupIterations; i++) await operation();
+  for (let i = 0; i < warmupIterations; i++) {await operation();}
 
-  if (forceGcBeforeStart) forceGc();
+  if (forceGcBeforeStart) {forceGc();}
 
   const { gcStats, disconnect: gcDisconnect } = setupGcObserver();
   const elMonitor = setupEventLoopMonitor(1);
@@ -116,14 +116,15 @@ export async function runBenchmark(
   await yieldToEventLoop();
   const t0 = performance.now();
 
-  for (let i = 0; i < iterations; i++) await operation();
+  for (let i = 0; i < iterations; i++) {await operation();}
 
   const elapsedMs = performance.now() - t0;
   await yieldToEventLoop();
   elMonitor.disable();
   gcDisconnect();
 
-  if (forceGcBeforeStart) forceGc();
+  if (forceGcBeforeStart) {forceGc();}
+
   const heapAfter = snapshotHeap();
 
   return {

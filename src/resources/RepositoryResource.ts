@@ -503,6 +503,7 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
       if (res.status === 'fulfilled') {
         acc[filePaths[index]] = res.value;
       }
+
       return acc;
     }, {} as Record<string, string>);
   }

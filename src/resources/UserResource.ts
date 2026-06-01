@@ -222,8 +222,9 @@ export class UserResource implements PromiseLike<GitHubUser> {
    */
   async contributionMap(params?: ContributionMapParams, signal?: AbortSignal): Promise<ContributionCalendar> {
     const variables: Record<string, unknown> = { login: this.login };
-    if (params?.from) variables.from = params.from;
-    if (params?.to) variables.to = params.to;
+    if (params?.from) {variables.from = params.from;}
+
+    if (params?.to) {variables.to = params.to;}
 
     const query = `
       query($login: String!, $from: DateTime, $to: DateTime) {

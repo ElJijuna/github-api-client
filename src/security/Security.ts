@@ -31,6 +31,7 @@ export class Security {
     if (!URL.canParse(apiUrl)) {
       throw new TypeError(`Invalid apiUrl: "${apiUrl}" is not a valid URL`);
     }
+
     this.apiUrl = apiUrl.replace(/\/$/, '');
     this.token = token;
   }

@@ -1,4 +1,3 @@
-import type { GitHubUser } from './User';
 import type { GitHubRepository } from './Repository';
 
 /**

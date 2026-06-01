@@ -24,5 +24,8 @@ export default [
         test: 'readonly',
       },
     },
+    rules: {
+      '@typescript-eslint/no-namespace': 'off',
+    },
   },
 ];

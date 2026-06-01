@@ -40,7 +40,7 @@ export interface GitHubWebhook {
  *
  * @see {@link https://docs.github.com/en/rest/webhooks/repos#list-repository-webhooks}
  */
-export interface WebhooksParams extends PaginationParams {}
+export type WebhooksParams = PaginationParams;
 
 /**
  * Request body for creating a repository webhook.

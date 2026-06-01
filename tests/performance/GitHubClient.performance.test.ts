@@ -85,6 +85,7 @@ async function measureAverageMs(operation: () => Promise<unknown>, iterations = 
   for (let i = 0; i < iterations; i += 1) {
     await operation();
   }
+
   return (performance.now() - startedAt) / iterations;
 }
 

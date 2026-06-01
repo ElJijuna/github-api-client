@@ -150,6 +150,7 @@ export class GitHubClient {
     if (event === 'request') {
       this.requestListeners.push(callback as GitHubClientEvents['request']);
     }
+
     return this;
   }
 
@@ -164,7 +165,8 @@ export class GitHubClient {
     statusCode?: number,
     error?: Error,
   ): void {
-    if (!startedAt) return;
+    if (!startedAt) {return;}
+
     const finishedAt = new Date();
     const payload: RequestEvent = {
       url,
@@ -200,6 +202,7 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
+
       const data = await response.json() as T;
       this.emitRequestEvent('GET', url, startedAt, statusCode);
       return data;
@@ -229,6 +232,7 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
+
       const data = await response.json() as T[];
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
@@ -264,6 +268,7 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
+
       const text = await response.text();
       this.emitRequestEvent('GET', url, startedAt, statusCode);
       return text;
@@ -300,6 +305,7 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
+
       const data = response.status !== 204 ? await response.json() as T : undefined as unknown as T;
       this.emitRequestEvent('POST', url, startedAt, statusCode);
       return data;
@@ -328,6 +334,7 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
+
       const data = await response.json() as T;
       this.emitRequestEvent('PATCH', url, startedAt, statusCode);
       return data;
@@ -351,6 +358,7 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
+
       this.emitRequestEvent('DELETE', url, startedAt, statusCode);
     } catch (err) {
       this.emitRequestEvent('DELETE', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
@@ -380,6 +388,7 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
+
       this.emitRequestEvent('PUT', url, startedAt, statusCode);
     } catch (err) {
       this.emitRequestEvent('PUT', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
@@ -406,6 +415,7 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
+
       const data = response.status !== 204 ? await response.json() as T : undefined as unknown as T;
       this.emitRequestEvent('PUT', url, startedAt, statusCode);
       return data;
@@ -434,10 +444,12 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
+
       const json = await response.json() as { data?: T; errors?: Array<{ message: string }> };
       if (json.errors?.length) {
         throw new Error(json.errors.map(e => e.message).join('; '));
       }
+
       this.emitRequestEvent('POST', url, startedAt, statusCode);
       return json.data as T;
     } catch (err) {
@@ -606,6 +618,7 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
+
       const data = await response.json() as SearchResult<GitHubRepository>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
@@ -744,6 +757,7 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
+
       this.emitRequestEvent('PATCH', url, startedAt, statusCode);
     } catch (err) {
       this.emitRequestEvent('PATCH', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
@@ -857,6 +871,7 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
+
       const data = await response.json() as SearchResult<GitHubIssue>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
@@ -898,6 +913,7 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
+
       const data = await response.json() as SearchResult<GitHubUser>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
@@ -940,6 +956,7 @@ export class GitHubClient {
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
+
       const data = await response.json() as SearchResult<GitHubCodeResult>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
@@ -962,7 +979,8 @@ export class GitHubClient {
  * @internal
  */
 function buildUrl(base: string, params?: Record<string, string | number | boolean>): string {
-  if (!params) return base;
+  if (!params) {return base;}
+
   const search = new URLSearchParams();
   for (const key in params) {
     const value = params[key];
@@ -970,6 +988,7 @@ function buildUrl(base: string, params?: Record<string, string | number | boolea
       search.append(key, String(value));
     }
   }
+
   const query = search.toString();
   return query ? `${base}?${query}` : base;
 }
@@ -983,7 +1002,8 @@ function buildUrl(base: string, params?: Record<string, string | number | boolea
  * @internal
  */
 function parseNextPage(linkHeader: string | null): number | undefined {
-  if (!linkHeader) return undefined;
+  if (!linkHeader) {return undefined;}
+
   const match = linkHeader.match(NEXT_PAGE_RE);
   return match ? parseInt(match[1], 10) : undefined;
 }

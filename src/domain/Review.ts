@@ -124,7 +124,7 @@ export interface RequestReviewersData {
  *
  * @see {@link https://docs.github.com/en/rest/pulls/reviews#list-reviews-for-a-pull-request}
  */
-export interface ReviewsParams extends PaginationParams {}
+export type ReviewsParams = PaginationParams;
 
 /**
  * Query parameters for listing review comments.

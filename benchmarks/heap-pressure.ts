@@ -85,7 +85,7 @@ async function benchHeapClientCreation(): Promise<void> {
   console.log(`  heap delta after GC: ${deltaKb.toFixed(1)} KB`);
   console.log(`  bytes per ctor     : ${bytesPerCtor.toFixed(1)}`);
   if (deltaKb > 0) {
-    console.log(`  Candidates: request listener array, cached request adapters, Security instance`);
+    console.log('  Candidates: request listener array, cached request adapters, Security instance');
   }
 }
 
@@ -103,6 +103,7 @@ async function benchLeakDetection(): Promise<void> {
     for (let i = 0; i < opsPerEpoch; i++) {
       await gh.currentUser();
     }
+
     forceGc();
     const heapKb = v8.getHeapStatistics().used_heap_size / 1024;
     heapSamples.push(heapKb);
@@ -113,8 +114,8 @@ async function benchLeakDetection(): Promise<void> {
   console.log(`  total growth across epochs: ${heapGrowthKb.toFixed(1)} KB`);
 
   if (heapGrowthKb > LEAK_THRESHOLD_KB) {
-    console.warn(`  WARN: monotonic heap growth detected — possible leak`);
-    console.warn(`  Inspect: event listeners accumulation, uncollected Promises`);
+    console.warn('  WARN: monotonic heap growth detected — possible leak');
+    console.warn('  Inspect: event listeners accumulation, uncollected Promises');
   } else {
     console.log(`  OK: heap stable across epochs (Δ ${heapGrowthKb.toFixed(1)} KB)`);
   }
@@ -145,7 +146,7 @@ async function benchSecurityHeaders(): Promise<void> {
   console.log(`  throughput  : ${opsPerSec.toLocaleString()} ops/s`);
   console.log(`  ns/call     : ${nsPerCall.toFixed(0)}`);
   console.log(`  heap delta  : ${heapDeltaKb.toFixed(1)} KB`);
-  console.log(`  Note: recreates {Authorization,Accept,Content-Type,X-GitHub-Api-Version} every call`);
+  console.log('  Note: recreates {Authorization,Accept,Content-Type,X-GitHub-Api-Version} every call');
 }
 
 import { performance } from 'perf_hooks';

@@ -5,7 +5,7 @@ import type { PaginationParams } from './Pagination';
  *
  * @see {@link https://docs.github.com/en/rest/issues/labels#list-labels-for-a-repository}
  */
-export interface LabelsParams extends PaginationParams {}
+export type LabelsParams = PaginationParams;
 
 /**
  * Request body for creating a label.

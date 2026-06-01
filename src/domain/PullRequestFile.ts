@@ -35,4 +35,4 @@ export interface GitHubPullRequestFile {
  *
  * @see {@link https://docs.github.com/en/rest/pulls/pulls#list-pull-requests-files}
  */
-export interface PullRequestFilesParams extends PaginationParams {}
+export type PullRequestFilesParams = PaginationParams;

@@ -29,7 +29,7 @@ export interface GitHubWorkflow {
  *
  * @see {@link https://docs.github.com/en/rest/actions/workflows#list-repository-workflows}
  */
-export interface WorkflowsParams extends PaginationParams {}
+export type WorkflowsParams = PaginationParams;
 
 /**
  * Request body for triggering a workflow dispatch event.

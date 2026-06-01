@@ -28,4 +28,4 @@ export interface GitHubTag {
  *
  * @see {@link https://docs.github.com/en/rest/repos/repos#list-repository-tags}
  */
-export interface TagsParams extends PaginationParams {}
+export type TagsParams = PaginationParams;

@@ -38,12 +38,12 @@ async function measureThroughput(
   iterations = ITERATIONS,
   warmup = 100,
 ): Promise<ThroughputResult> {
-  for (let i = 0; i < warmup; i++) await operation();
+  for (let i = 0; i < warmup; i++) {await operation();}
 
   const heapBefore = v8.getHeapStatistics().used_heap_size;
   const t0 = performance.now();
 
-  for (let i = 0; i < iterations; i++) await operation();
+  for (let i = 0; i < iterations; i++) {await operation();}
 
   const elapsed = performance.now() - t0;
   const heapAfter = v8.getHeapStatistics().used_heap_size;
@@ -187,6 +187,7 @@ describe('GitHubClient throughput — all HTTP verbs', () => {
     for (let i = 0; i < isolated_iters; i++) {
       security.getHeaders();
     }
+
     const elapsed = performance.now() - t0;
 
     const opsPerSec = Math.round(isolated_iters / (elapsed / 1000));

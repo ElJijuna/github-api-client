@@ -79,7 +79,7 @@ export interface GitHubCheckRun {
  *
  * @see {@link https://docs.github.com/en/rest/commits/statuses#list-commit-statuses-for-a-reference}
  */
-export interface CommitStatusesParams extends PaginationParams {}
+export type CommitStatusesParams = PaginationParams;
 
 /**
  * Query parameters for listing check runs.
@@ -144,7 +144,7 @@ export interface GitHubCommitComment {
  *
  * @see {@link https://docs.github.com/en/rest/commits/comments#list-commit-comments}
  */
-export interface CommitCommentsParams extends PaginationParams {}
+export type CommitCommentsParams = PaginationParams;
 
 /**
  * Request body for adding a commit comment.

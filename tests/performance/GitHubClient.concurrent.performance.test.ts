@@ -94,8 +94,10 @@ describe('GitHubClient concurrency benchmarks', () => {
       async (_url: RequestInfo | URL, init?: RequestInit) => {
         const method = init?.method ?? 'GET';
         const url = String(_url);
-        if (method === 'GET' && url.includes('/users/')) return makeListResponse([mockRepoFixture]);
-        if (method === 'POST') return makeJsonResponse(mockGistFixture, 201);
+        if (method === 'GET' && url.includes('/users/')) {return makeListResponse([mockRepoFixture]);}
+
+        if (method === 'POST') {return makeJsonResponse(mockGistFixture, 201);}
+
         return makeJsonResponse(mockUserFixture);
       },
     );
@@ -110,8 +112,10 @@ describe('GitHubClient concurrency benchmarks', () => {
 
     const t0 = performance.now();
     const ops = Array.from({ length: 100 }, (_, i) => {
-      if (i % 3 === 0) return gh.currentUser();
-      if (i % 3 === 1) return gh.user('octocat').repos();
+      if (i % 3 === 0) {return gh.currentUser();}
+
+      if (i % 3 === 1) {return gh.user('octocat').repos();}
+
       return gh.createGist({ files: { 'f.ts': { content: 'x' } }, public: false });
     });
     await Promise.all(ops);
@@ -143,6 +147,7 @@ describe('GitHubClient concurrency benchmarks', () => {
       for (let b = 0; b < BATCHES; b++) {
         await Promise.all(Array.from({ length: 50 }, () => gh.currentUser()));
       }
+
       const elapsed = performance.now() - t0;
 
       const throughput = Math.round((50 * BATCHES) / (elapsed / 1000));
@@ -182,6 +187,7 @@ describe('GitHubClient concurrency benchmarks', () => {
     for (let b = 0; b < BATCHES; b++) {
       await Promise.all(Array.from({ length: 50 }, () => gh.currentUser()));
     }
+
     const elapsed = performance.now() - t0;
     const throughput = Math.round((50 * BATCHES) / (elapsed / 1000));
 
@@ -205,6 +211,7 @@ describe('GitHubClient concurrency benchmarks', () => {
       const ac = new AbortController();
       await gh.markAllNotificationsRead(ac.signal);
     }
+
     const elapsed = performance.now() - t0;
     const avgMs = elapsed / iters;
     const opsPerSec = Math.round(iters / (elapsed / 1000));

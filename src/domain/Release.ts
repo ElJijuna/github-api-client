@@ -66,7 +66,7 @@ export interface GitHubRelease {
  *
  * @see {@link https://docs.github.com/en/rest/releases/releases#list-releases}
  */
-export interface ReleasesParams extends PaginationParams {}
+export type ReleasesParams = PaginationParams;
 
 /**
  * Request body for creating a release.

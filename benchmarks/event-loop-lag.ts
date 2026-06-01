@@ -35,7 +35,7 @@ async function measureEventLoopLag(
   iterations = ITERATIONS,
 ): Promise<ELResult> {
   // warmup before starting the monitor
-  for (let i = 0; i < 50; i++) await operation();
+  for (let i = 0; i < 50; i++) {await operation();}
 
   const h = monitorEventLoopDelay({ resolution: EL_RESOLUTION_MS });
   h.enable();
@@ -140,6 +140,7 @@ async function main(): Promise<void> {
       void JSON.stringify(event);
     });
   }
+
   await measureEventLoopLag(
     'EL: GET /user with 10 JSON-serializing listeners',
     () => gh.currentUser(),
@@ -153,6 +154,7 @@ async function main(): Promise<void> {
       // intentionally empty
     });
   }
+
   await measureEventLoopLag(
     'EL: GET /user with 10 empty listeners (array fanout only)',
     () => gh.currentUser(),
