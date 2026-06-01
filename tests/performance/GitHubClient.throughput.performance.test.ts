@@ -16,11 +16,13 @@ import {
 
 function readEnvInt(name: string, fallback: number): number {
   const v = Number(process.env[name]);
+
   return Number.isInteger(v) && v > 0 ? v : fallback;
 }
 
 function readEnvFloat(name: string, fallback: number): number {
   const v = Number(process.env[name]);
+
   return Number.isFinite(v) && v > 0 ? v : fallback;
 }
 
@@ -38,12 +40,16 @@ async function measureThroughput(
   iterations = ITERATIONS,
   warmup = 100,
 ): Promise<ThroughputResult> {
-  for (let i = 0; i < warmup; i++) {await operation();}
+  for (let i = 0; i < warmup; i++) {
+    await operation();
+  }
 
   const heapBefore = v8.getHeapStatistics().used_heap_size;
   const t0 = performance.now();
 
-  for (let i = 0; i < iterations; i++) {await operation();}
+  for (let i = 0; i < iterations; i++) {
+    await operation();
+  }
 
   const elapsed = performance.now() - t0;
   const heapAfter = v8.getHeapStatistics().used_heap_size;
@@ -58,6 +64,7 @@ async function measureThroughput(
 expect.extend({
   toBeWithinAverageMs(received: number, limit: number) {
     const pass = received <= limit;
+
     return {
       pass,
       message: () => `expected ${received.toFixed(4)}ms average to be <= ${limit}ms`,
@@ -102,6 +109,7 @@ describe('GitHubClient throughput — all HTTP verbs', () => {
 
   it('GET list WITH Link header — parseNextPage regex overhead', async () => {
     const linkHeader = '<https://api.github.com/users/octocat/repos?page=2>; rel="next", <https://api.github.com/users/octocat/repos?page=5>; rel="last"';
+
     global.fetch = jest.fn().mockResolvedValue(makeListResponse([mockRepoFixture], linkHeader));
     const gh = new GitHubClient({ token: MOCK_TOKEN });
 
@@ -184,6 +192,7 @@ describe('GitHubClient throughput — all HTTP verbs', () => {
     const isolated_iters = ITERATIONS * 5;
 
     const t0 = performance.now();
+
     for (let i = 0; i < isolated_iters; i++) {
       security.getHeaders();
     }
@@ -192,6 +201,7 @@ describe('GitHubClient throughput — all HTTP verbs', () => {
 
     const opsPerSec = Math.round(isolated_iters / (elapsed / 1000));
     const nsPerCall = (elapsed / isolated_iters) * 1e6;
+
     console.log(`getHeaders(): ${opsPerSec.toLocaleString()} ops/s | ${nsPerCall.toFixed(0)} ns/call`);
     // No assertion — documents baseline for future optimization of cached headers
   });

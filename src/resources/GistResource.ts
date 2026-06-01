@@ -131,8 +131,10 @@ export class GistResource implements PromiseLike<GitHubGist> {
   async isStarred(signal?: AbortSignal): Promise<boolean> {
     try {
       await this.request<void>(`${this.basePath}/star`, undefined, signal);
+
       return true;
-    } catch {
+    }
+    catch {
       return false;
     }
   }

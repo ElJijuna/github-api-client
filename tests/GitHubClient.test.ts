@@ -347,7 +347,9 @@ function mockTextResponse(text: string, status = 200) {
     status,
     statusText: 'OK',
     text: async () => text,
-    json: async () => { throw new Error('not json'); },
+    json: async () => {
+      throw new Error('not json'); 
+    },
     headers: { get: () => null },
   });
 }
@@ -425,6 +427,7 @@ describe('GitHubClient constructor', () => {
 describe('GitHubClient.currentUser()', () => {
   it('fetches the authenticated user', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(mockUser);
 
     const result = await gh.currentUser();
@@ -438,12 +441,14 @@ describe('GitHubClient.currentUser()', () => {
 
   it('throws GitHubApiError on 401', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(401, 'Unauthorized');
 
     try {
       await gh.currentUser();
       fail('Should have thrown');
-    } catch (err) {
+    }
+    catch (err) {
       expect(err).toBeInstanceOf(GitHubApiError);
       expect((err as GitHubApiError).status).toBe(401);
     }
@@ -453,6 +458,7 @@ describe('GitHubClient.currentUser()', () => {
 describe('GitHubClient.user(login)', () => {
   it('fetches user info when awaited directly', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(mockUser);
 
     const result = await gh.user('octocat');
@@ -466,6 +472,7 @@ describe('GitHubClient.user(login)', () => {
 
   it('fetches user repos', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockRepo));
 
     const result = await gh.user('octocat').repos();
@@ -480,6 +487,7 @@ describe('GitHubClient.user(login)', () => {
 
   it('parses the Link header for pagination', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockRepo), { link: makeLinkHeader(2) });
 
     const result = await gh.user('octocat').repos({ per_page: 1 });
@@ -490,6 +498,7 @@ describe('GitHubClient.user(login)', () => {
 
   it('forwards per_page and page params', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockRepo));
 
     await gh.user('octocat').repos({ per_page: 50, page: 2 });
@@ -502,6 +511,7 @@ describe('GitHubClient.user(login)', () => {
 
   it('fetches user followers', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockUser));
 
     const result = await gh.user('octocat').followers();
@@ -515,6 +525,7 @@ describe('GitHubClient.user(login)', () => {
 
   it('fetches user following', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockUser));
 
     await gh.user('octocat').following();
@@ -546,6 +557,7 @@ describe('GitHubClient.user(login)', () => {
       public: true,
       created_at: '2011-09-06T17:26:27Z',
     };
+
     mockJsonResponse(pagedOf(mockEvent));
 
     const result = await gh.user('octocat').publicEvents();
@@ -560,6 +572,7 @@ describe('GitHubClient.user(login)', () => {
 
   it('forwards per_page and page params to publicEvents', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse([]);
 
     await gh.user('octocat').publicEvents({ per_page: 10, page: 2 });
@@ -574,6 +587,7 @@ describe('GitHubClient.user(login)', () => {
 describe('GitHubClient.org(name)', () => {
   it('fetches org info when awaited directly', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(mockOrg);
 
     const result = await gh.org('github');
@@ -587,6 +601,7 @@ describe('GitHubClient.org(name)', () => {
 
   it('fetches org repos', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockRepo));
 
     const result = await gh.org('github').repos({ type: 'public' });
@@ -600,6 +615,7 @@ describe('GitHubClient.org(name)', () => {
 
   it('fetches org members', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockUser));
 
     const result = await gh.org('github').members({ role: 'admin' });
@@ -615,6 +631,7 @@ describe('GitHubClient.org(name)', () => {
 describe('OrganizationResource.createRepo()', () => {
   it('creates a repository and returns it', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse({ ...mockRepo, name: 'new-repo', full_name: 'github/new-repo', private: true });
 
     const result = await gh.org('github').createRepo({ name: 'new-repo', private: true });
@@ -633,6 +650,7 @@ describe('OrganizationResource.createRepo()', () => {
 
   it('passes all optional fields in the request body', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse(mockRepo);
 
     await gh.org('github').createRepo({
@@ -664,6 +682,7 @@ describe('OrganizationResource.createRepo()', () => {
 
   it('throws GitHubApiError on 422 (validation failed)', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(422, 'Unprocessable Entity');
 
     await expect(gh.org('github').createRepo({ name: 'invalid name!' })).rejects.toThrow(GitHubApiError);
@@ -673,6 +692,7 @@ describe('OrganizationResource.createRepo()', () => {
 describe('GitHubClient.repo(owner, name)', () => {
   it('fetches repo info when awaited directly', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(mockRepo);
 
     const result = await gh.repo('octocat', 'Hello-World');
@@ -686,6 +706,7 @@ describe('GitHubClient.repo(owner, name)', () => {
 
   it('also accessible via org().repo()', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(mockRepo);
 
     const result = await gh.org('github').repo('linguist');
@@ -699,6 +720,7 @@ describe('GitHubClient.repo(owner, name)', () => {
 
   it('also accessible via user().repo()', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(mockRepo);
 
     await gh.user('octocat').repo('Hello-World');
@@ -714,6 +736,7 @@ describe('RepositoryResource', () => {
   describe('pullRequests()', () => {
     it('fetches pull requests', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf(mockPullRequest));
 
       const result = await gh.repo('octocat', 'Hello-World').pullRequests({ state: 'open' });
@@ -729,6 +752,7 @@ describe('RepositoryResource', () => {
   describe('languages()', () => {
     it('fetches repo languages', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(mockLanguages);
 
       const result = await gh.repo('octocat', 'Hello-World').languages();
@@ -744,6 +768,7 @@ describe('RepositoryResource', () => {
   describe('commits()', () => {
     it('fetches commits', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf(mockCommit));
 
       const result = await gh.repo('octocat', 'Hello-World').commits({ per_page: 10 });
@@ -759,6 +784,7 @@ describe('RepositoryResource', () => {
   describe('branches()', () => {
     it('fetches branches', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf(mockBranch));
 
       const result = await gh.repo('octocat', 'Hello-World').branches();
@@ -772,6 +798,7 @@ describe('RepositoryResource', () => {
 
     it('filters protected branches', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf(mockBranch));
 
       await gh.repo('octocat', 'Hello-World').branches({ protected: true });
@@ -786,6 +813,7 @@ describe('RepositoryResource', () => {
   describe('branch()', () => {
     it('fetches a single branch by name', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(mockBranch);
 
       const result = await gh.repo('octocat', 'Hello-World').branch('main');
@@ -801,6 +829,7 @@ describe('RepositoryResource', () => {
   describe('tags()', () => {
     it('fetches tags', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf(mockTag));
 
       const result = await gh.repo('octocat', 'Hello-World').tags();
@@ -816,6 +845,7 @@ describe('RepositoryResource', () => {
   describe('releases()', () => {
     it('fetches releases', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf(mockRelease));
 
       const result = await gh.repo('octocat', 'Hello-World').releases();
@@ -831,6 +861,7 @@ describe('RepositoryResource', () => {
   describe('latestRelease()', () => {
     it('fetches the latest release', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(mockRelease);
 
       const result = await gh.repo('octocat', 'Hello-World').latestRelease();
@@ -846,6 +877,7 @@ describe('RepositoryResource', () => {
   describe('release()', () => {
     it('fetches a release by id', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(mockRelease);
 
       const result = await gh.repo('octocat', 'Hello-World').release(1);
@@ -862,6 +894,7 @@ describe('RepositoryResource', () => {
     it('creates a release', async () => {
       const gh = new GitHubClient({ token: TOKEN });
       const data: CreateReleaseData = { tag_name: 'v1.1.0', name: 'v1.1.0', body: 'Changelog' };
+
       mockPostResponse({ ...mockRelease, tag_name: 'v1.1.0' });
 
       const result = await gh.repo('octocat', 'Hello-World').createRelease(data);
@@ -880,6 +913,7 @@ describe('RepositoryResource', () => {
   describe('updateRelease()', () => {
     it('updates a release', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse({ ...mockRelease, draft: false });
 
       const result = await gh.repo('octocat', 'Hello-World').updateRelease(1, { draft: false });
@@ -898,6 +932,7 @@ describe('RepositoryResource', () => {
   describe('deleteRelease()', () => {
     it('deletes a release', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockDeleteResponse();
 
       await gh.repo('octocat', 'Hello-World').deleteRelease(1);
@@ -912,6 +947,7 @@ describe('RepositoryResource', () => {
   describe('forks()', () => {
     it('fetches forks', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf(mockRepo));
 
       const result = await gh.repo('octocat', 'Hello-World').forks({ sort: 'newest' });
@@ -927,6 +963,7 @@ describe('RepositoryResource', () => {
   describe('webhooks()', () => {
     it('fetches webhooks', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf(mockWebhook));
 
       const result = await gh.repo('octocat', 'Hello-World').webhooks();
@@ -942,6 +979,7 @@ describe('RepositoryResource', () => {
   describe('raw()', () => {
     it('fetches raw file content with Accept: vnd.github.raw+json', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockTextResponse('# Hello World');
 
       const content = await gh.repo('octocat', 'Hello-World').raw('README.md');
@@ -957,6 +995,7 @@ describe('RepositoryResource', () => {
 
     it('passes ref param', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockTextResponse('content');
 
       await gh.repo('octocat', 'Hello-World').raw('README.md', { ref: 'dev' });
@@ -971,6 +1010,7 @@ describe('RepositoryResource', () => {
   describe('multipleRaw()', () => {
     it('fetches multiple raw files and maps content by file path', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockTextResponse('# Hello World');
       mockTextResponse('export const ok = true;');
 
@@ -999,6 +1039,7 @@ describe('RepositoryResource', () => {
 
     it('omits files that fail to fetch', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockTextResponse('# Hello World');
       mockTextResponse('not found', 404);
 
@@ -1012,6 +1053,7 @@ describe('RepositoryResource', () => {
   describe('topics()', () => {
     it('fetches repository topics', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse({ names: ['typescript', 'api-client'] });
 
       const topics = await gh.repo('octocat', 'Hello-World').topics();
@@ -1027,6 +1069,7 @@ describe('RepositoryResource', () => {
   describe('contributors()', () => {
     it('fetches contributors', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf({ login: 'octocat', id: 1, contributions: 32 }));
 
       const result = await gh.repo('octocat', 'Hello-World').contributors();
@@ -1044,6 +1087,7 @@ describe('PullRequestResource', () => {
   describe('get()', () => {
     it('fetches the pull request when awaited directly', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(mockPullRequest);
 
       const result = await gh.repo('octocat', 'Hello-World').pullRequest(1);
@@ -1059,6 +1103,7 @@ describe('PullRequestResource', () => {
   describe('commits()', () => {
     it('fetches PR commits', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf(mockCommit));
 
       const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).commits();
@@ -1074,6 +1119,7 @@ describe('PullRequestResource', () => {
   describe('files()', () => {
     it('fetches changed files', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf(mockFile));
 
       const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).files();
@@ -1090,6 +1136,7 @@ describe('PullRequestResource', () => {
   describe('reviews()', () => {
     it('fetches PR reviews', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf(mockReview));
 
       const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).reviews();
@@ -1105,6 +1152,7 @@ describe('PullRequestResource', () => {
   describe('reviewComments()', () => {
     it('fetches inline review comments', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf(mockReviewComment));
 
       const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).reviewComments();
@@ -1120,6 +1168,7 @@ describe('PullRequestResource', () => {
   describe('merge()', () => {
     it('merges the pull request with default options', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockPostResponse(mockMergeResult, 200);
 
       const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).merge();
@@ -1134,6 +1183,7 @@ describe('PullRequestResource', () => {
 
     it('passes merge options in the request body', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockPostResponse(mockMergeResult, 200);
 
       await gh.repo('octocat', 'Hello-World').pullRequest(1).merge({
@@ -1154,6 +1204,7 @@ describe('PullRequestResource', () => {
   describe('createReview()', () => {
     it('submits an approval review', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockPostResponse(mockReview);
 
       const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).createReview({
@@ -1172,6 +1223,7 @@ describe('PullRequestResource', () => {
   describe('requestReviewers()', () => {
     it('requests reviewers on the pull request', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockPostResponse(mockPullRequest);
 
       const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).requestReviewers({
@@ -1189,6 +1241,7 @@ describe('PullRequestResource', () => {
   describe('addComment()', () => {
     it('adds an inline diff comment to the pull request', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockPostResponse(mockReviewComment);
 
       const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).addComment({
@@ -1210,6 +1263,7 @@ describe('PullRequestResource', () => {
   describe('update()', () => {
     it('updates pull request metadata', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockPatchResponse({ ...mockPullRequest, title: 'Updated title' });
 
       const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).update({
@@ -1230,6 +1284,7 @@ describe('CommitResource', () => {
   describe('get()', () => {
     it('fetches commit info when awaited directly', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(mockCommit);
 
       const result = await gh.repo('octocat', 'Hello-World').commit('abc123def456');
@@ -1245,6 +1300,7 @@ describe('CommitResource', () => {
   describe('statuses()', () => {
     it('fetches commit statuses', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf(mockStatus));
 
       const result = await gh.repo('octocat', 'Hello-World').commit('abc123def456').statuses();
@@ -1260,6 +1316,7 @@ describe('CommitResource', () => {
   describe('combinedStatus()', () => {
     it('fetches the combined commit status', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(mockCombinedStatus);
 
       const result = await gh.repo('octocat', 'Hello-World').commit('abc123def456').combinedStatus();
@@ -1276,6 +1333,7 @@ describe('CommitResource', () => {
   describe('createStatus()', () => {
     it('posts a new commit status', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockPostResponse(mockStatus);
 
       const result = await gh.repo('octocat', 'Hello-World').commit('abc123def456').createStatus({
@@ -1297,6 +1355,7 @@ describe('CommitResource', () => {
   describe('comments()', () => {
     it('fetches commit comments', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf(mockCommitComment));
 
       const result = await gh.repo('octocat', 'Hello-World').commit('abc123def456').comments();
@@ -1313,6 +1372,7 @@ describe('CommitResource', () => {
   describe('addComment()', () => {
     it('posts a new commit comment', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockPostResponse(mockCommitComment);
 
       const result = await gh.repo('octocat', 'Hello-World').commit('abc123def456').addComment({
@@ -1332,6 +1392,7 @@ describe('CommitResource', () => {
 describe('GitHubClient.searchRepos()', () => {
   it('searches for repositories and returns totalCount', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse({ total_count: 1, incomplete_results: false, items: [mockRepo] });
 
     const result = await gh.searchRepos({ q: 'language:typescript' });
@@ -1347,6 +1408,7 @@ describe('GitHubClient.searchRepos()', () => {
 
   it('parses pagination from Link header on search results', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(
       { total_count: 100, incomplete_results: false, items: [mockRepo] },
       { link: makeLinkHeader(2) },
@@ -1363,14 +1425,17 @@ describe('GitHubClient.searchRepos()', () => {
 describe('Error handling', () => {
   it('throws GitHubApiError with status and statusText on non-2xx response', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(404, 'Not Found');
 
     try {
       await gh.repo('octocat', 'nonexistent').get();
       fail('Should have thrown');
-    } catch (err) {
+    }
+    catch (err) {
       expect(err).toBeInstanceOf(GitHubApiError);
       const apiErr = err as GitHubApiError;
+
       expect(apiErr.status).toBe(404);
       expect(apiErr.statusText).toBe('Not Found');
       expect(apiErr.message).toBe('GitHub API error: 404 Not Found');
@@ -1379,6 +1444,7 @@ describe('Error handling', () => {
 
   it('throws GitHubApiError on 403 Forbidden', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(403, 'Forbidden');
 
     await expect(gh.currentUser()).rejects.toThrow(GitHubApiError);
@@ -1388,15 +1454,18 @@ describe('Error handling', () => {
 describe('Request event emission', () => {
   it('emits request events with timing info', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(mockUser);
 
     const events: unknown[] = [];
+
     gh.on('request', (event) => events.push(event));
 
     await gh.currentUser();
 
     expect(events).toHaveLength(1);
     const event = events[0] as { url: string; method: string; statusCode: number; durationMs: number };
+
     expect(event.url).toBe(`${API_URL}/user`);
     expect(event.method).toBe('GET');
     expect(event.statusCode).toBe(200);
@@ -1405,24 +1474,29 @@ describe('Request event emission', () => {
 
   it('emits request events with error on failed requests', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(404, 'Not Found');
 
     const events: unknown[] = [];
+
     gh.on('request', (event) => events.push(event));
 
     await gh.currentUser().catch(() => { });
 
     expect(events).toHaveLength(1);
     const event = events[0] as { error: Error; statusCode: number };
+
     expect(event.error).toBeInstanceOf(GitHubApiError);
     expect(event.statusCode).toBe(404);
   });
 
   it('supports multiple listeners', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(mockUser);
 
     const calls: number[] = [];
+
     gh.on('request', () => calls.push(1));
     gh.on('request', () => calls.push(2));
 
@@ -1434,6 +1508,7 @@ describe('Request event emission', () => {
   it('on() returns the client for chaining', () => {
     const gh = new GitHubClient({ token: TOKEN });
     const result = gh.on('request', () => { });
+
     expect(result).toBe(gh);
   });
 });
@@ -1441,6 +1516,7 @@ describe('Request event emission', () => {
 describe('Request headers', () => {
   it('sends Bearer token authorization', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(mockUser);
 
     await gh.currentUser();
@@ -1459,11 +1535,13 @@ describe('Request headers', () => {
 
   it('omits Authorization header when no token is provided', async () => {
     const gh = new GitHubClient();
+
     mockJsonResponse(pagedOf(mockRepo));
 
     await gh.repo('octocat', 'Hello-World').branches();
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
+
     expect(init.headers).not.toHaveProperty('Authorization');
     expect(init.headers).toMatchObject({
       Accept: 'application/vnd.github+json',
@@ -1473,6 +1551,7 @@ describe('Request headers', () => {
 
   it('makes unauthenticated requests to public endpoints', async () => {
     const gh = new GitHubClient();
+
     mockJsonResponse(mockUser);
 
     const result = await gh.user('octocat');
@@ -1488,6 +1567,7 @@ describe('Request headers', () => {
 describe('Custom API URL (GitHub Enterprise)', () => {
   it('uses custom apiUrl for all requests', async () => {
     const gh = new GitHubClient({ token: TOKEN, apiUrl: 'https://github.example.com/api/v3' });
+
     mockJsonResponse(mockUser);
 
     await gh.currentUser();
@@ -1520,6 +1600,7 @@ const mockIssue: GitHubIssue = {
 describe('RepositoryResource.createFork()', () => {
   it('creates a fork with no data', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse(mockRepo);
 
     const result = await gh.repo('octocat', 'Hello-World').createFork();
@@ -1533,6 +1614,7 @@ describe('RepositoryResource.createFork()', () => {
 
   it('creates a fork with an organization target', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse({ ...mockRepo, full_name: 'my-org/Hello-World' });
 
     const result = await gh.repo('octocat', 'Hello-World').createFork({ organization: 'my-org' });
@@ -1551,6 +1633,7 @@ describe('RepositoryResource.createFork()', () => {
 describe('RepositoryResource.createWebhook()', () => {
   it('creates a webhook and returns it', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse(mockWebhook);
 
     const result = await gh.repo('octocat', 'Hello-World').createWebhook({
@@ -1579,6 +1662,7 @@ describe('RepositoryResource.createWebhook()', () => {
 describe('RepositoryResource.updateWebhook()', () => {
   it('updates a webhook and returns the updated webhook', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPatchResponse({ ...mockWebhook, events: ['push', 'pull_request', 'release'] });
 
     const result = await gh.repo('octocat', 'Hello-World').updateWebhook(1, {
@@ -1599,6 +1683,7 @@ describe('RepositoryResource.updateWebhook()', () => {
 describe('RepositoryResource.deleteWebhook()', () => {
   it('deletes a webhook and returns void', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockDeleteResponse();
 
     await gh.repo('octocat', 'Hello-World').deleteWebhook(1);
@@ -1613,6 +1698,7 @@ describe('RepositoryResource.deleteWebhook()', () => {
 describe('RepositoryResource.issues()', () => {
   it('fetches issues', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockIssue));
 
     const result = await gh.repo('octocat', 'Hello-World').issues({ state: 'open' });
@@ -1628,6 +1714,7 @@ describe('RepositoryResource.issues()', () => {
 describe('RepositoryResource.createIssue()', () => {
   it('creates an issue and returns it', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse(mockIssue);
 
     const result = await gh.repo('octocat', 'Hello-World').createIssue({
@@ -1652,6 +1739,7 @@ describe('RepositoryResource.labels()', () => {
 
   it('fetches labels', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockLabel));
 
     const result = await gh.repo('octocat', 'Hello-World').labels();
@@ -1665,6 +1753,7 @@ describe('RepositoryResource.labels()', () => {
 
   it('fetches a single label by name', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(mockLabel);
 
     const result = await gh.repo('octocat', 'Hello-World').label('bug');
@@ -1678,6 +1767,7 @@ describe('RepositoryResource.labels()', () => {
 
   it('creates a label', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse(mockLabel);
 
     const result = await gh.repo('octocat', 'Hello-World').createLabel({ name: 'bug', color: 'ee0701' });
@@ -1694,6 +1784,7 @@ describe('RepositoryResource.labels()', () => {
 
   it('updates a label', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse({ ...mockLabel, color: 'ff0000' });
 
     const result = await gh.repo('octocat', 'Hello-World').updateLabel('bug', { color: 'ff0000' });
@@ -1710,6 +1801,7 @@ describe('RepositoryResource.labels()', () => {
 
   it('deletes a label', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockDeleteResponse();
 
     await gh.repo('octocat', 'Hello-World').deleteLabel('wontfix');
@@ -1722,6 +1814,7 @@ describe('RepositoryResource.labels()', () => {
 
   it('encodes label name with spaces in URL', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse({ ...mockLabel, name: 'good first issue' });
 
     await gh.repo('octocat', 'Hello-World').label('good first issue');
@@ -1750,6 +1843,7 @@ describe('RepositoryResource.milestones()', () => {
 
   it('fetches milestones', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockMilestone));
 
     const result = await gh.repo('octocat', 'Hello-World').milestones({ state: 'open' });
@@ -1763,6 +1857,7 @@ describe('RepositoryResource.milestones()', () => {
 
   it('fetches a single milestone by number', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(mockMilestone);
 
     const result = await gh.repo('octocat', 'Hello-World').milestone(1);
@@ -1776,6 +1871,7 @@ describe('RepositoryResource.milestones()', () => {
 
   it('creates a milestone', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse(mockMilestone);
 
     const result = await gh.repo('octocat', 'Hello-World').createMilestone({ title: 'v1.0', due_on: '2025-12-31T00:00:00Z' });
@@ -1792,6 +1888,7 @@ describe('RepositoryResource.milestones()', () => {
 
   it('updates a milestone', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse({ ...mockMilestone, state: 'closed' });
 
     const result = await gh.repo('octocat', 'Hello-World').updateMilestone(1, { state: 'closed' });
@@ -1808,6 +1905,7 @@ describe('RepositoryResource.milestones()', () => {
 
   it('deletes a milestone', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockDeleteResponse();
 
     await gh.repo('octocat', 'Hello-World').deleteMilestone(1);
@@ -1822,6 +1920,7 @@ describe('RepositoryResource.milestones()', () => {
 describe('RepositoryResource.collaborators()', () => {
   it('lists collaborators', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockUser));
 
     const result = await gh.repo('octocat', 'Hello-World').collaborators();
@@ -1835,6 +1934,7 @@ describe('RepositoryResource.collaborators()', () => {
 
   it('filters by affiliation', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockUser));
 
     await gh.repo('octocat', 'Hello-World').collaborators({ affiliation: 'outside' });
@@ -1847,6 +1947,7 @@ describe('RepositoryResource.collaborators()', () => {
 
   it('adds a collaborator', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     fetchMock.mockResolvedValueOnce({ ok: true, status: 204, headers: { get: () => null } });
 
     await gh.repo('octocat', 'Hello-World').addCollaborator('hubot');
@@ -1859,6 +1960,7 @@ describe('RepositoryResource.collaborators()', () => {
 
   it('adds a collaborator with a permission level', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     fetchMock.mockResolvedValueOnce({ ok: true, status: 201, json: async () => ({}), headers: { get: () => null } });
 
     await gh.repo('octocat', 'Hello-World').addCollaborator('hubot', { permission: 'maintain' });
@@ -1874,6 +1976,7 @@ describe('RepositoryResource.collaborators()', () => {
 
   it('removes a collaborator', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockDeleteResponse();
 
     await gh.repo('octocat', 'Hello-World').removeCollaborator('hubot');
@@ -1889,6 +1992,7 @@ describe('IssueResource', () => {
   describe('get()', () => {
     it('fetches the issue when awaited directly', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(mockIssue);
 
       const result = await gh.repo('octocat', 'Hello-World').issue(1);
@@ -1905,6 +2009,7 @@ describe('IssueResource', () => {
   describe('comments()', () => {
     it('fetches issue comments', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse(pagedOf({
         id: 1,
         body: 'Me too!',
@@ -1935,6 +2040,7 @@ describe('IssueResource', () => {
         updated_at: '2024-01-01T00:00:00Z',
         html_url: 'https://github.com/octocat/Hello-World/issues/1#issuecomment-42',
       };
+
       mockPostResponse(mockComment);
 
       const result = await gh.repo('octocat', 'Hello-World').issue(1).addComment('Thanks for the report!');
@@ -1953,6 +2059,7 @@ describe('IssueResource', () => {
   describe('update()', () => {
     it('closes an issue', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse({ ...mockIssue, state: 'closed' });
 
       const result = await gh.repo('octocat', 'Hello-World').issue(1).update({ state: 'closed', state_reason: 'completed' });
@@ -1969,6 +2076,7 @@ describe('IssueResource', () => {
 
     it('updates title and assignees', async () => {
       const gh = new GitHubClient({ token: TOKEN });
+
       mockJsonResponse({ ...mockIssue, title: 'New title' });
 
       await gh.repo('octocat', 'Hello-World').issue(1).update({ title: 'New title', assignees: ['octocat'] });
@@ -1987,6 +2095,7 @@ describe('IssueResource', () => {
 describe('GitHubClient.advisories()', () => {
   it('fetches global advisories with params', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockGlobalAdvisory));
 
     const result = await gh.advisories({ severity: 'critical', ecosystem: 'npm' });
@@ -2001,6 +2110,7 @@ describe('GitHubClient.advisories()', () => {
 
   it('fetches global advisories without params', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockGlobalAdvisory));
 
     const result = await gh.advisories();
@@ -2016,6 +2126,7 @@ describe('GitHubClient.advisories()', () => {
 describe('GitHubClient.advisory()', () => {
   it('fetches a single global advisory by GHSA ID', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(mockGlobalAdvisory);
 
     const result = await gh.advisory('GHSA-1234-5678-9abc');
@@ -2032,6 +2143,7 @@ describe('GitHubClient.advisory()', () => {
 describe('RepositoryResource.repoAdvisories()', () => {
   it('fetches repository advisories with params', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockRepoAdvisory));
 
     const result = await gh.repo('octocat', 'Hello-World').repoAdvisories({ state: 'draft' });
@@ -2048,6 +2160,7 @@ describe('RepositoryResource.repoAdvisories()', () => {
 describe('RepositoryResource.createAdvisory()', () => {
   it('creates an advisory draft and returns it', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse(mockRepoAdvisory);
 
     const result = await gh.repo('octocat', 'Hello-World').createAdvisory({
@@ -2075,6 +2188,7 @@ describe('RepositoryResource.createAdvisory()', () => {
 describe('RepositoryResource.repoAdvisory()', () => {
   it('fetches a single repository advisory by GHSA ID', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(mockRepoAdvisory);
 
     const result = await gh.repo('octocat', 'Hello-World').repoAdvisory('GHSA-1234-5678-9abc');
@@ -2091,6 +2205,7 @@ describe('RepositoryResource.repoAdvisory()', () => {
 describe('RepositoryResource.updateAdvisory()', () => {
   it('updates a repository advisory and returns it', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPatchResponse({ ...mockRepoAdvisory, state: 'published', published_at: '2023-02-01T00:00:00Z' });
 
     const result = await gh.repo('octocat', 'Hello-World').updateAdvisory('GHSA-1234-5678-9abc', {
@@ -2112,6 +2227,7 @@ describe('RepositoryResource.updateAdvisory()', () => {
 describe('RepositoryResource.requestCve()', () => {
   it('submits a CVE request and returns the updated advisory', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse({ ...mockRepoAdvisory, submission: { accepted: true } });
 
     const result = await gh.repo('octocat', 'Hello-World').requestCve('GHSA-1234-5678-9abc');
@@ -2127,6 +2243,7 @@ describe('RepositoryResource.requestCve()', () => {
 describe('GitHubClient.advisoryByCve()', () => {
   it('returns the advisory matching the CVE ID', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockGlobalAdvisory));
 
     const result = await gh.advisoryByCve('CVE-2023-12345');
@@ -2142,6 +2259,7 @@ describe('GitHubClient.advisoryByCve()', () => {
 
   it('returns null when no advisory is found for the CVE ID', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse([]);
 
     const result = await gh.advisoryByCve('CVE-9999-00000');
@@ -2155,6 +2273,7 @@ describe('GitHubClient.advisoryByCve()', () => {
 
   it('throws GitHubApiError on API error', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(500, 'Internal Server Error');
 
     await expect(gh.advisoryByCve('CVE-2023-12345')).rejects.toThrow(GitHubApiError);
@@ -2181,6 +2300,7 @@ const mockContributionCalendar: ContributionCalendar = {
 describe('UserResource.contributionMap()', () => {
   it('returns the contribution calendar for a user', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse({
       data: {
         user: {
@@ -2208,6 +2328,7 @@ describe('UserResource.contributionMap()', () => {
 
   it('sends from/to variables when params are provided', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse({ data: { user: { contributionsCollection: { contributionCalendar: mockContributionCalendar } } } }, 200);
 
     await gh.user('octocat').contributionMap({
@@ -2216,6 +2337,7 @@ describe('UserResource.contributionMap()', () => {
     });
 
     const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+
     expect(body.variables.login).toBe('octocat');
     expect(body.variables.from).toBe('2024-01-01T00:00:00Z');
     expect(body.variables.to).toBe('2024-12-31T23:59:59Z');
@@ -2223,11 +2345,13 @@ describe('UserResource.contributionMap()', () => {
 
   it('omits from/to variables when no params are given', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse({ data: { user: { contributionsCollection: { contributionCalendar: mockContributionCalendar } } } }, 200);
 
     await gh.user('octocat').contributionMap();
 
     const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+
     expect(body.variables.login).toBe('octocat');
     expect(body.variables.from).toBeUndefined();
     expect(body.variables.to).toBeUndefined();
@@ -2235,6 +2359,7 @@ describe('UserResource.contributionMap()', () => {
 
   it('throws on GraphQL errors', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse({ errors: [{ message: 'Could not resolve to a User' }] }, 200);
 
     await expect(gh.user('octocat').contributionMap()).rejects.toThrow('Could not resolve to a User');
@@ -2242,6 +2367,7 @@ describe('UserResource.contributionMap()', () => {
 
   it('throws GitHubApiError on HTTP error', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(401, 'Unauthorized');
 
     await expect(gh.user('octocat').contributionMap()).rejects.toThrow(GitHubApiError);
@@ -2255,6 +2381,7 @@ describe('UserResource.commitContributionsByRepo()', () => {
 
   it('returns commit contributions by repository', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse({ data: { user: { contributionsCollection: { commitContributionsByRepository: mockContribs } } } }, 200);
 
     const result = await gh.user('octocat').commitContributionsByRepo();
@@ -2276,6 +2403,7 @@ describe('UserResource.pullRequestContributionsByRepo()', () => {
 
   it('returns pull request contributions by repository', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse({ data: { user: { contributionsCollection: { pullRequestContributionsByRepository: mockContribs } } } }, 200);
 
     const result = await gh.user('octocat').pullRequestContributionsByRepo();
@@ -2295,6 +2423,7 @@ describe('UserResource.issueContributionsByRepo()', () => {
 
   it('returns issue contributions by repository', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse({ data: { user: { contributionsCollection: { issueContributionsByRepository: mockContribs } } } }, 200);
 
     const result = await gh.user('octocat').issueContributionsByRepo();
@@ -2310,6 +2439,7 @@ describe('UserResource.issueContributionsByRepo()', () => {
 describe('UserResource.pinnedItems()', () => {
   it('returns pinned repositories and gists', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse({
       data: {
         user: {
@@ -2331,14 +2461,17 @@ describe('UserResource.pinnedItems()', () => {
     );
     expect(result).toHaveLength(2);
     const repo = result[0] as { nameWithOwner: string; stargazerCount: number };
+
     expect(repo.nameWithOwner).toBe('octocat/Hello-World');
     expect(repo.stargazerCount).toBe(100);
     const gist = result[1] as { name: string };
+
     expect(gist.name).toBe('abc123');
   });
 
   it('returns empty array when no items are pinned', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse({ data: { user: { pinnedItems: { nodes: [] } } } }, 200);
 
     const result = await gh.user('octocat').pinnedItems();
@@ -2350,6 +2483,7 @@ describe('UserResource.pinnedItems()', () => {
 describe('GitHubClient.graphql()', () => {
   it('executes an arbitrary GraphQL query and returns data', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse({ data: { viewer: { login: 'octocat' } } }, 200);
 
     const result = await gh.graphql<{ viewer: { login: string } }>('query { viewer { login } }');
@@ -2363,6 +2497,7 @@ describe('GitHubClient.graphql()', () => {
 
   it('throws when the response contains GraphQL errors', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse({ errors: [{ message: 'Field does not exist' }] }, 200);
 
     await expect(gh.graphql('query { badField }')).rejects.toThrow('Field does not exist');
@@ -2370,6 +2505,7 @@ describe('GitHubClient.graphql()', () => {
 
   it('throws GitHubApiError on HTTP error', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(403, 'Forbidden');
 
     await expect(gh.graphql('query { viewer { login } }')).rejects.toThrow(GitHubApiError);
@@ -2404,6 +2540,7 @@ const mockNotification = {
 describe('GitHubClient.notifications()', () => {
   it('fetches unread notifications by default', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse([mockNotification]);
 
     const result = await gh.notifications();
@@ -2419,6 +2556,7 @@ describe('GitHubClient.notifications()', () => {
 
   it('passes params as query string', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse([mockNotification]);
 
     await gh.notifications({ all: true, per_page: 50 });
@@ -2431,6 +2569,7 @@ describe('GitHubClient.notifications()', () => {
 
   it('parses pagination from Link header', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse([mockNotification], { link: makeLinkHeader(2) });
 
     const result = await gh.notifications();
@@ -2441,6 +2580,7 @@ describe('GitHubClient.notifications()', () => {
 
   it('throws GitHubApiError on 401', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(401, 'Unauthorized');
 
     await expect(gh.notifications()).rejects.toThrow(GitHubApiError);
@@ -2450,6 +2590,7 @@ describe('GitHubClient.notifications()', () => {
 describe('GitHubClient.markNotificationRead()', () => {
   it('sends PATCH to the correct thread URL', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockDeleteResponse(205);
 
     await gh.markNotificationRead('123456');
@@ -2462,6 +2603,7 @@ describe('GitHubClient.markNotificationRead()', () => {
 
   it('throws GitHubApiError on non-2xx response', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(403, 'Forbidden');
 
     await expect(gh.markNotificationRead('1')).rejects.toThrow(GitHubApiError);
@@ -2471,6 +2613,7 @@ describe('GitHubClient.markNotificationRead()', () => {
 describe('GitHubClient.markAllNotificationsRead()', () => {
   it('sends PUT /notifications', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockDeleteResponse(205);
 
     await gh.markAllNotificationsRead();
@@ -2483,6 +2626,7 @@ describe('GitHubClient.markAllNotificationsRead()', () => {
 
   it('throws GitHubApiError on non-2xx response', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(422, 'Unprocessable Entity');
 
     await expect(gh.markAllNotificationsRead()).rejects.toThrow(GitHubApiError);
@@ -2494,6 +2638,7 @@ describe('GitHubClient.markAllNotificationsRead()', () => {
 describe('GitHubClient.issues()', () => {
   it('fetches cross-repo issues without params', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse([mockIssue]);
 
     const result = await gh.issues();
@@ -2507,6 +2652,7 @@ describe('GitHubClient.issues()', () => {
 
   it('passes filter and state as query params', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse([mockIssue]);
 
     await gh.issues({ filter: 'all', state: 'open', per_page: 100 });
@@ -2519,6 +2665,7 @@ describe('GitHubClient.issues()', () => {
 
   it('parses Link header for pagination', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse([mockIssue], { link: makeLinkHeader(3) });
 
     const result = await gh.issues({ per_page: 1 });
@@ -2529,6 +2676,7 @@ describe('GitHubClient.issues()', () => {
 
   it('throws GitHubApiError on 401', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(401, 'Unauthorized');
 
     await expect(gh.issues()).rejects.toThrow(GitHubApiError);
@@ -2540,6 +2688,7 @@ describe('GitHubClient.issues()', () => {
 describe('GitHubClient.searchIssues()', () => {
   it('searches issues and returns totalCount', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse({ total_count: 1, incomplete_results: false, items: [mockIssue] });
 
     const result = await gh.searchIssues({ q: 'is:issue is:open author:octocat' });
@@ -2555,6 +2704,7 @@ describe('GitHubClient.searchIssues()', () => {
 
   it('searches PRs with is:pr qualifier', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse({ total_count: 5, incomplete_results: false, items: [mockIssue] });
 
     const result = await gh.searchIssues({ q: 'is:pr is:open author:octocat', sort: 'updated', per_page: 50 });
@@ -2568,6 +2718,7 @@ describe('GitHubClient.searchIssues()', () => {
 
   it('parses Link header on search results', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(
       { total_count: 100, incomplete_results: false, items: [mockIssue] },
       { link: makeLinkHeader(2) },
@@ -2582,6 +2733,7 @@ describe('GitHubClient.searchIssues()', () => {
 
   it('throws GitHubApiError on 422 (invalid query)', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(422, 'Unprocessable Entity');
 
     await expect(gh.searchIssues({ q: '' })).rejects.toThrow(GitHubApiError);
@@ -2591,6 +2743,7 @@ describe('GitHubClient.searchIssues()', () => {
 describe('GitHubClient.searchUsers()', () => {
   it('searches users and returns totalCount', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse({ total_count: 1, incomplete_results: false, items: [mockUser] });
 
     const result = await gh.searchUsers({ q: 'location:Berlin language:typescript' });
@@ -2606,6 +2759,7 @@ describe('GitHubClient.searchUsers()', () => {
 
   it('passes sort and order params', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse({ total_count: 5, incomplete_results: false, items: [mockUser] });
 
     await gh.searchUsers({ q: 'type:user', sort: 'followers', order: 'desc' });
@@ -2618,6 +2772,7 @@ describe('GitHubClient.searchUsers()', () => {
 
   it('throws GitHubApiError on 422', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(422, 'Unprocessable Entity');
 
     await expect(gh.searchUsers({ q: '' })).rejects.toThrow(GitHubApiError);
@@ -2636,6 +2791,7 @@ describe('GitHubClient.searchCode()', () => {
 
   it('searches code and returns totalCount', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse({ total_count: 1, incomplete_results: false, items: [mockCodeResult] });
 
     const result = await gh.searchCode({ q: 'addClass repo:jquery/jquery' });
@@ -2652,6 +2808,7 @@ describe('GitHubClient.searchCode()', () => {
 
   it('parses Link header for pagination', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(
       { total_count: 100, incomplete_results: false, items: [mockCodeResult] },
       { link: makeLinkHeader(2) },
@@ -2666,6 +2823,7 @@ describe('GitHubClient.searchCode()', () => {
 
   it('throws GitHubApiError on 422', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(422, 'Unprocessable Entity');
 
     await expect(gh.searchCode({ q: '' })).rejects.toThrow(GitHubApiError);
@@ -2692,6 +2850,7 @@ const mockWorkflowRun = {
 describe('RepositoryResource.workflowRuns()', () => {
   it('fetches workflow runs for a repository', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse({ total_count: 1, workflow_runs: [mockWorkflowRun] });
 
     const result = await gh.repo('octocat', 'Hello-World').workflowRuns({ per_page: 10 });
@@ -2706,6 +2865,7 @@ describe('RepositoryResource.workflowRuns()', () => {
 
   it('filters by branch', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse({ total_count: 1, workflow_runs: [mockWorkflowRun] });
 
     await gh.repo('octocat', 'Hello-World').workflowRuns({ branch: 'main' });
@@ -2718,6 +2878,7 @@ describe('RepositoryResource.workflowRuns()', () => {
 
   it('fetches workflow runs without params', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse({ total_count: 0, workflow_runs: [] });
 
     const result = await gh.repo('octocat', 'Hello-World').workflowRuns();
@@ -2731,6 +2892,7 @@ describe('RepositoryResource.workflowRuns()', () => {
 
   it('throws GitHubApiError on 404', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(404, 'Not Found');
 
     await expect(gh.repo('octocat', 'nonexistent').workflowRuns()).rejects.toThrow(GitHubApiError);
@@ -2751,6 +2913,7 @@ describe('RepositoryResource.workflows()', () => {
 
   it('lists workflows', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse({ total_count: 1, workflows: [mockWorkflow] });
 
     const result = await gh.repo('octocat', 'Hello-World').workflows();
@@ -2767,6 +2930,7 @@ describe('RepositoryResource.workflows()', () => {
 describe('RepositoryResource.workflowRun()', () => {
   it('fetches a single workflow run by id', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(mockWorkflowRun);
 
     const result = await gh.repo('octocat', 'Hello-World').workflowRun(1);
@@ -2783,6 +2947,7 @@ describe('RepositoryResource.workflowRun()', () => {
 describe('RepositoryResource.cancelWorkflowRun()', () => {
   it('cancels a workflow run', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockPostResponse({});
 
     await gh.repo('octocat', 'Hello-World').cancelWorkflowRun(1);
@@ -2797,6 +2962,7 @@ describe('RepositoryResource.cancelWorkflowRun()', () => {
 describe('RepositoryResource.triggerWorkflow()', () => {
   it('triggers a workflow dispatch by file name', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     fetchMock.mockResolvedValueOnce({ ok: true, status: 204, headers: { get: () => null } });
 
     await gh.repo('octocat', 'Hello-World').triggerWorkflow('ci.yml', { ref: 'main' });
@@ -2812,6 +2978,7 @@ describe('RepositoryResource.triggerWorkflow()', () => {
 
   it('triggers a workflow dispatch with inputs', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     fetchMock.mockResolvedValueOnce({ ok: true, status: 204, headers: { get: () => null } });
 
     await gh.repo('octocat', 'Hello-World').triggerWorkflow(1, { ref: 'main', inputs: { environment: 'staging' } });
@@ -2836,6 +3003,7 @@ const mockSocialAccounts: SocialAccount[] = [
 describe('UserResource.socialAccounts()', () => {
   it('fetches social accounts for a user', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(mockSocialAccounts);
 
     const result = await gh.user('ElJijuna').socialAccounts();
@@ -2853,6 +3021,7 @@ describe('UserResource.socialAccounts()', () => {
 
   it('returns an empty array when the user has no social accounts', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse([]);
 
     const result = await gh.user('octocat').socialAccounts();
@@ -2866,6 +3035,7 @@ describe('UserResource.socialAccounts()', () => {
 
   it('throws GitHubApiError on 404 (user not found)', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(404, 'Not Found');
 
     await expect(gh.user('ghost-user').socialAccounts()).rejects.toThrow(GitHubApiError);
@@ -2875,6 +3045,7 @@ describe('UserResource.socialAccounts()', () => {
 describe('UserResource.organizations()', () => {
   it('fetches organizations for a user', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf(mockOrg));
 
     const result = await gh.user('octocat').organizations();
@@ -2888,6 +3059,7 @@ describe('UserResource.organizations()', () => {
 
   it('returns an empty list when the user has no public organizations', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockJsonResponse(pagedOf());
 
     const result = await gh.user('octocat').organizations();
@@ -2897,6 +3069,7 @@ describe('UserResource.organizations()', () => {
 
   it('throws GitHubApiError on 404 (user not found)', async () => {
     const gh = new GitHubClient({ token: TOKEN });
+
     mockErrorResponse(404, 'Not Found');
 
     await expect(gh.user('ghost-user').organizations()).rejects.toThrow(GitHubApiError);

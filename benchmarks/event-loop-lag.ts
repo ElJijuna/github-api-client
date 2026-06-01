@@ -35,9 +35,12 @@ async function measureEventLoopLag(
   iterations = ITERATIONS,
 ): Promise<ELResult> {
   // warmup before starting the monitor
-  for (let i = 0; i < 50; i++) {await operation();}
+  for (let i = 0; i < 50; i++) {
+    await operation();
+  }
 
   const h = monitorEventLoopDelay({ resolution: EL_RESOLUTION_MS });
+
   h.enable();
   await yieldToEventLoop();
   const t0 = performance.now();
@@ -47,6 +50,7 @@ async function measureEventLoopLag(
   }
 
   const elapsed = performance.now() - t0;
+
   await yieldToEventLoop();
   h.disable();
 
@@ -67,6 +71,7 @@ async function measureEventLoopLag(
   console.log(`  elapsed ms  : ${elapsed.toFixed(2)}`);
   console.log(`  avg op ms   : ${(elapsed / iterations).toFixed(4)}`);
   const fmt = (v: number) => Number.isNaN(v) ? '<1ms' : v.toFixed(4);
+
   console.log(`  EL mean ms  : ${fmt(result.meanMs)}`);
   console.log(`  EL p50  ms  : ${fmt(result.p50Ms)}`);
   console.log(`  EL p95  ms  : ${fmt(result.p95Ms)}`);
@@ -94,6 +99,7 @@ async function main(): Promise<void> {
 
   // 2. Serial GET list + Link header — regex path in event loop
   const link = '<https://api.github.com/users/octocat/repos?page=2>; rel="next", <https://api.github.com/users/octocat/repos?page=5>; rel="last"';
+
   installFetchMock(() => makeListResponse(Array(30).fill(mockRepoFixture), link));
   gh = new GitHubClient({ token: MOCK_TOKEN });
   await measureEventLoopLag(
@@ -123,6 +129,7 @@ async function main(): Promise<void> {
 
   for (const concurrency of [10, 50, 100] as const) {
     const batchIterations = Math.max(Math.floor(ITERATIONS / concurrency), 50);
+
     await measureEventLoopLag(
       `EL: Promise.all(${concurrency}) concurrent GETs`,
       async () => {

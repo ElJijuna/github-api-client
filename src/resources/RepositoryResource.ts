@@ -455,6 +455,7 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    */
   async contents(path?: string, params?: ContentParams, signal?: AbortSignal): Promise<GitHubContent | GitHubContent[]> {
     const contentPath = path ? `${this.basePath}/contents/${path}` : `${this.basePath}/contents`;
+
     return this.request<GitHubContent | GitHubContent[]>(
       contentPath,
       params as Record<string, string | number | boolean>,
@@ -517,6 +518,7 @@ export class RepositoryResource implements PromiseLike<GitHubRepository> {
    */
   async topics(signal?: AbortSignal): Promise<string[]> {
     const data = await this.request<{ names: string[] }>(`${this.basePath}/topics`, undefined, signal);
+
     return data.names;
   }
 

@@ -13,11 +13,13 @@ import {
 
 function readEnvInt(name: string, fallback: number): number {
   const v = Number(process.env[name]);
+
   return Number.isInteger(v) && v > 0 ? v : fallback;
 }
 
 function readEnvFloat(name: string, fallback: number): number {
   const v = Number(process.env[name]);
+
   return Number.isFinite(v) && v > 0 ? v : fallback;
 }
 
@@ -30,6 +32,7 @@ const CONCURRENCY_LEVELS = [10, 50, 100] as const;
 expect.extend({
   toHaveAcceptableThroughput(received: number, minOpsPerSec: number) {
     const pass = minOpsPerSec === 0 || received >= minOpsPerSec;
+
     return {
       pass,
       message: () => `expected ${received.toLocaleString()} ops/s to be >= ${minOpsPerSec.toLocaleString()} ops/s`,
@@ -94,9 +97,14 @@ describe('GitHubClient concurrency benchmarks', () => {
       async (_url: RequestInfo | URL, init?: RequestInit) => {
         const method = init?.method ?? 'GET';
         const url = String(_url);
-        if (method === 'GET' && url.includes('/users/')) {return makeListResponse([mockRepoFixture]);}
 
-        if (method === 'POST') {return makeJsonResponse(mockGistFixture, 201);}
+        if (method === 'GET' && url.includes('/users/')) {
+          return makeListResponse([mockRepoFixture]);
+        }
+
+        if (method === 'POST') {
+          return makeJsonResponse(mockGistFixture, 201);
+        }
 
         return makeJsonResponse(mockUserFixture);
       },
@@ -112,12 +120,17 @@ describe('GitHubClient concurrency benchmarks', () => {
 
     const t0 = performance.now();
     const ops = Array.from({ length: 100 }, (_, i) => {
-      if (i % 3 === 0) {return gh.currentUser();}
+      if (i % 3 === 0) {
+        return gh.currentUser();
+      }
 
-      if (i % 3 === 1) {return gh.user('octocat').repos();}
+      if (i % 3 === 1) {
+        return gh.user('octocat').repos();
+      }
 
       return gh.createGist({ files: { 'f.ts': { content: 'x' } }, public: false });
     });
+
     await Promise.all(ops);
     const elapsed = performance.now() - t0;
 
@@ -144,6 +157,7 @@ describe('GitHubClient concurrency benchmarks', () => {
       }
 
       const t0 = performance.now();
+
       for (let b = 0; b < BATCHES; b++) {
         await Promise.all(Array.from({ length: 50 }, () => gh.currentUser()));
       }
@@ -151,6 +165,7 @@ describe('GitHubClient concurrency benchmarks', () => {
       const elapsed = performance.now() - t0;
 
       const throughput = Math.round((50 * BATCHES) / (elapsed / 1000));
+
       results[`listeners_${listenerCount}`] = throughput;
       console.log(`[listeners=${listenerCount}] ${throughput.toLocaleString()} ops/s`);
 
@@ -162,6 +177,7 @@ describe('GitHubClient concurrency benchmarks', () => {
     const withTen = results['listeners_10'] ?? 0;
     const degradation = (baseline - withTen) / baseline;
     const instrumentationCost = (noListeners - baseline) / noListeners;
+
     console.log(`Telemetry activation cost (0→1): ${(instrumentationCost * 100).toFixed(1)}%`);
     console.log(`Listener fanout degradation (1→10): ${(degradation * 100).toFixed(1)}%`);
     expect(degradation).toBeLessThan(MAX_DEGRADATION);
@@ -184,6 +200,7 @@ describe('GitHubClient concurrency benchmarks', () => {
     }
 
     const t0 = performance.now();
+
     for (let b = 0; b < BATCHES; b++) {
       await Promise.all(Array.from({ length: 50 }, () => gh.currentUser()));
     }
@@ -201,14 +218,18 @@ describe('GitHubClient concurrency benchmarks', () => {
 
     const iters = readEnvInt('BENCH_THROUGHPUT_ITERATIONS', 2_000);
     const warmup = 100;
+
     for (let i = 0; i < warmup; i++) {
       const ac = new AbortController();
+
       await gh.markAllNotificationsRead(ac.signal);
     }
 
     const t0 = performance.now();
+
     for (let i = 0; i < iters; i++) {
       const ac = new AbortController();
+
       await gh.markAllNotificationsRead(ac.signal);
     }
 

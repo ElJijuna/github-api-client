@@ -165,7 +165,9 @@ export class GitHubClient {
     statusCode?: number,
     error?: Error,
   ): void {
-    if (!startedAt) {return;}
+    if (!startedAt) {
+      return;
+    }
 
     const finishedAt = new Date();
     const payload: RequestEvent = {
@@ -177,6 +179,7 @@ export class GitHubClient {
       statusCode,
       ...(error ? { error } : {}),
     };
+
     for (const listener of this.requestListeners) {
       listener(payload);
     }
@@ -194,19 +197,25 @@ export class GitHubClient {
     const base = `${this.security.getApiUrl()}${path}`;
     const url = buildUrl(base, params);
     const startedAt = this.startRequestEvent();
+
     let statusCode: number | undefined;
+
     try {
       const headers = options?.headers ?? this.security.getHeaders();
       const response = await fetch(url, { headers, signal: options?.signal });
+
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
       const data = await response.json() as T;
+
       this.emitRequestEvent('GET', url, startedAt, statusCode);
+
       return data;
-    } catch (err) {
+    }
+    catch (err) {
       this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
@@ -225,9 +234,12 @@ export class GitHubClient {
     const base = `${this.security.getApiUrl()}${path}`;
     const url = buildUrl(base, params);
     const startedAt = this.startRequestEvent();
+
     let statusCode: number | undefined;
+
     try {
       const response = await fetch(url, { headers: this.security.getHeaders(), signal });
+
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
@@ -236,13 +248,16 @@ export class GitHubClient {
       const data = await response.json() as T[];
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
+
       this.emitRequestEvent('GET', url, startedAt, statusCode);
+
       return {
         values: data,
         hasNextPage: nextPage !== undefined,
         nextPage,
       };
-    } catch (err) {
+    }
+    catch (err) {
       this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
@@ -261,18 +276,24 @@ export class GitHubClient {
     const base = `${this.security.getApiUrl()}${path}`;
     const url = buildUrl(base, params);
     const startedAt = this.startRequestEvent();
+
     let statusCode: number | undefined;
+
     try {
       const response = await fetch(url, { headers: this.security.getRawHeaders(), signal });
+
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
       const text = await response.text();
+
       this.emitRequestEvent('GET', url, startedAt, statusCode);
+
       return text;
-    } catch (err) {
+    }
+    catch (err) {
       this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
@@ -293,7 +314,9 @@ export class GitHubClient {
   private async requestPost<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
     const url = `${this.security.getApiUrl()}${path}`;
     const startedAt = this.startRequestEvent();
+
     let statusCode: number | undefined;
+
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -301,15 +324,19 @@ export class GitHubClient {
         body: JSON.stringify(body),
         signal,
       });
+
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
       const data = response.status !== 204 ? await response.json() as T : undefined as unknown as T;
+
       this.emitRequestEvent('POST', url, startedAt, statusCode);
+
       return data;
-    } catch (err) {
+    }
+    catch (err) {
       this.emitRequestEvent('POST', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
@@ -322,7 +349,9 @@ export class GitHubClient {
   private async requestPatch<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
     const url = `${this.security.getApiUrl()}${path}`;
     const startedAt = this.startRequestEvent();
+
     let statusCode: number | undefined;
+
     try {
       const response = await fetch(url, {
         method: 'PATCH',
@@ -330,15 +359,19 @@ export class GitHubClient {
         body: JSON.stringify(body),
         signal,
       });
+
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
       const data = await response.json() as T;
+
       this.emitRequestEvent('PATCH', url, startedAt, statusCode);
+
       return data;
-    } catch (err) {
+    }
+    catch (err) {
       this.emitRequestEvent('PATCH', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
@@ -347,20 +380,24 @@ export class GitHubClient {
   private async requestDelete(path: string, signal?: AbortSignal): Promise<void> {
     const url = `${this.security.getApiUrl()}${path}`;
     const startedAt = this.startRequestEvent();
+
     let statusCode: number | undefined;
+
     try {
       const response = await fetch(url, {
         method: 'DELETE',
         headers: this.security.getHeaders(),
         signal,
       });
+
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
       this.emitRequestEvent('DELETE', url, startedAt, statusCode);
-    } catch (err) {
+    }
+    catch (err) {
       this.emitRequestEvent('DELETE', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
@@ -377,20 +414,24 @@ export class GitHubClient {
   private async requestPut(path: string, signal?: AbortSignal): Promise<void> {
     const url = `${this.security.getApiUrl()}${path}`;
     const startedAt = this.startRequestEvent();
+
     let statusCode: number | undefined;
+
     try {
       const response = await fetch(url, {
         method: 'PUT',
         headers: this.security.getHeaders(),
         signal,
       });
+
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
       this.emitRequestEvent('PUT', url, startedAt, statusCode);
-    } catch (err) {
+    }
+    catch (err) {
       this.emitRequestEvent('PUT', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
@@ -403,7 +444,9 @@ export class GitHubClient {
   private async requestBodyPut<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
     const url = `${this.security.getApiUrl()}${path}`;
     const startedAt = this.startRequestEvent();
+
     let statusCode: number | undefined;
+
     try {
       const response = await fetch(url, {
         method: 'PUT',
@@ -411,15 +454,19 @@ export class GitHubClient {
         body: JSON.stringify(body),
         signal,
       });
+
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
       const data = response.status !== 204 ? await response.json() as T : undefined as unknown as T;
+
       this.emitRequestEvent('PUT', url, startedAt, statusCode);
+
       return data;
-    } catch (err) {
+    }
+    catch (err) {
       this.emitRequestEvent('PUT', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
@@ -432,7 +479,9 @@ export class GitHubClient {
   private async requestGraphQL<T>(query: string, variables?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
     const url = `${this.security.getApiUrl()}/graphql`;
     const startedAt = this.startRequestEvent();
+
     let statusCode: number | undefined;
+
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -440,19 +489,23 @@ export class GitHubClient {
         body: JSON.stringify({ query, variables }),
         signal,
       });
+
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
       const json = await response.json() as { data?: T; errors?: Array<{ message: string }> };
+
       if (json.errors?.length) {
         throw new Error(json.errors.map(e => e.message).join('; '));
       }
 
       this.emitRequestEvent('POST', url, startedAt, statusCode);
+
       return json.data as T;
-    } catch (err) {
+    }
+    catch (err) {
       this.emitRequestEvent('POST', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
@@ -611,9 +664,12 @@ export class GitHubClient {
     const base = `${this.security.getApiUrl()}/search/repositories`;
     const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
     const startedAt = this.startRequestEvent();
+
     let statusCode: number | undefined;
+
     try {
       const response = await fetch(url, { headers: this.security.getHeaders(), signal });
+
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
@@ -622,14 +678,17 @@ export class GitHubClient {
       const data = await response.json() as SearchResult<GitHubRepository>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
+
       this.emitRequestEvent('GET', url, startedAt, statusCode);
+
       return {
         values: data.items,
         hasNextPage: nextPage !== undefined,
         nextPage,
         totalCount: data.total_count,
       };
-    } catch (err) {
+    }
+    catch (err) {
       this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
@@ -735,6 +794,7 @@ export class GitHubClient {
    */
   async advisoryByCve(cveId: string, signal?: AbortSignal): Promise<GitHubAdvisory | null> {
     const result = await this.requestList<GitHubAdvisory>('/advisories', { cve_id: cveId }, signal);
+
     return result.values[0] ?? null;
   }
 
@@ -746,20 +806,24 @@ export class GitHubClient {
   private async requestPatchVoid(path: string, signal?: AbortSignal): Promise<void> {
     const url = `${this.security.getApiUrl()}${path}`;
     const startedAt = this.startRequestEvent();
+
     let statusCode: number | undefined;
+
     try {
       const response = await fetch(url, {
         method: 'PATCH',
         headers: this.security.getHeaders(),
         signal,
       });
+
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
       this.emitRequestEvent('PATCH', url, startedAt, statusCode);
-    } catch (err) {
+    }
+    catch (err) {
       this.emitRequestEvent('PATCH', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
@@ -864,9 +928,12 @@ export class GitHubClient {
     const base = `${this.security.getApiUrl()}/search/issues`;
     const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
     const startedAt = this.startRequestEvent();
+
     let statusCode: number | undefined;
+
     try {
       const response = await fetch(url, { headers: this.security.getHeaders(), signal });
+
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
@@ -875,14 +942,17 @@ export class GitHubClient {
       const data = await response.json() as SearchResult<GitHubIssue>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
+
       this.emitRequestEvent('GET', url, startedAt, statusCode);
+
       return {
         values: data.items,
         hasNextPage: nextPage !== undefined,
         nextPage,
         totalCount: data.total_count,
       };
-    } catch (err) {
+    }
+    catch (err) {
       this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
@@ -906,9 +976,12 @@ export class GitHubClient {
     const base = `${this.security.getApiUrl()}/search/users`;
     const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
     const startedAt = this.startRequestEvent();
+
     let statusCode: number | undefined;
+
     try {
       const response = await fetch(url, { headers: this.security.getHeaders(), signal });
+
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
@@ -917,14 +990,17 @@ export class GitHubClient {
       const data = await response.json() as SearchResult<GitHubUser>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
+
       this.emitRequestEvent('GET', url, startedAt, statusCode);
+
       return {
         values: data.items,
         hasNextPage: nextPage !== undefined,
         nextPage,
         totalCount: data.total_count,
       };
-    } catch (err) {
+    }
+    catch (err) {
       this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
@@ -949,9 +1025,12 @@ export class GitHubClient {
     const base = `${this.security.getApiUrl()}/search/code`;
     const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
     const startedAt = this.startRequestEvent();
+
     let statusCode: number | undefined;
+
     try {
       const response = await fetch(url, { headers: this.security.getHeaders(), signal });
+
       statusCode = response.status;
       if (!response.ok) {
         throw new GitHubApiError(response.status, response.statusText);
@@ -960,14 +1039,17 @@ export class GitHubClient {
       const data = await response.json() as SearchResult<GitHubCodeResult>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
+
       this.emitRequestEvent('GET', url, startedAt, statusCode);
+
       return {
         values: data.items,
         hasNextPage: nextPage !== undefined,
         nextPage,
         totalCount: data.total_count,
       };
-    } catch (err) {
+    }
+    catch (err) {
       this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
@@ -979,17 +1061,22 @@ export class GitHubClient {
  * @internal
  */
 function buildUrl(base: string, params?: Record<string, string | number | boolean>): string {
-  if (!params) {return base;}
+  if (!params) {
+    return base;
+  }
 
   const search = new URLSearchParams();
+
   for (const key in params) {
     const value = params[key];
+
     if (value !== undefined) {
       search.append(key, String(value));
     }
   }
 
   const query = search.toString();
+
   return query ? `${base}?${query}` : base;
 }
 
@@ -1002,8 +1089,11 @@ function buildUrl(base: string, params?: Record<string, string | number | boolea
  * @internal
  */
 function parseNextPage(linkHeader: string | null): number | undefined {
-  if (!linkHeader) {return undefined;}
+  if (!linkHeader) {
+    return undefined;
+  }
 
   const match = linkHeader.match(NEXT_PAGE_RE);
+
   return match ? parseInt(match[1], 10) : undefined;
 }

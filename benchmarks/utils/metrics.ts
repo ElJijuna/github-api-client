@@ -40,6 +40,7 @@ export interface BenchmarkResult {
 export function snapshotHeap(): HeapSnapshot {
   const s = v8.getHeapStatistics();
   const m = process.memoryUsage();
+
   return {
     usedHeapSize: s.used_heap_size,
     totalHeapSize: s.total_heap_size,
@@ -66,14 +67,22 @@ export function setupGcObserver(): { gcStats: GcStats; disconnect: () => void } 
   const obs = new PerformanceObserver((list) => {
     for (const entry of list.getEntries() as GcEntry[]) {
       const kind = entry.detail?.kind ?? 0;
+
       gcStats.totalDurationMs += entry.duration;
-      if (kind === GC_KIND_SCAVENGE) {gcStats.minorCount++;}
-      else if (kind === GC_KIND_MARK_COMPACT) {gcStats.majorCount++;}
-      else if (kind === GC_KIND_INCREMENTAL) {gcStats.incrementalCount++;}
+      if (kind === GC_KIND_SCAVENGE) {
+        gcStats.minorCount++;
+      }
+      else if (kind === GC_KIND_MARK_COMPACT) {
+        gcStats.majorCount++;
+      }
+      else if (kind === GC_KIND_INCREMENTAL) {
+        gcStats.incrementalCount++;
+      }
     }
   });
 
   obs.observe({ entryTypes: ['gc'], buffered: false });
+
   return { gcStats, disconnect: () => obs.disconnect() };
 }
 
@@ -82,7 +91,9 @@ export function setupEventLoopMonitor(resolutionMs = 1): {
   getStats: () => EventLoopStats;
 } {
   const h = monitorEventLoopDelay({ resolution: resolutionMs });
+
   h.enable();
+
   return {
     disable: () => h.disable(),
     getStats: (): EventLoopStats => ({
@@ -106,24 +117,34 @@ export async function runBenchmark(
 ): Promise<BenchmarkResult> {
   const { warmupIterations = 50, iterations, forceGcBeforeStart = false } = options;
 
-  for (let i = 0; i < warmupIterations; i++) {await operation();}
+  for (let i = 0; i < warmupIterations; i++) {
+    await operation();
+  }
 
-  if (forceGcBeforeStart) {forceGc();}
+  if (forceGcBeforeStart) {
+    forceGc();
+  }
 
   const { gcStats, disconnect: gcDisconnect } = setupGcObserver();
   const elMonitor = setupEventLoopMonitor(1);
   const heapBefore = snapshotHeap();
+
   await yieldToEventLoop();
   const t0 = performance.now();
 
-  for (let i = 0; i < iterations; i++) {await operation();}
+  for (let i = 0; i < iterations; i++) {
+    await operation();
+  }
 
   const elapsedMs = performance.now() - t0;
+
   await yieldToEventLoop();
   elMonitor.disable();
   gcDisconnect();
 
-  if (forceGcBeforeStart) {forceGc();}
+  if (forceGcBeforeStart) {
+    forceGc();
+  }
 
   const heapAfter = snapshotHeap();
 
@@ -151,6 +172,7 @@ export function printResult(result: BenchmarkResult): void {
   console.log(`  GC major    : ${result.gcStats.majorCount}`);
   console.log(`  GC total ms : ${result.gcStats.totalDurationMs.toFixed(2)}`);
   const fmt = (v: number) => Number.isNaN(v) ? '<1ms' : v.toFixed(4);
+
   console.log(`  EL mean ms  : ${fmt(result.eventLoop.meanMs)}`);
   console.log(`  EL p95  ms  : ${fmt(result.eventLoop.p95Ms)}`);
   console.log(`  EL p99  ms  : ${fmt(result.eventLoop.p99Ms)}`);

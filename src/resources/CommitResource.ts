@@ -73,6 +73,7 @@ export class CommitResource implements PromiseLike<GitHubCommit> {
    */
   async statuses(params?: CommitStatusesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubCommitStatus>> {
     const repoPath = this.basePath.replace(`/commits/${this.ref}`, '');
+
     return this.requestList<GitHubCommitStatus>(
       `${repoPath}/statuses/${this.ref}`,
       params as Record<string, string | number | boolean>,
@@ -105,6 +106,7 @@ export class CommitResource implements PromiseLike<GitHubCommit> {
       params as Record<string, string | number | boolean>,
       signal,
     );
+
     return {
       values: raw.check_runs,
       hasNextPage: false,
@@ -121,6 +123,7 @@ export class CommitResource implements PromiseLike<GitHubCommit> {
    */
   async createStatus(data: CreateStatusData, signal?: AbortSignal): Promise<GitHubCommitStatus> {
     const repoPath = this.basePath.replace(`/commits/${this.ref}`, '');
+
     return this.requestBody<GitHubCommitStatus>(`${repoPath}/statuses/${this.ref}`, data, signal);
   }
 

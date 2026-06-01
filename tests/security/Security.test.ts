@@ -12,6 +12,7 @@ describe('Security', () => {
 
     it('uses the default API URL when none is provided', () => {
       const security = new Security('ghp_token');
+
       expect(security.getApiUrl()).toBe('https://api.github.com');
     });
 
@@ -30,11 +31,13 @@ describe('Security', () => {
 
     it('removes trailing slash from the API URL', () => {
       const security = new Security('ghp_token', 'https://api.github.com/');
+
       expect(security.getApiUrl()).toBe('https://api.github.com');
     });
 
     it('removes trailing slash from a custom API URL', () => {
       const security = new Security('ghp_token', 'https://github.example.com/api/v3/');
+
       expect(security.getApiUrl()).toBe('https://github.example.com/api/v3');
     });
   });
@@ -42,6 +45,7 @@ describe('Security', () => {
   describe('getApiUrl()', () => {
     it('returns the base API URL', () => {
       const security = new Security('ghp_token', 'https://api.github.com');
+
       expect(security.getApiUrl()).toBe('https://api.github.com');
     });
   });
@@ -49,11 +53,13 @@ describe('Security', () => {
   describe('getAuthorizationHeader()', () => {
     it('returns a Bearer authorization header', () => {
       const security = new Security('ghp_myToken123');
+
       expect(security.getAuthorizationHeader()).toBe('Bearer ghp_myToken123');
     });
 
     it('uses the token as-is (no encoding)', () => {
       const security = new Security('ghs_my:special/token');
+
       expect(security.getAuthorizationHeader()).toBe('Bearer ghs_my:special/token');
     });
   });
@@ -85,11 +91,13 @@ describe('Security', () => {
 
     it('includes the correct Accept header for the GitHub API', () => {
       const security = new Security('ghp_token');
+
       expect(security.getHeaders()['Accept']).toBe('application/vnd.github+json');
     });
 
     it('includes the GitHub API version header', () => {
       const security = new Security('ghp_token');
+
       expect(security.getHeaders()['X-GitHub-Api-Version']).toBe('2022-11-28');
     });
   });

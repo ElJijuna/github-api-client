@@ -1,3 +1,4 @@
+import eslintJest from 'super-configs/eslint/jest';
 import eslintTs from 'super-configs/eslint/ts';
 
 export default [
@@ -9,23 +10,5 @@ export default [
     ],
   },
   ...eslintTs,
-  {
-    files: ['tests/**/*.ts'],
-    languageOptions: {
-      globals: {
-        afterAll: 'readonly',
-        afterEach: 'readonly',
-        beforeAll: 'readonly',
-        beforeEach: 'readonly',
-        describe: 'readonly',
-        expect: 'readonly',
-        it: 'readonly',
-        jest: 'readonly',
-        test: 'readonly',
-      },
-    },
-    rules: {
-      '@typescript-eslint/no-namespace': 'off',
-    },
-  },
+  ...eslintJest,
 ];

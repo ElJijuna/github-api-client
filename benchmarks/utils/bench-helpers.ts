@@ -9,11 +9,13 @@
 
 export function readEnvInt(name: string, fallback: number): number {
   const v = Number(process.env[name]);
+
   return Number.isInteger(v) && v > 0 ? v : fallback;
 }
 
 export function readEnvFloat(name: string, fallback: number): number {
   const v = Number(process.env[name]);
+
   return Number.isFinite(v) && v > 0 ? v : fallback;
 }
 
@@ -27,6 +29,7 @@ export function requireExposeGc(): void {
 
 export function forceGc(): void {
   const g = global as unknown as Record<string, unknown>;
+
   if (typeof g['gc'] === 'function') {
     (g['gc'] as () => void)();
   }

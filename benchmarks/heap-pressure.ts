@@ -37,6 +37,7 @@ async function benchHeapSingleGet(): Promise<void> {
 
 async function benchHeapListParsing(): Promise<void> {
   const link = '<https://api.github.com/users/octocat/repos?page=2>; rel="next", <https://api.github.com/users/octocat/repos?page=5>; rel="last"';
+
   installFetchMock(() => makeListResponse(Array(30).fill(mockRepoFixture), link));
   const gh = new GitHubClient({ token: MOCK_TOKEN });
 
@@ -73,6 +74,7 @@ async function benchHeapClientCreation(): Promise<void> {
 
   for (let i = 0; i < ctorIterations; i++) {
     const gh = new GitHubClient({ token: MOCK_TOKEN });
+
     void gh;
   }
 
@@ -106,17 +108,20 @@ async function benchLeakDetection(): Promise<void> {
 
     forceGc();
     const heapKb = v8.getHeapStatistics().used_heap_size / 1024;
+
     heapSamples.push(heapKb);
     console.log(`  epoch ${epoch + 1}: heap = ${heapKb.toFixed(1)} KB`);
   }
 
   const heapGrowthKb = (heapSamples[EPOCHS - 1] ?? 0) - (heapSamples[0] ?? 0);
+
   console.log(`  total growth across epochs: ${heapGrowthKb.toFixed(1)} KB`);
 
   if (heapGrowthKb > LEAK_THRESHOLD_KB) {
     console.warn('  WARN: monotonic heap growth detected — possible leak');
     console.warn('  Inspect: event listeners accumulation, uncollected Promises');
-  } else {
+  }
+  else {
     console.log(`  OK: heap stable across epochs (Δ ${heapGrowthKb.toFixed(1)} KB)`);
   }
 }
@@ -135,6 +140,7 @@ async function benchSecurityHeaders(): Promise<void> {
   }
 
   const elapsed = performance.now() - t0;
+
   forceGc();
   const heapAfter = snapshotHeap();
 

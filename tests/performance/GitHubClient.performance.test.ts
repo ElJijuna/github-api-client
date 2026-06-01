@@ -53,11 +53,13 @@ type FetchMock = jest.Mock<Promise<Response>, Parameters<typeof fetch>>;
 
 function readPositiveInt(name: string, fallback: number): number {
   const value = Number(process.env[name]);
+
   return Number.isInteger(value) && value > 0 ? value : fallback;
 }
 
 function readPositiveFloat(name: string, fallback: number): number {
   const value = Number(process.env[name]);
+
   return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
@@ -82,6 +84,7 @@ async function measureAverageMs(operation: () => Promise<unknown>, iterations = 
   }
 
   const startedAt = performance.now();
+
   for (let i = 0; i < iterations; i += 1) {
     await operation();
   }
@@ -92,6 +95,7 @@ async function measureAverageMs(operation: () => Promise<unknown>, iterations = 
 expect.extend({
   toBeWithinAverageMs(received: number, limit: number) {
     const pass = received <= limit;
+
     return {
       pass,
       message: () => `expected ${received.toFixed(4)}ms average to be <= ${limit}ms`,
@@ -114,6 +118,7 @@ describe('GitHubClient performance', () => {
 
   it('keeps authenticated GET overhead low', async () => {
     const fetchMock = createFetchMock(mockUser);
+
     global.fetch = fetchMock;
     const gh = new GitHubClient({ token: TOKEN });
     const maxAverageMs = readPositiveFloat('PERF_GET_MAX_AVG_MS', 1);
@@ -128,6 +133,7 @@ describe('GitHubClient performance', () => {
 
   it('keeps paginated list parsing overhead low', async () => {
     const fetchMock = createFetchMock([mockRepo]);
+
     global.fetch = fetchMock;
     const gh = new GitHubClient({ token: TOKEN });
     const maxAverageMs = readPositiveFloat('PERF_LIST_MAX_AVG_MS', 1);

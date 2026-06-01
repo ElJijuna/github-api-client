@@ -85,7 +85,10 @@ export function makeJsonResponse(data: unknown, status = 200): Response {
 
 export function makeListResponse(data: unknown[], linkHeader?: string): Response {
   const headers = new Headers();
-  if (linkHeader) {headers.set('Link', linkHeader);}
+
+  if (linkHeader) {
+    headers.set('Link', linkHeader);
+  }
 
   return {
     ok: true,
