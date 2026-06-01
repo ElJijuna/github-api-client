@@ -1,3 +1,10 @@
+## [1.16.3](https://github.com/ElJijuna/github-api-client/compare/v1.16.2...v1.16.3) (2026-06-01)
+
+
+### Bug Fixes
+
+* satisfy shared ESLint config rules ([d9ef7ba](https://github.com/ElJijuna/github-api-client/commit/d9ef7ba91e389b0ca880d4d12ca44042b343a31e))
+
 # [1.16.0](https://github.com/ElJijuna/github-api-client/compare/v1.15.0...v1.16.0) (2026-05-25)
 
 
