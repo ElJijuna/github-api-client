@@ -1,7 +1,17 @@
 import { Security } from './security/Security';
 import { GitHubApiError } from './errors/GitHubApiError';
 import { OrganizationResource } from './resources/OrganizationResource';
-import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestPutFn, RequestBodyPutFn, GraphQLFn } from './resources/OrganizationResource';
+import type {
+  RequestFn,
+  RequestListFn,
+  RequestTextFn,
+  RequestBodyFn,
+  RequestPatchFn,
+  RequestDeleteFn,
+  RequestPutFn,
+  RequestBodyPutFn,
+  GraphQLFn,
+} from './resources/OrganizationResource';
 import { RepositoryResource } from './resources/RepositoryResource';
 import { UserResource } from './resources/UserResource';
 import { GistResource } from './resources/GistResource';
@@ -209,14 +219,19 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
-      const data = await response.json() as T;
+      const data = (await response.json()) as T;
 
       this.emitRequestEvent('GET', url, startedAt, statusCode);
 
       return data;
-    }
-    catch (err) {
-      this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
+    } catch (err) {
+      this.emitRequestEvent(
+        'GET',
+        url,
+        startedAt,
+        statusCode,
+        err instanceof Error ? err : new Error(String(err)),
+      );
       throw err;
     }
   }
@@ -245,7 +260,7 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
-      const data = await response.json() as T[];
+      const data = (await response.json()) as T[];
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
 
@@ -256,9 +271,14 @@ export class GitHubClient {
         hasNextPage: nextPage !== undefined,
         nextPage,
       };
-    }
-    catch (err) {
-      this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
+    } catch (err) {
+      this.emitRequestEvent(
+        'GET',
+        url,
+        startedAt,
+        statusCode,
+        err instanceof Error ? err : new Error(String(err)),
+      );
       throw err;
     }
   }
@@ -292,9 +312,14 @@ export class GitHubClient {
       this.emitRequestEvent('GET', url, startedAt, statusCode);
 
       return text;
-    }
-    catch (err) {
-      this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
+    } catch (err) {
+      this.emitRequestEvent(
+        'GET',
+        url,
+        startedAt,
+        statusCode,
+        err instanceof Error ? err : new Error(String(err)),
+      );
       throw err;
     }
   }
@@ -330,14 +355,20 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
-      const data = response.status !== 204 ? await response.json() as T : undefined as unknown as T;
+      const data =
+        response.status !== 204 ? ((await response.json()) as T) : (undefined as unknown as T);
 
       this.emitRequestEvent('POST', url, startedAt, statusCode);
 
       return data;
-    }
-    catch (err) {
-      this.emitRequestEvent('POST', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
+    } catch (err) {
+      this.emitRequestEvent(
+        'POST',
+        url,
+        startedAt,
+        statusCode,
+        err instanceof Error ? err : new Error(String(err)),
+      );
       throw err;
     }
   }
@@ -365,14 +396,19 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
-      const data = await response.json() as T;
+      const data = (await response.json()) as T;
 
       this.emitRequestEvent('PATCH', url, startedAt, statusCode);
 
       return data;
-    }
-    catch (err) {
-      this.emitRequestEvent('PATCH', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
+    } catch (err) {
+      this.emitRequestEvent(
+        'PATCH',
+        url,
+        startedAt,
+        statusCode,
+        err instanceof Error ? err : new Error(String(err)),
+      );
       throw err;
     }
   }
@@ -396,9 +432,14 @@ export class GitHubClient {
       }
 
       this.emitRequestEvent('DELETE', url, startedAt, statusCode);
-    }
-    catch (err) {
-      this.emitRequestEvent('DELETE', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
+    } catch (err) {
+      this.emitRequestEvent(
+        'DELETE',
+        url,
+        startedAt,
+        statusCode,
+        err instanceof Error ? err : new Error(String(err)),
+      );
       throw err;
     }
   }
@@ -430,9 +471,14 @@ export class GitHubClient {
       }
 
       this.emitRequestEvent('PUT', url, startedAt, statusCode);
-    }
-    catch (err) {
-      this.emitRequestEvent('PUT', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
+    } catch (err) {
+      this.emitRequestEvent(
+        'PUT',
+        url,
+        startedAt,
+        statusCode,
+        err instanceof Error ? err : new Error(String(err)),
+      );
       throw err;
     }
   }
@@ -460,14 +506,20 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
-      const data = response.status !== 204 ? await response.json() as T : undefined as unknown as T;
+      const data =
+        response.status !== 204 ? ((await response.json()) as T) : (undefined as unknown as T);
 
       this.emitRequestEvent('PUT', url, startedAt, statusCode);
 
       return data;
-    }
-    catch (err) {
-      this.emitRequestEvent('PUT', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
+    } catch (err) {
+      this.emitRequestEvent(
+        'PUT',
+        url,
+        startedAt,
+        statusCode,
+        err instanceof Error ? err : new Error(String(err)),
+      );
       throw err;
     }
   }
@@ -476,7 +528,11 @@ export class GitHubClient {
     return this.requestBodyPutFn;
   }
 
-  private async requestGraphQL<T>(query: string, variables?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
+  private async requestGraphQL<T>(
+    query: string,
+    variables?: Record<string, unknown>,
+    signal?: AbortSignal,
+  ): Promise<T> {
     const url = `${this.security.getApiUrl()}/graphql`;
     const startedAt = this.startRequestEvent();
 
@@ -495,18 +551,23 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
-      const json = await response.json() as { data?: T; errors?: Array<{ message: string }> };
+      const json = (await response.json()) as { data?: T; errors?: Array<{ message: string }> };
 
       if (json.errors?.length) {
-        throw new Error(json.errors.map(e => e.message).join('; '));
+        throw new Error(json.errors.map((e) => e.message).join('; '));
       }
 
       this.emitRequestEvent('POST', url, startedAt, statusCode);
 
       return json.data as T;
-    }
-    catch (err) {
-      this.emitRequestEvent('POST', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
+    } catch (err) {
+      this.emitRequestEvent(
+        'POST',
+        url,
+        startedAt,
+        statusCode,
+        err instanceof Error ? err : new Error(String(err)),
+      );
       throw err;
     }
   }
@@ -535,7 +596,11 @@ export class GitHubClient {
    * console.log(result.viewer.login);
    * ```
    */
-  async graphql<T>(query: string, variables?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
+  async graphql<T>(
+    query: string,
+    variables?: Record<string, unknown>,
+    signal?: AbortSignal,
+  ): Promise<T> {
     return this.requestGraphQL<T>(query, variables, signal);
   }
 
@@ -660,7 +725,10 @@ export class GitHubClient {
    * console.log(`Found ${results.totalCount} repositories`);
    * ```
    */
-  async searchRepos(params: SearchReposParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubRepository>> {
+  async searchRepos(
+    params: SearchReposParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubRepository>> {
     const base = `${this.security.getApiUrl()}/search/repositories`;
     const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
     const startedAt = this.startRequestEvent();
@@ -675,7 +743,7 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
-      const data = await response.json() as SearchResult<GitHubRepository>;
+      const data = (await response.json()) as SearchResult<GitHubRepository>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
 
@@ -687,9 +755,14 @@ export class GitHubClient {
         nextPage,
         totalCount: data.total_count,
       };
-    }
-    catch (err) {
-      this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
+    } catch (err) {
+      this.emitRequestEvent(
+        'GET',
+        url,
+        startedAt,
+        statusCode,
+        err instanceof Error ? err : new Error(String(err)),
+      );
       throw err;
     }
   }
@@ -729,8 +802,15 @@ export class GitHubClient {
    *
    * @param params - Optional filters: `since`, `per_page`, `page`
    */
-  async listGists(params?: GistsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubGist>> {
-    return this.requestList<GitHubGist>('/gists', params as Record<string, string | number | boolean>, signal);
+  async listGists(
+    params?: GistsParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubGist>> {
+    return this.requestList<GitHubGist>(
+      '/gists',
+      params as Record<string, string | number | boolean>,
+      signal,
+    );
   }
 
   /**
@@ -757,8 +837,15 @@ export class GitHubClient {
    * const advisories = await gh.advisories({ severity: 'critical', ecosystem: 'npm' });
    * ```
    */
-  async advisories(params?: AdvisoriesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubAdvisory>> {
-    return this.requestList<GitHubAdvisory>('/advisories', params as Record<string, string | number | boolean>, signal);
+  async advisories(
+    params?: AdvisoriesParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubAdvisory>> {
+    return this.requestList<GitHubAdvisory>(
+      '/advisories',
+      params as Record<string, string | number | boolean>,
+      signal,
+    );
   }
 
   /**
@@ -822,9 +909,14 @@ export class GitHubClient {
       }
 
       this.emitRequestEvent('PATCH', url, startedAt, statusCode);
-    }
-    catch (err) {
-      this.emitRequestEvent('PATCH', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
+    } catch (err) {
+      this.emitRequestEvent(
+        'PATCH',
+        url,
+        startedAt,
+        statusCode,
+        err instanceof Error ? err : new Error(String(err)),
+      );
       throw err;
     }
   }
@@ -846,8 +938,15 @@ export class GitHubClient {
    * const { values } = await gh.notifications({ all: true });
    * ```
    */
-  async notifications(params?: NotificationsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubNotification>> {
-    return this.requestList<GitHubNotification>('/notifications', params as Record<string, string | number | boolean>, signal);
+  async notifications(
+    params?: NotificationsParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubNotification>> {
+    return this.requestList<GitHubNotification>(
+      '/notifications',
+      params as Record<string, string | number | boolean>,
+      signal,
+    );
   }
 
   /**
@@ -902,8 +1001,15 @@ export class GitHubClient {
    * const realIssues = values.filter(i => !i.pull_request);
    * ```
    */
-  async issues(params?: IssuesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubIssue>> {
-    return this.requestList<GitHubIssue>('/issues', params as Record<string, string | number | boolean>, signal);
+  async issues(
+    params?: IssuesParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubIssue>> {
+    return this.requestList<GitHubIssue>(
+      '/issues',
+      params as Record<string, string | number | boolean>,
+      signal,
+    );
   }
 
   /**
@@ -924,7 +1030,10 @@ export class GitHubClient {
    * const stale = await gh.searchIssues({ q: 'is:issue is:open updated:<2024-01-01', sort: 'updated' });
    * ```
    */
-  async searchIssues(params: SearchIssuesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubIssue>> {
+  async searchIssues(
+    params: SearchIssuesParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubIssue>> {
     const base = `${this.security.getApiUrl()}/search/issues`;
     const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
     const startedAt = this.startRequestEvent();
@@ -939,7 +1048,7 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
-      const data = await response.json() as SearchResult<GitHubIssue>;
+      const data = (await response.json()) as SearchResult<GitHubIssue>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
 
@@ -951,9 +1060,14 @@ export class GitHubClient {
         nextPage,
         totalCount: data.total_count,
       };
-    }
-    catch (err) {
-      this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
+    } catch (err) {
+      this.emitRequestEvent(
+        'GET',
+        url,
+        startedAt,
+        statusCode,
+        err instanceof Error ? err : new Error(String(err)),
+      );
       throw err;
     }
   }
@@ -972,7 +1086,10 @@ export class GitHubClient {
    * console.log(`Found ${results.totalCount} users`);
    * ```
    */
-  async searchUsers(params: SearchUsersParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubUser>> {
+  async searchUsers(
+    params: SearchUsersParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubUser>> {
     const base = `${this.security.getApiUrl()}/search/users`;
     const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
     const startedAt = this.startRequestEvent();
@@ -987,7 +1104,7 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
-      const data = await response.json() as SearchResult<GitHubUser>;
+      const data = (await response.json()) as SearchResult<GitHubUser>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
 
@@ -999,9 +1116,14 @@ export class GitHubClient {
         nextPage,
         totalCount: data.total_count,
       };
-    }
-    catch (err) {
-      this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
+    } catch (err) {
+      this.emitRequestEvent(
+        'GET',
+        url,
+        startedAt,
+        statusCode,
+        err instanceof Error ? err : new Error(String(err)),
+      );
       throw err;
     }
   }
@@ -1021,7 +1143,10 @@ export class GitHubClient {
    * results.values; // GitHubCodeResult[]
    * ```
    */
-  async searchCode(params: SearchCodeParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubCodeResult>> {
+  async searchCode(
+    params: SearchCodeParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubCodeResult>> {
     const base = `${this.security.getApiUrl()}/search/code`;
     const url = buildUrl(base, params as unknown as Record<string, string | number | boolean>);
     const startedAt = this.startRequestEvent();
@@ -1036,7 +1161,7 @@ export class GitHubClient {
         throw new GitHubApiError(response.status, response.statusText);
       }
 
-      const data = await response.json() as SearchResult<GitHubCodeResult>;
+      const data = (await response.json()) as SearchResult<GitHubCodeResult>;
       const linkHeader = response.headers.get('Link');
       const nextPage = parseNextPage(linkHeader);
 
@@ -1048,9 +1173,14 @@ export class GitHubClient {
         nextPage,
         totalCount: data.total_count,
       };
-    }
-    catch (err) {
-      this.emitRequestEvent('GET', url, startedAt, statusCode, err instanceof Error ? err : new Error(String(err)));
+    } catch (err) {
+      this.emitRequestEvent(
+        'GET',
+        url,
+        startedAt,
+        statusCode,
+        err instanceof Error ? err : new Error(String(err)),
+      );
       throw err;
     }
   }

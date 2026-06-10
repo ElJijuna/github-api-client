@@ -23,7 +23,12 @@ export type NotificationReason =
 /**
  * The type of subject a notification refers to.
  */
-export type NotificationSubjectType = 'Issue' | 'PullRequest' | 'Release' | 'CheckSuite' | 'Discussion';
+export type NotificationSubjectType =
+  | 'Issue'
+  | 'PullRequest'
+  | 'Release'
+  | 'CheckSuite'
+  | 'Discussion';
 
 /**
  * The subject of a GitHub notification (the Issue, PR, Release, etc. that triggered it).

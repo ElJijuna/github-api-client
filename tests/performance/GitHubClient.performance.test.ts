@@ -78,7 +78,10 @@ function createFetchMock(data: unknown): FetchMock {
   return jest.fn<Promise<Response>, Parameters<typeof fetch>>(async () => jsonResponse(data));
 }
 
-async function measureAverageMs(operation: () => Promise<unknown>, iterations = ITERATIONS): Promise<number> {
+async function measureAverageMs(
+  operation: () => Promise<unknown>,
+  iterations = ITERATIONS,
+): Promise<number> {
   for (let i = 0; i < 50; i += 1) {
     await operation();
   }
@@ -126,9 +129,12 @@ describe('GitHubClient performance', () => {
     const averageMs = await measureAverageMs(() => gh.currentUser());
 
     expect(averageMs).toBeWithinAverageMs(maxAverageMs);
-    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/user`, expect.objectContaining({
-      headers: expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }),
-    }));
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/user`,
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }),
+      }),
+    );
   });
 
   it('keeps paginated list parsing overhead low', async () => {

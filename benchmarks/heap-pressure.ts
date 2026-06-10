@@ -22,21 +22,24 @@ async function benchHeapSingleGet(): Promise<void> {
   installFetchMock(() => makeJsonResponse(mockUserFixture));
   const gh = new GitHubClient({ token: MOCK_TOKEN });
 
-  const result = await runBenchmark(
-    'Heap: GET /user (single)',
-    () => gh.currentUser(),
-    { iterations: ITERATIONS, warmupIterations: 100, forceGcBeforeStart: true },
-  );
+  const result = await runBenchmark('Heap: GET /user (single)', () => gh.currentUser(), {
+    iterations: ITERATIONS,
+    warmupIterations: 100,
+    forceGcBeforeStart: true,
+  });
 
   printResult(result);
 
   if (result.heapDeltaKb > LEAK_THRESHOLD_KB) {
-    console.warn(`  WARN: ${result.heapDeltaKb.toFixed(1)} KB retained after GC — candidates: Date objects, listener closures`);
+    console.warn(
+      `  WARN: ${result.heapDeltaKb.toFixed(1)} KB retained after GC — candidates: Date objects, listener closures`,
+    );
   }
 }
 
 async function benchHeapListParsing(): Promise<void> {
-  const link = '<https://api.github.com/users/octocat/repos?page=2>; rel="next", <https://api.github.com/users/octocat/repos?page=5>; rel="last"';
+  const link =
+    '<https://api.github.com/users/octocat/repos?page=2>; rel="next", <https://api.github.com/users/octocat/repos?page=5>; rel="last"';
 
   installFetchMock(() => makeListResponse(Array(30).fill(mockRepoFixture), link));
   const gh = new GitHubClient({ token: MOCK_TOKEN });
@@ -54,7 +57,13 @@ async function benchHeapUrlConstruction(): Promise<void> {
   installFetchMock(() => makeJsonResponse(mockUserFixture));
   const gh = new GitHubClient({ token: MOCK_TOKEN });
 
-  const params = { sort: 'updated', direction: 'desc', per_page: 100, page: 1, type: 'public' } as const;
+  const params = {
+    sort: 'updated',
+    direction: 'desc',
+    per_page: 100,
+    page: 1,
+    type: 'public',
+  } as const;
 
   const result = await runBenchmark(
     'Heap: URL construction with URLSearchParams (5 params)',
@@ -120,8 +129,7 @@ async function benchLeakDetection(): Promise<void> {
   if (heapGrowthKb > LEAK_THRESHOLD_KB) {
     console.warn('  WARN: monotonic heap growth detected — possible leak');
     console.warn('  Inspect: event listeners accumulation, uncollected Promises');
-  }
-  else {
+  } else {
     console.log(`  OK: heap stable across epochs (Δ ${heapGrowthKb.toFixed(1)} KB)`);
   }
 }
@@ -148,11 +156,15 @@ async function benchSecurityHeaders(): Promise<void> {
   const nsPerCall = (elapsed / headerIterations) * 1e6;
   const heapDeltaKb = (heapAfter.usedHeapSize - heapBefore.usedHeapSize) / 1024;
 
-  console.log(`\n--- Heap: Security.getHeaders() isolated (${headerIterations.toLocaleString()}x) ---`);
+  console.log(
+    `\n--- Heap: Security.getHeaders() isolated (${headerIterations.toLocaleString()}x) ---`,
+  );
   console.log(`  throughput  : ${opsPerSec.toLocaleString()} ops/s`);
   console.log(`  ns/call     : ${nsPerCall.toFixed(0)}`);
   console.log(`  heap delta  : ${heapDeltaKb.toFixed(1)} KB`);
-  console.log('  Note: recreates {Authorization,Accept,Content-Type,X-GitHub-Api-Version} every call');
+  console.log(
+    '  Note: recreates {Authorization,Accept,Content-Type,X-GitHub-Api-Version} every call',
+  );
 }
 
 import { performance } from 'perf_hooks';
@@ -178,7 +190,9 @@ async function main(): Promise<void> {
   console.log('\n=== Done ===');
 }
 
-main().catch((err: unknown) => {
+try {
+  await main();
+} catch (err) {
   console.error(err);
   process.exit(1);
-});
+}

@@ -3,11 +3,7 @@ import eslintTs from 'super-configs/eslint/ts';
 
 export default [
   {
-    ignores: [
-      'dist/**',
-      'coverage/**',
-      'node_modules/**',
-    ],
+    ignores: ['dist/**', 'coverage/**', 'node_modules/**'],
   },
   ...eslintTs,
   ...eslintJest,

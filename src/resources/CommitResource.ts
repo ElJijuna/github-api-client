@@ -1,5 +1,15 @@
 import type { GitHubCommit } from '../domain/Commit';
-import type { GitHubCommitStatus, GitHubCombinedStatus, GitHubCheckRun, CommitStatusesParams, CheckRunsParams, CreateStatusData, GitHubCommitComment, CommitCommentsParams, CommitCommentData } from '../domain/CommitStatus';
+import type {
+  GitHubCommitStatus,
+  GitHubCombinedStatus,
+  GitHubCheckRun,
+  CommitStatusesParams,
+  CheckRunsParams,
+  CreateStatusData,
+  GitHubCommitComment,
+  CommitCommentsParams,
+  CommitCommentData,
+} from '../domain/CommitStatus';
 import type { GitHubPagedResponse } from '../domain/Pagination';
 import type { RequestFn, RequestListFn, RequestBodyFn } from './OrganizationResource';
 
@@ -45,11 +55,21 @@ export class CommitResource implements PromiseLike<GitHubCommit> {
    * Allows the resource to be awaited directly, resolving with the commit info.
    * Delegates to {@link CommitResource.get}.
    */
-  then<TResult1 = GitHubCommit, TResult2 = never>(
+  async then<TResult1 = GitHubCommit, TResult2 = never>(
     onfulfilled?: ((value: GitHubCommit) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
-  ): PromiseLike<TResult1 | TResult2> {
-    return this.get().then(onfulfilled, onrejected);
+  ): Promise<TResult1 | TResult2> {
+    try {
+      const value = await this.get();
+
+      return onfulfilled ? await onfulfilled(value) : (value as unknown as TResult1);
+    } catch (reason) {
+      if (onrejected) {
+        return await onrejected(reason);
+      }
+
+      throw reason;
+    }
   }
 
   /**
@@ -71,7 +91,10 @@ export class CommitResource implements PromiseLike<GitHubCommit> {
    * @param params - Optional pagination: `per_page`, `page`
    * @returns A paged response of commit statuses
    */
-  async statuses(params?: CommitStatusesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubCommitStatus>> {
+  async statuses(
+    params?: CommitStatusesParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubCommitStatus>> {
     const repoPath = this.basePath.replace(`/commits/${this.ref}`, '');
 
     return this.requestList<GitHubCommitStatus>(
@@ -100,7 +123,10 @@ export class CommitResource implements PromiseLike<GitHubCommit> {
    * @param params - Optional filters: `check_name`, `status`, `app_id`, `per_page`, `page`
    * @returns A paged response of check runs
    */
-  async checkRuns(params?: CheckRunsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubCheckRun>> {
+  async checkRuns(
+    params?: CheckRunsParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubCheckRun>> {
     const raw = await this.request<{ check_runs: GitHubCheckRun[] }>(
       `${this.basePath}/check-runs`,
       params as Record<string, string | number | boolean>,
@@ -135,7 +161,10 @@ export class CommitResource implements PromiseLike<GitHubCommit> {
    * @param params - Optional pagination: `per_page`, `page`
    * @returns A paged response of commit comments
    */
-  async comments(params?: CommitCommentsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubCommitComment>> {
+  async comments(
+    params?: CommitCommentsParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubCommitComment>> {
     return this.requestList<GitHubCommitComment>(
       `${this.basePath}/comments`,
       params as Record<string, string | number | boolean>,

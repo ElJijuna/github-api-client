@@ -8,7 +8,7 @@ async function test() {
   // List repositories for a user (https://docs.github.com/rest/repos/repos#list-repositories-for-a-user)
   const repos = await gh.user(owner).repos();
 
-  repos.values.forEach(({ name }) => { 
+  repos.values.forEach(({ name }) => {
     console.log('repo name: ', name);
   });
   console.log('total repos: ', repos.totalCount);
@@ -64,4 +64,8 @@ async function test() {
   console.log('total events fetched: ', events.values.length);
 }
 
-test().catch(console.error);
+try {
+  await test();
+} catch (err) {
+  console.error(err);
+}

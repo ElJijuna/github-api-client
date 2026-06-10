@@ -3,8 +3,22 @@ import type { GitHubOrganization } from '../domain/Organization';
 import type { GitHubRepository, ReposParams } from '../domain/Repository';
 import type { GitHubEvent, EventsParams } from '../domain/Event';
 import type { GitHubPagedResponse } from '../domain/Pagination';
-import type { ContributionCalendar, ContributionMapParams, RepoContribution, PinnedItem } from '../domain/Contribution';
-import type { RequestFn, RequestListFn, RequestTextFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestBodyPutFn, GraphQLFn } from './OrganizationResource';
+import type {
+  ContributionCalendar,
+  ContributionMapParams,
+  RepoContribution,
+  PinnedItem,
+} from '../domain/Contribution';
+import type {
+  RequestFn,
+  RequestListFn,
+  RequestTextFn,
+  RequestBodyFn,
+  RequestPatchFn,
+  RequestDeleteFn,
+  RequestBodyPutFn,
+  GraphQLFn,
+} from './OrganizationResource';
 import { RepositoryResource } from './RepositoryResource';
 
 /**
@@ -47,11 +61,21 @@ export class UserResource implements PromiseLike<GitHubUser> {
    * Allows the resource to be awaited directly, resolving with the user info.
    * Delegates to {@link UserResource.get}.
    */
-  then<TResult1 = GitHubUser, TResult2 = never>(
+  async then<TResult1 = GitHubUser, TResult2 = never>(
     onfulfilled?: ((value: GitHubUser) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
-  ): PromiseLike<TResult1 | TResult2> {
-    return this.get().then(onfulfilled, onrejected);
+  ): Promise<TResult1 | TResult2> {
+    try {
+      const value = await this.get();
+
+      return onfulfilled ? await onfulfilled(value) : (value as unknown as TResult1);
+    } catch (reason) {
+      if (onrejected) {
+        return await onrejected(reason);
+      }
+
+      throw reason;
+    }
   }
 
   /**
@@ -73,7 +97,10 @@ export class UserResource implements PromiseLike<GitHubUser> {
    * @param params - Optional filters: `type`, `sort`, `direction`, `per_page`, `page`
    * @returns A paged response of repositories
    */
-  async repos(params?: ReposParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubRepository>> {
+  async repos(
+    params?: ReposParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubRepository>> {
     return this.requestList<GitHubRepository>(
       `${this.basePath}/repos`,
       params as Record<string, string | number | boolean>,
@@ -115,7 +142,10 @@ export class UserResource implements PromiseLike<GitHubUser> {
    *
    * @returns A paged response of users
    */
-  async following(params?: { per_page?: number; page?: number }, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubUser>> {
+  async following(
+    params?: { per_page?: number; page?: number },
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubUser>> {
     return this.requestList<GitHubUser>(
       `${this.basePath}/following`,
       params as Record<string, string | number | boolean>,
@@ -130,7 +160,10 @@ export class UserResource implements PromiseLike<GitHubUser> {
    *
    * @returns A paged response of users
    */
-  async followers(params?: { per_page?: number; page?: number }, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubUser>> {
+  async followers(
+    params?: { per_page?: number; page?: number },
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubUser>> {
     return this.requestList<GitHubUser>(
       `${this.basePath}/followers`,
       params as Record<string, string | number | boolean>,
@@ -146,7 +179,10 @@ export class UserResource implements PromiseLike<GitHubUser> {
    * @param params - Optional pagination: `per_page`, `page`
    * @returns A paged response of public events
    */
-  async publicEvents(params?: EventsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubEvent>> {
+  async publicEvents(
+    params?: EventsParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubEvent>> {
     return this.requestList<GitHubEvent>(
       `${this.basePath}/events/public`,
       params as Record<string, string | number | boolean>,
@@ -161,7 +197,10 @@ export class UserResource implements PromiseLike<GitHubUser> {
    *
    * @returns A paged response of organizations
    */
-  async organizations(params?: { per_page?: number; page?: number }, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubOrganization>> {
+  async organizations(
+    params?: { per_page?: number; page?: number },
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubOrganization>> {
     return this.requestList<GitHubOrganization>(
       `${this.basePath}/orgs`,
       params as Record<string, string | number | boolean>,
@@ -221,7 +260,10 @@ export class UserResource implements PromiseLike<GitHubUser> {
    * });
    * ```
    */
-  async contributionMap(params?: ContributionMapParams, signal?: AbortSignal): Promise<ContributionCalendar> {
+  async contributionMap(
+    params?: ContributionMapParams,
+    signal?: AbortSignal,
+  ): Promise<ContributionCalendar> {
     const variables: Record<string, unknown> = { login: this.login };
 
     if (params?.from) {
@@ -286,10 +328,17 @@ export class UserResource implements PromiseLike<GitHubUser> {
       }
     `;
     const result = await this.graphql<{
-      user: { contributionsCollection: { commitContributionsByRepository: Array<{ repository: { nameWithOwner: string; url: string }; contributions: { totalCount: number } }> } };
+      user: {
+        contributionsCollection: {
+          commitContributionsByRepository: Array<{
+            repository: { nameWithOwner: string; url: string };
+            contributions: { totalCount: number };
+          }>;
+        };
+      };
     }>(query, { login: this.login }, signal);
 
-    return result.user.contributionsCollection.commitContributionsByRepository.map(r => ({
+    return result.user.contributionsCollection.commitContributionsByRepository.map((r) => ({
       repository: r.repository,
       totalCount: r.contributions.totalCount,
     }));
@@ -322,10 +371,17 @@ export class UserResource implements PromiseLike<GitHubUser> {
       }
     `;
     const result = await this.graphql<{
-      user: { contributionsCollection: { pullRequestContributionsByRepository: Array<{ repository: { nameWithOwner: string; url: string }; contributions: { totalCount: number } }> } };
+      user: {
+        contributionsCollection: {
+          pullRequestContributionsByRepository: Array<{
+            repository: { nameWithOwner: string; url: string };
+            contributions: { totalCount: number };
+          }>;
+        };
+      };
     }>(query, { login: this.login }, signal);
 
-    return result.user.contributionsCollection.pullRequestContributionsByRepository.map(r => ({
+    return result.user.contributionsCollection.pullRequestContributionsByRepository.map((r) => ({
       repository: r.repository,
       totalCount: r.contributions.totalCount,
     }));
@@ -358,10 +414,17 @@ export class UserResource implements PromiseLike<GitHubUser> {
       }
     `;
     const result = await this.graphql<{
-      user: { contributionsCollection: { issueContributionsByRepository: Array<{ repository: { nameWithOwner: string; url: string }; contributions: { totalCount: number } }> } };
+      user: {
+        contributionsCollection: {
+          issueContributionsByRepository: Array<{
+            repository: { nameWithOwner: string; url: string };
+            contributions: { totalCount: number };
+          }>;
+        };
+      };
     }>(query, { login: this.login }, signal);
 
-    return result.user.contributionsCollection.issueContributionsByRepository.map(r => ({
+    return result.user.contributionsCollection.issueContributionsByRepository.map((r) => ({
       repository: r.repository,
       totalCount: r.contributions.totalCount,
     }));

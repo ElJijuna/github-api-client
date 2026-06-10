@@ -10,29 +10,122 @@ export { UserResource } from './resources/UserResource';
 export { IssueResource } from './resources/IssueResource';
 export { GistResource } from './resources/GistResource';
 export type { GitHubUser, UsersParams, SearchUsersParams, SocialAccount } from './domain/User';
-export type { GitHubOrganization, OrgMembersParams, CreateOrgRepoData } from './domain/Organization';
-export type { GitHubRepository, ReposParams, ForksParams, SearchReposParams, CreateForkData } from './domain/Repository';
-export type { GitHubPullRequest, GitHubRef, GitHubLabel, GitHubMilestone, PullRequestsParams } from './domain/PullRequest';
-export type { GitHubReview, GitHubReviewComment, ReviewsParams, ReviewCommentsParams } from './domain/Review';
+export type {
+  GitHubOrganization,
+  OrgMembersParams,
+  CreateOrgRepoData,
+} from './domain/Organization';
+export type {
+  GitHubRepository,
+  ReposParams,
+  ForksParams,
+  SearchReposParams,
+  CreateForkData,
+} from './domain/Repository';
+export type {
+  GitHubPullRequest,
+  GitHubRef,
+  GitHubLabel,
+  GitHubMilestone,
+  PullRequestsParams,
+} from './domain/PullRequest';
+export type {
+  GitHubReview,
+  GitHubReviewComment,
+  ReviewsParams,
+  ReviewCommentsParams,
+} from './domain/Review';
 export type { GitHubPullRequestFile, PullRequestFilesParams } from './domain/PullRequestFile';
 export type { GitHubCommit, GitHubCommitFile, CommitsParams } from './domain/Commit';
-export type { GitHubCommitStatus, GitHubCombinedStatus, GitHubCheckRun, CommitStatusesParams, CheckRunsParams } from './domain/CommitStatus';
+export type {
+  GitHubCommitStatus,
+  GitHubCombinedStatus,
+  GitHubCheckRun,
+  CommitStatusesParams,
+  CheckRunsParams,
+} from './domain/CommitStatus';
 export type { GitHubBranch, BranchesParams } from './domain/Branch';
 export type { GitHubTag, TagsParams } from './domain/Tag';
-export type { GitHubRelease, GitHubReleaseAsset, ReleasesParams, CreateReleaseData, UpdateReleaseData } from './domain/Release';
+export type {
+  GitHubRelease,
+  GitHubReleaseAsset,
+  ReleasesParams,
+  CreateReleaseData,
+  UpdateReleaseData,
+} from './domain/Release';
 export type { GitHubCodeResult, SearchCodeParams } from './domain/SearchCode';
-export type { GitHubWebhook, WebhooksParams, CreateWebhookData, UpdateWebhookData } from './domain/Webhook';
+export type {
+  GitHubWebhook,
+  WebhooksParams,
+  CreateWebhookData,
+  UpdateWebhookData,
+} from './domain/Webhook';
 export type { GitHubContent, ContentParams } from './domain/Content';
-export type { GitHubIssue, GitHubIssueComment, IssuesParams, CreateIssueData, UpdateIssueData } from './domain/Issue';
+export type {
+  GitHubIssue,
+  GitHubIssueComment,
+  IssuesParams,
+  CreateIssueData,
+  UpdateIssueData,
+} from './domain/Issue';
 export type { LabelsParams, CreateLabelData, UpdateLabelData } from './domain/Label';
-export type { MilestonesParams, CreateMilestoneData, UpdateMilestoneData } from './domain/Milestone';
+export type {
+  MilestonesParams,
+  CreateMilestoneData,
+  UpdateMilestoneData,
+} from './domain/Milestone';
 export type { CollaboratorsParams, AddCollaboratorData } from './domain/Collaborator';
-export type { GitHubGist, GistFile, GistCommit, GistFork, GistComment, GistsParams, CreateGistData, UpdateGistData, GistCommentData } from './domain/Gist';
-export type { GitHubAdvisory, GitHubAdvisoryVulnerability, AdvisoriesParams, GitHubRepositoryAdvisory, RepoAdvisoriesParams, AdvisoryVulnerabilityInput, CreateAdvisoryData, UpdateAdvisoryData } from './domain/Advisory';
+export type {
+  GitHubGist,
+  GistFile,
+  GistCommit,
+  GistFork,
+  GistComment,
+  GistsParams,
+  CreateGistData,
+  UpdateGistData,
+  GistCommentData,
+} from './domain/Gist';
+export type {
+  GitHubAdvisory,
+  GitHubAdvisoryVulnerability,
+  AdvisoriesParams,
+  GitHubRepositoryAdvisory,
+  RepoAdvisoriesParams,
+  AdvisoryVulnerabilityInput,
+  CreateAdvisoryData,
+  UpdateAdvisoryData,
+} from './domain/Advisory';
 export type { PaginationParams, GitHubPagedResponse } from './domain/Pagination';
-export type { ContributionDay, ContributionCalendar, ContributionMapParams, RepoContribution, PinnedRepository, PinnedGist, PinnedItem } from './domain/Contribution';
-export type { GitHubNotification, NotificationSubject, NotificationRepository, NotificationReason, NotificationSubjectType, NotificationsParams } from './domain/Notification';
-export type { GitHubWorkflowRun, GitHubWorkflowRunsResponse, WorkflowRunsParams, WorkflowRunStatus, WorkflowRunConclusion } from './domain/WorkflowRun';
-export type { GitHubWorkflow, GitHubWorkflowsResponse, WorkflowsParams, TriggerWorkflowData } from './domain/Workflow';
+export type {
+  ContributionDay,
+  ContributionCalendar,
+  ContributionMapParams,
+  RepoContribution,
+  PinnedRepository,
+  PinnedGist,
+  PinnedItem,
+} from './domain/Contribution';
+export type {
+  GitHubNotification,
+  NotificationSubject,
+  NotificationRepository,
+  NotificationReason,
+  NotificationSubjectType,
+  NotificationsParams,
+} from './domain/Notification';
+export type {
+  GitHubWorkflowRun,
+  GitHubWorkflowRunsResponse,
+  WorkflowRunsParams,
+  WorkflowRunStatus,
+  WorkflowRunConclusion,
+} from './domain/WorkflowRun';
+export type {
+  GitHubWorkflow,
+  GitHubWorkflowsResponse,
+  WorkflowsParams,
+  TriggerWorkflowData,
+} from './domain/Workflow';
 export type { SearchIssuesParams } from './domain/SearchIssue';
 export type { GitHubTree, GitHubTreeItem, GitTreeParams } from './domain/GitTree';

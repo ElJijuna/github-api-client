@@ -1,6 +1,22 @@
-import type { GitHubGist, GistCommit, GistFork, GistComment, GistsParams, CreateGistData, UpdateGistData, GistCommentData } from '../domain/Gist';
+import type {
+  GitHubGist,
+  GistCommit,
+  GistFork,
+  GistComment,
+  GistsParams,
+  CreateGistData,
+  UpdateGistData,
+  GistCommentData,
+} from '../domain/Gist';
 import type { GitHubPagedResponse } from '../domain/Pagination';
-import type { RequestFn, RequestListFn, RequestBodyFn, RequestPatchFn, RequestDeleteFn, RequestPutFn } from './OrganizationResource';
+import type {
+  RequestFn,
+  RequestListFn,
+  RequestBodyFn,
+  RequestPatchFn,
+  RequestDeleteFn,
+  RequestPutFn,
+} from './OrganizationResource';
 
 /**
  * Provides access to GitHub Gist endpoints.
@@ -35,11 +51,21 @@ export class GistResource implements PromiseLike<GitHubGist> {
    * Allows the resource to be awaited directly, resolving with the gist.
    * Delegates to {@link GistResource.get}.
    */
-  then<TResult1 = GitHubGist, TResult2 = never>(
+  async then<TResult1 = GitHubGist, TResult2 = never>(
     onfulfilled?: ((value: GitHubGist) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
-  ): PromiseLike<TResult1 | TResult2> {
-    return this.get().then(onfulfilled, onrejected);
+  ): Promise<TResult1 | TResult2> {
+    try {
+      const value = await this.get();
+
+      return onfulfilled ? await onfulfilled(value) : (value as unknown as TResult1);
+    } catch (reason) {
+      if (onrejected) {
+        return await onrejected(reason);
+      }
+
+      throw reason;
+    }
   }
 
   /**
@@ -74,7 +100,10 @@ export class GistResource implements PromiseLike<GitHubGist> {
    *
    * `GET /gists/{gist_id}/commits`
    */
-  async commits(params?: { per_page?: number; page?: number }, signal?: AbortSignal): Promise<GitHubPagedResponse<GistCommit>> {
+  async commits(
+    params?: { per_page?: number; page?: number },
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GistCommit>> {
     return this.requestList<GistCommit>(
       `${this.basePath}/commits`,
       params as Record<string, string | number | boolean>,
@@ -96,7 +125,10 @@ export class GistResource implements PromiseLike<GitHubGist> {
    *
    * `GET /gists/{gist_id}/forks`
    */
-  async forks(params?: { per_page?: number; page?: number }, signal?: AbortSignal): Promise<GitHubPagedResponse<GistFork>> {
+  async forks(
+    params?: { per_page?: number; page?: number },
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GistFork>> {
     return this.requestList<GistFork>(
       `${this.basePath}/forks`,
       params as Record<string, string | number | boolean>,
@@ -133,8 +165,7 @@ export class GistResource implements PromiseLike<GitHubGist> {
       await this.request<void>(`${this.basePath}/star`, undefined, signal);
 
       return true;
-    }
-    catch {
+    } catch {
       return false;
     }
   }
@@ -144,7 +175,10 @@ export class GistResource implements PromiseLike<GitHubGist> {
    *
    * `GET /gists/{gist_id}/comments`
    */
-  async comments(params?: { per_page?: number; page?: number }, signal?: AbortSignal): Promise<GitHubPagedResponse<GistComment>> {
+  async comments(
+    params?: { per_page?: number; page?: number },
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GistComment>> {
     return this.requestList<GistComment>(
       `${this.basePath}/comments`,
       params as Record<string, string | number | boolean>,
@@ -166,7 +200,11 @@ export class GistResource implements PromiseLike<GitHubGist> {
    *
    * `PATCH /gists/{gist_id}/comments/{comment_id}`
    */
-  async updateComment(commentId: number, data: GistCommentData, signal?: AbortSignal): Promise<GistComment> {
+  async updateComment(
+    commentId: number,
+    data: GistCommentData,
+    signal?: AbortSignal,
+  ): Promise<GistComment> {
     return this.requestPatch<GistComment>(`${this.basePath}/comments/${commentId}`, data, signal);
   }
 

@@ -127,6 +127,6 @@ export function makeTextResponse(content: string): Response {
 }
 
 export function installFetchMock(responseFn: (url: string) => Response): void {
-  (global as typeof globalThis & { fetch: typeof fetch }).fetch =
-    async (url: RequestInfo | URL) => responseFn(String(url));
+  (global as typeof globalThis & { fetch: typeof fetch }).fetch = async (url: RequestInfo | URL) =>
+    responseFn(String(url));
 }

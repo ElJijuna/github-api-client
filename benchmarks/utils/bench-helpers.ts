@@ -36,7 +36,9 @@ export function forceGc(): void {
 }
 
 export function emitJsonResults(results: unknown[]): void {
-  if (process.env['BENCH_JSON'] === '1') {
+  const { BENCH_JSON } = process.env;
+
+  if (BENCH_JSON === '1') {
     process.stdout.write(JSON.stringify(results, null, 2) + '\n');
   }
 }

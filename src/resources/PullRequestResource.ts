@@ -1,9 +1,28 @@
-import type { GitHubPullRequest, MergeData, MergeResult, UpdatePullRequestData } from '../domain/PullRequest';
-import type { GitHubReview, GitHubReviewComment, ReviewsParams, ReviewCommentsParams, CreateReviewData, AddCommentData, RequestReviewersData } from '../domain/Review';
+import type {
+  GitHubPullRequest,
+  MergeData,
+  MergeResult,
+  UpdatePullRequestData,
+} from '../domain/PullRequest';
+import type {
+  GitHubReview,
+  GitHubReviewComment,
+  ReviewsParams,
+  ReviewCommentsParams,
+  CreateReviewData,
+  AddCommentData,
+  RequestReviewersData,
+} from '../domain/Review';
 import type { GitHubPullRequestFile, PullRequestFilesParams } from '../domain/PullRequestFile';
 import type { GitHubCommit } from '../domain/Commit';
 import type { GitHubPagedResponse, PaginationParams } from '../domain/Pagination';
-import type { RequestFn, RequestListFn, RequestBodyFn, RequestPatchFn, RequestBodyPutFn } from './OrganizationResource';
+import type {
+  RequestFn,
+  RequestListFn,
+  RequestBodyFn,
+  RequestPatchFn,
+  RequestBodyPutFn,
+} from './OrganizationResource';
 
 /**
  * Represents a GitHub pull request resource with chainable async methods.
@@ -50,11 +69,21 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
    * Allows the resource to be awaited directly, resolving with the pull request info.
    * Delegates to {@link PullRequestResource.get}.
    */
-  then<TResult1 = GitHubPullRequest, TResult2 = never>(
+  async then<TResult1 = GitHubPullRequest, TResult2 = never>(
     onfulfilled?: ((value: GitHubPullRequest) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
-  ): PromiseLike<TResult1 | TResult2> {
-    return this.get().then(onfulfilled, onrejected);
+  ): Promise<TResult1 | TResult2> {
+    try {
+      const value = await this.get();
+
+      return onfulfilled ? await onfulfilled(value) : (value as unknown as TResult1);
+    } catch (reason) {
+      if (onrejected) {
+        return await onrejected(reason);
+      }
+
+      throw reason;
+    }
   }
 
   /**
@@ -76,7 +105,10 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
    * @param params - Optional pagination: `per_page`, `page`
    * @returns A paged response of commits
    */
-  async commits(params?: PaginationParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubCommit>> {
+  async commits(
+    params?: PaginationParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubCommit>> {
     return this.requestList<GitHubCommit>(
       `${this.basePath}/commits`,
       params as Record<string, string | number | boolean>,
@@ -92,7 +124,10 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
    * @param params - Optional pagination: `per_page`, `page`
    * @returns A paged response of changed files
    */
-  async files(params?: PullRequestFilesParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubPullRequestFile>> {
+  async files(
+    params?: PullRequestFilesParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubPullRequestFile>> {
     return this.requestList<GitHubPullRequestFile>(
       `${this.basePath}/files`,
       params as Record<string, string | number | boolean>,
@@ -108,7 +143,10 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
    * @param params - Optional pagination: `per_page`, `page`
    * @returns A paged response of reviews
    */
-  async reviews(params?: ReviewsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubReview>> {
+  async reviews(
+    params?: ReviewsParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubReview>> {
     return this.requestList<GitHubReview>(
       `${this.basePath}/reviews`,
       params as Record<string, string | number | boolean>,
@@ -124,7 +162,10 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
    * @param params - Optional filters: `sort`, `direction`, `since`, `per_page`, `page`
    * @returns A paged response of review comments
    */
-  async reviewComments(params?: ReviewCommentsParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubReviewComment>> {
+  async reviewComments(
+    params?: ReviewCommentsParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubReviewComment>> {
     return this.requestList<GitHubReviewComment>(
       `${this.basePath}/comments`,
       params as Record<string, string | number | boolean>,
@@ -144,8 +185,7 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
       await this.request<never>(`${this.basePath}/merge`, undefined, signal);
 
       return true;
-    }
-    catch (err) {
+    } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         throw err;
       }
@@ -186,8 +226,15 @@ export class PullRequestResource implements PromiseLike<GitHubPullRequest> {
    * @param data - Object with `reviewers` (logins) and/or `team_reviewers` (slugs)
    * @returns The updated pull request
    */
-  async requestReviewers(data: RequestReviewersData, signal?: AbortSignal): Promise<GitHubPullRequest> {
-    return this.requestBody<GitHubPullRequest>(`${this.basePath}/requested_reviewers`, data, signal);
+  async requestReviewers(
+    data: RequestReviewersData,
+    signal?: AbortSignal,
+  ): Promise<GitHubPullRequest> {
+    return this.requestBody<GitHubPullRequest>(
+      `${this.basePath}/requested_reviewers`,
+      data,
+      signal,
+    );
   }
 
   /**

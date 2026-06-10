@@ -93,7 +93,9 @@ describe('GitHubClient throughput — all HTTP verbs', () => {
 
     const result = await measureThroughput(() => gh.currentUser());
 
-    console.log(`GET /user: ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`);
+    console.log(
+      `GET /user: ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`,
+    );
     expect(result.averageMs).toBeWithinAverageMs(readEnvFloat('BENCH_GET_MAX_AVG_MS', 1));
   });
 
@@ -103,19 +105,24 @@ describe('GitHubClient throughput — all HTTP verbs', () => {
 
     const result = await measureThroughput(() => gh.user('octocat').repos({ per_page: 100 }));
 
-    console.log(`GET list (no Link): ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`);
+    console.log(
+      `GET list (no Link): ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`,
+    );
     expect(result.averageMs).toBeWithinAverageMs(readEnvFloat('BENCH_LIST_MAX_AVG_MS', 1));
   });
 
   it('GET list WITH Link header — parseNextPage regex overhead', async () => {
-    const linkHeader = '<https://api.github.com/users/octocat/repos?page=2>; rel="next", <https://api.github.com/users/octocat/repos?page=5>; rel="last"';
+    const linkHeader =
+      '<https://api.github.com/users/octocat/repos?page=2>; rel="next", <https://api.github.com/users/octocat/repos?page=5>; rel="last"';
 
     global.fetch = jest.fn().mockResolvedValue(makeListResponse([mockRepoFixture], linkHeader));
     const gh = new GitHubClient({ token: MOCK_TOKEN });
 
     const result = await measureThroughput(() => gh.user('octocat').repos({ per_page: 100 }));
 
-    console.log(`GET list (with Link): ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`);
+    console.log(
+      `GET list (with Link): ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`,
+    );
     expect(result.averageMs).toBeWithinAverageMs(readEnvFloat('BENCH_LIST_LINK_MAX_AVG_MS', 2));
   });
 
@@ -123,11 +130,13 @@ describe('GitHubClient throughput — all HTTP verbs', () => {
     global.fetch = jest.fn().mockResolvedValue(makeTextResponse('# README'));
     const gh = new GitHubClient({ token: MOCK_TOKEN });
 
-    const result = await measureThroughput(
-      () => gh.repo('octocat', 'Hello-World').raw('README.md'),
+    const result = await measureThroughput(() =>
+      gh.repo('octocat', 'Hello-World').raw('README.md'),
     );
 
-    console.log(`GET text: ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`);
+    console.log(
+      `GET text: ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`,
+    );
     expect(result.averageMs).toBeWithinAverageMs(readEnvFloat('BENCH_TEXT_MAX_AVG_MS', 1));
   });
 
@@ -139,7 +148,9 @@ describe('GitHubClient throughput — all HTTP verbs', () => {
       gh.createGist({ files: { 'bench.ts': { content: 'const x = 1;' } }, public: false }),
     );
 
-    console.log(`POST: ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`);
+    console.log(
+      `POST: ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`,
+    );
     expect(result.averageMs).toBeWithinAverageMs(readEnvFloat('BENCH_POST_MAX_AVG_MS', 2));
   });
 
@@ -149,7 +160,9 @@ describe('GitHubClient throughput — all HTTP verbs', () => {
 
     const result = await measureThroughput(() => gh.markNotificationRead('123456789'));
 
-    console.log(`PATCH void: ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`);
+    console.log(
+      `PATCH void: ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`,
+    );
     expect(result.averageMs).toBeWithinAverageMs(readEnvFloat('BENCH_PATCH_MAX_AVG_MS', 1));
   });
 
@@ -159,7 +172,9 @@ describe('GitHubClient throughput — all HTTP verbs', () => {
 
     const result = await measureThroughput(() => gh.gist('abc123def456').delete());
 
-    console.log(`DELETE: ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`);
+    console.log(
+      `DELETE: ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`,
+    );
     expect(result.averageMs).toBeWithinAverageMs(readEnvFloat('BENCH_DELETE_MAX_AVG_MS', 1));
   });
 
@@ -169,21 +184,25 @@ describe('GitHubClient throughput — all HTTP verbs', () => {
 
     const result = await measureThroughput(() => gh.markAllNotificationsRead());
 
-    console.log(`PUT void: ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`);
+    console.log(
+      `PUT void: ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`,
+    );
     expect(result.averageMs).toBeWithinAverageMs(readEnvFloat('BENCH_PUT_MAX_AVG_MS', 1));
   });
 
   it('POST /graphql — requestGraphQL query overhead', async () => {
-    global.fetch = jest.fn().mockResolvedValue(
-      makeGraphQLResponse({ viewer: { login: 'octocat' } }),
-    );
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue(makeGraphQLResponse({ viewer: { login: 'octocat' } }));
     const gh = new GitHubClient({ token: MOCK_TOKEN });
 
     const result = await measureThroughput(() =>
       gh.graphql<{ viewer: { login: string } }>('query { viewer { login } }'),
     );
 
-    console.log(`GraphQL: ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`);
+    console.log(
+      `GraphQL: ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms | heap Δ ${result.heapDeltaKb.toFixed(1)} KB`,
+    );
     expect(result.averageMs).toBeWithinAverageMs(readEnvFloat('BENCH_GRAPHQL_MAX_AVG_MS', 2));
   });
 
@@ -202,7 +221,9 @@ describe('GitHubClient throughput — all HTTP verbs', () => {
     const opsPerSec = Math.round(isolated_iters / (elapsed / 1000));
     const nsPerCall = (elapsed / isolated_iters) * 1e6;
 
-    console.log(`getHeaders(): ${opsPerSec.toLocaleString()} ops/s | ${nsPerCall.toFixed(0)} ns/call`);
+    console.log(
+      `getHeaders(): ${opsPerSec.toLocaleString()} ops/s | ${nsPerCall.toFixed(0)} ns/call`,
+    );
     // No assertion — documents baseline for future optimization of cached headers
   });
 
@@ -211,11 +232,11 @@ describe('GitHubClient throughput — all HTTP verbs', () => {
     const gh = new GitHubClient({ token: MOCK_TOKEN });
 
     const params = { sort: 'updated', direction: 'desc', per_page: 100, page: 1 } as const;
-    const result = await measureThroughput(
-      () => gh.user('octocat').repos(params),
-    );
+    const result = await measureThroughput(() => gh.user('octocat').repos(params));
 
-    console.log(`URL(4 params): ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms`);
+    console.log(
+      `URL(4 params): ${result.throughputOpsPerSec.toLocaleString()} ops/s | avg ${result.averageMs.toFixed(4)}ms`,
+    );
     expect(result.averageMs).toBeWithinAverageMs(readEnvFloat('BENCH_URL_PARAMS_MAX_AVG_MS', 2));
   });
 });

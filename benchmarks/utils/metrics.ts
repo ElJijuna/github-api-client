@@ -71,11 +71,9 @@ export function setupGcObserver(): { gcStats: GcStats; disconnect: () => void } 
       gcStats.totalDurationMs += entry.duration;
       if (kind === GC_KIND_SCAVENGE) {
         gcStats.minorCount++;
-      }
-      else if (kind === GC_KIND_MARK_COMPACT) {
+      } else if (kind === GC_KIND_MARK_COMPACT) {
         gcStats.majorCount++;
-      }
-      else if (kind === GC_KIND_INCREMENTAL) {
+      } else if (kind === GC_KIND_INCREMENTAL) {
         gcStats.incrementalCount++;
       }
     }
@@ -171,7 +169,7 @@ export function printResult(result: BenchmarkResult): void {
   console.log(`  GC minor    : ${result.gcStats.minorCount}`);
   console.log(`  GC major    : ${result.gcStats.majorCount}`);
   console.log(`  GC total ms : ${result.gcStats.totalDurationMs.toFixed(2)}`);
-  const fmt = (v: number) => Number.isNaN(v) ? '<1ms' : v.toFixed(4);
+  const fmt = (v: number) => (Number.isNaN(v) ? '<1ms' : v.toFixed(4));
 
   console.log(`  EL mean ms  : ${fmt(result.eventLoop.meanMs)}`);
   console.log(`  EL p95  ms  : ${fmt(result.eventLoop.p95Ms)}`);

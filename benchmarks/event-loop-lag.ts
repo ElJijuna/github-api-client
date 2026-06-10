@@ -70,7 +70,7 @@ async function measureEventLoopLag(
   console.log(`  iterations  : ${iterations.toLocaleString()}`);
   console.log(`  elapsed ms  : ${elapsed.toFixed(2)}`);
   console.log(`  avg op ms   : ${(elapsed / iterations).toFixed(4)}`);
-  const fmt = (v: number) => Number.isNaN(v) ? '<1ms' : v.toFixed(4);
+  const fmt = (v: number) => (Number.isNaN(v) ? '<1ms' : v.toFixed(4));
 
   console.log(`  EL mean ms  : ${fmt(result.meanMs)}`);
   console.log(`  EL p50  ms  : ${fmt(result.p50Ms)}`);
@@ -98,29 +98,29 @@ async function main(): Promise<void> {
   await measureEventLoopLag('EL: serial GET /user (baseline)', () => gh.currentUser());
 
   // 2. Serial GET list + Link header — regex path in event loop
-  const link = '<https://api.github.com/users/octocat/repos?page=2>; rel="next", <https://api.github.com/users/octocat/repos?page=5>; rel="last"';
+  const link =
+    '<https://api.github.com/users/octocat/repos?page=2>; rel="next", <https://api.github.com/users/octocat/repos?page=5>; rel="last"';
 
   installFetchMock(() => makeListResponse(Array(30).fill(mockRepoFixture), link));
   gh = new GitHubClient({ token: MOCK_TOKEN });
-  await measureEventLoopLag(
-    'EL: serial GET list with Link header (parseNextPage regex)',
-    () => gh.user('octocat').repos(),
+  await measureEventLoopLag('EL: serial GET list with Link header (parseNextPage regex)', () =>
+    gh.user('octocat').repos(),
   );
 
   // 3. Serial GET list — no Link header (regex short-circuit)
   installFetchMock(() => makeListResponse([mockRepoFixture]));
   gh = new GitHubClient({ token: MOCK_TOKEN });
-  await measureEventLoopLag(
-    'EL: serial GET list without Link header (regex skipped)',
-    () => gh.user('octocat').repos(),
+  await measureEventLoopLag('EL: serial GET list without Link header (regex skipped)', () =>
+    gh.user('octocat').repos(),
   );
 
   // 4. URL construction with many params — URLSearchParams cost in EL
   installFetchMock(() => makeListResponse([mockRepoFixture]));
   gh = new GitHubClient({ token: MOCK_TOKEN });
-  await measureEventLoopLag(
-    'EL: URL construction (5 query params)',
-    () => gh.user('octocat').repos({ sort: 'updated', direction: 'desc', per_page: 100, page: 1, type: 'public' }),
+  await measureEventLoopLag('EL: URL construction (5 query params)', () =>
+    gh
+      .user('octocat')
+      .repos({ sort: 'updated', direction: 'desc', per_page: 100, page: 1, type: 'public' }),
   );
 
   // 5. Concurrent batches — event loop lag under Promise.all pressure
@@ -148,9 +148,8 @@ async function main(): Promise<void> {
     });
   }
 
-  await measureEventLoopLag(
-    'EL: GET /user with 10 JSON-serializing listeners',
-    () => gh.currentUser(),
+  await measureEventLoopLag('EL: GET /user with 10 JSON-serializing listeners', () =>
+    gh.currentUser(),
   );
 
   // 7. Empty listeners — isolates listener fanout from serialization cost
@@ -162,15 +161,16 @@ async function main(): Promise<void> {
     });
   }
 
-  await measureEventLoopLag(
-    'EL: GET /user with 10 empty listeners (array fanout only)',
-    () => gh.currentUser(),
+  await measureEventLoopLag('EL: GET /user with 10 empty listeners (array fanout only)', () =>
+    gh.currentUser(),
   );
 
   console.log('\n=== Done ===');
 }
 
-main().catch((err: unknown) => {
+try {
+  await main();
+} catch (err) {
   console.error(err);
   process.exit(1);
-});
+}

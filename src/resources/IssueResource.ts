@@ -1,6 +1,11 @@
 import type { GitHubIssue, GitHubIssueComment, UpdateIssueData } from '../domain/Issue';
 import type { GitHubPagedResponse, PaginationParams } from '../domain/Pagination';
-import type { RequestFn, RequestListFn, RequestBodyFn, RequestPatchFn } from './OrganizationResource';
+import type {
+  RequestFn,
+  RequestListFn,
+  RequestBodyFn,
+  RequestPatchFn,
+} from './OrganizationResource';
 
 /**
  * Represents a GitHub issue resource with chainable async methods.
@@ -37,11 +42,21 @@ export class IssueResource implements PromiseLike<GitHubIssue> {
    * Allows the resource to be awaited directly, resolving with the issue info.
    * Delegates to {@link IssueResource.get}.
    */
-  then<TResult1 = GitHubIssue, TResult2 = never>(
+  async then<TResult1 = GitHubIssue, TResult2 = never>(
     onfulfilled?: ((value: GitHubIssue) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
-  ): PromiseLike<TResult1 | TResult2> {
-    return this.get().then(onfulfilled, onrejected);
+  ): Promise<TResult1 | TResult2> {
+    try {
+      const value = await this.get();
+
+      return onfulfilled ? await onfulfilled(value) : (value as unknown as TResult1);
+    } catch (reason) {
+      if (onrejected) {
+        return await onrejected(reason);
+      }
+
+      throw reason;
+    }
   }
 
   /**
@@ -63,7 +78,10 @@ export class IssueResource implements PromiseLike<GitHubIssue> {
    * @param params - Optional filters: `since`, `per_page`, `page`
    * @returns A paged response of comments
    */
-  async comments(params?: PaginationParams & { since?: string }, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubIssueComment>> {
+  async comments(
+    params?: PaginationParams & { since?: string },
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubIssueComment>> {
     return this.requestList<GitHubIssueComment>(
       `${this.basePath}/comments`,
       params as Record<string, string | number | boolean>,

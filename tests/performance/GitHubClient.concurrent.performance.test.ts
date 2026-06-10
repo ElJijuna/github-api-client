@@ -25,7 +25,7 @@ function readEnvFloat(name: string, fallback: number): number {
 
 const BATCHES = readEnvInt('BENCH_CONCURRENT_BATCHES', 20);
 const MAX_HEAP_KB = readEnvFloat('BENCH_CONCURRENT_MAX_HEAP_KB', 10_240);
-const MAX_DEGRADATION = readEnvFloat('BENCH_MAX_LISTENER_DEGRADATION', 0.50);
+const MAX_DEGRADATION = readEnvFloat('BENCH_MAX_LISTENER_DEGRADATION', 0.5);
 
 const CONCURRENCY_LEVELS = [10, 50, 100] as const;
 
@@ -35,7 +35,8 @@ expect.extend({
 
     return {
       pass,
-      message: () => `expected ${received.toLocaleString()} ops/s to be >= ${minOpsPerSec.toLocaleString()} ops/s`,
+      message: () =>
+        `expected ${received.toLocaleString()} ops/s to be >= ${minOpsPerSec.toLocaleString()} ops/s`,
     };
   },
 });
@@ -82,7 +83,7 @@ describe('GitHubClient concurrency benchmarks', () => {
 
       console.log(
         `[c=${concurrency}] ${throughput.toLocaleString()} ops/s | ` +
-        `avg batch ${avgBatchMs.toFixed(2)}ms | heap Δ ${heapDeltaKb.toFixed(1)} KB`,
+          `avg batch ${avgBatchMs.toFixed(2)}ms | heap Δ ${heapDeltaKb.toFixed(1)} KB`,
       );
 
       expect(throughput).toHaveAcceptableThroughput(
@@ -93,8 +94,9 @@ describe('GitHubClient concurrency benchmarks', () => {
   }
 
   it('Promise.all(100) mixed HTTP methods — detects accidental serialization', async () => {
-    global.fetch = jest.fn().mockImplementation(
-      async (_url: RequestInfo | URL, init?: RequestInit) => {
+    global.fetch = jest
+      .fn()
+      .mockImplementation(async (_url: RequestInfo | URL, init?: RequestInit) => {
         const method = init?.method ?? 'GET';
         const url = String(_url);
 
@@ -107,8 +109,7 @@ describe('GitHubClient concurrency benchmarks', () => {
         }
 
         return makeJsonResponse(mockUserFixture);
-      },
-    );
+      });
     const gh = new GitHubClient({ token: MOCK_TOKEN });
 
     // warmup
@@ -208,7 +209,9 @@ describe('GitHubClient concurrency benchmarks', () => {
     const elapsed = performance.now() - t0;
     const throughput = Math.round((50 * BATCHES) / (elapsed / 1000));
 
-    console.log(`[3 JSON listeners, c=50] ${throughput.toLocaleString()} ops/s | ${elapsed.toFixed(2)}ms total`);
+    console.log(
+      `[3 JSON listeners, c=50] ${throughput.toLocaleString()} ops/s | ${elapsed.toFixed(2)}ms total`,
+    );
     expect(throughput).toHaveAcceptableThroughput(0);
   });
 
@@ -237,7 +240,9 @@ describe('GitHubClient concurrency benchmarks', () => {
     const avgMs = elapsed / iters;
     const opsPerSec = Math.round(iters / (elapsed / 1000));
 
-    console.log(`AbortSignal per-request: ${opsPerSec.toLocaleString()} ops/s | avg ${avgMs.toFixed(4)}ms`);
+    console.log(
+      `AbortSignal per-request: ${opsPerSec.toLocaleString()} ops/s | avg ${avgMs.toFixed(4)}ms`,
+    );
     // No hard limit — documents the cost of creating AbortController per request
   });
 });

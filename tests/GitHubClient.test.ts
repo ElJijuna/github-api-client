@@ -12,7 +12,11 @@ import type { GitHubWebhook } from '../src/domain/Webhook';
 import type { GitHubReview, GitHubReviewComment } from '../src/domain/Review';
 import type { MergeResult } from '../src/domain/PullRequest';
 import type { GitHubPullRequestFile } from '../src/domain/PullRequestFile';
-import type { GitHubCommitStatus, GitHubCombinedStatus, GitHubCommitComment } from '../src/domain/CommitStatus';
+import type {
+  GitHubCommitStatus,
+  GitHubCombinedStatus,
+  GitHubCommitComment,
+} from '../src/domain/CommitStatus';
 import type { GitHubIssue } from '../src/domain/Issue';
 import type { GitHubEvent } from '../src/domain/Event';
 import type { GitHubAdvisory, GitHubRepositoryAdvisory } from '../src/domain/Advisory';
@@ -348,7 +352,7 @@ function mockTextResponse(text: string, status = 200) {
     statusText: 'OK',
     text: async () => text,
     json: async () => {
-      throw new Error('not json'); 
+      throw new Error('not json');
     },
     headers: { get: () => null },
   });
@@ -404,7 +408,9 @@ describe('GitHubClient constructor', () => {
   });
 
   it('creates a client with a custom API URL', () => {
-    expect(() => new GitHubClient({ token: TOKEN, apiUrl: 'https://github.example.com/api/v3' })).not.toThrow();
+    expect(
+      () => new GitHubClient({ token: TOKEN, apiUrl: 'https://github.example.com/api/v3' }),
+    ).not.toThrow();
   });
 
   it('creates a client without any options (unauthenticated)', () => {
@@ -434,7 +440,9 @@ describe('GitHubClient.currentUser()', () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       `${API_URL}/user`,
-      expect.objectContaining({ headers: expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }) }),
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }),
+      }),
     );
     expect(result).toEqual(mockUser);
   });
@@ -447,8 +455,7 @@ describe('GitHubClient.currentUser()', () => {
     try {
       await gh.currentUser();
       fail('Should have thrown');
-    }
-    catch (err) {
+    } catch (err) {
       expect(err).toBeInstanceOf(GitHubApiError);
       expect((err as GitHubApiError).status).toBe(401);
     }
@@ -463,10 +470,7 @@ describe('GitHubClient.user(login)', () => {
 
     const result = await gh.user('octocat');
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${API_URL}/users/octocat`,
-      expect.anything(),
-    );
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/users/octocat`, expect.anything());
     expect(result.login).toBe('octocat');
   });
 
@@ -477,10 +481,7 @@ describe('GitHubClient.user(login)', () => {
 
     const result = await gh.user('octocat').repos();
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${API_URL}/users/octocat/repos`,
-      expect.anything(),
-    );
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/users/octocat/repos`, expect.anything());
     expect(result.values).toHaveLength(1);
     expect(result.hasNextPage).toBe(false);
   });
@@ -516,10 +517,7 @@ describe('GitHubClient.user(login)', () => {
 
     const result = await gh.user('octocat').followers();
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${API_URL}/users/octocat/followers`,
-      expect.anything(),
-    );
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/users/octocat/followers`, expect.anything());
     expect(result.values[0].login).toBe('octocat');
   });
 
@@ -530,10 +528,7 @@ describe('GitHubClient.user(login)', () => {
 
     await gh.user('octocat').following();
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${API_URL}/users/octocat/following`,
-      expect.anything(),
-    );
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/users/octocat/following`, expect.anything());
   });
 
   it('fetches public events for a user', async () => {
@@ -592,10 +587,7 @@ describe('GitHubClient.org(name)', () => {
 
     const result = await gh.org('github');
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${API_URL}/orgs/github`,
-      expect.anything(),
-    );
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/orgs/github`, expect.anything());
     expect(result.login).toBe('github');
   });
 
@@ -632,7 +624,12 @@ describe('OrganizationResource.createRepo()', () => {
   it('creates a repository and returns it', async () => {
     const gh = new GitHubClient({ token: TOKEN });
 
-    mockPostResponse({ ...mockRepo, name: 'new-repo', full_name: 'github/new-repo', private: true });
+    mockPostResponse({
+      ...mockRepo,
+      name: 'new-repo',
+      full_name: 'github/new-repo',
+      private: true,
+    });
 
     const result = await gh.org('github').createRepo({ name: 'new-repo', private: true });
 
@@ -685,7 +682,9 @@ describe('OrganizationResource.createRepo()', () => {
 
     mockErrorResponse(422, 'Unprocessable Entity');
 
-    await expect(gh.org('github').createRepo({ name: 'invalid name!' })).rejects.toThrow(GitHubApiError);
+    await expect(gh.org('github').createRepo({ name: 'invalid name!' })).rejects.toThrow(
+      GitHubApiError,
+    );
   });
 });
 
@@ -711,10 +710,7 @@ describe('GitHubClient.repo(owner, name)', () => {
 
     const result = await gh.org('github').repo('linguist');
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${API_URL}/repos/github/linguist`,
-      expect.anything(),
-    );
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/repos/github/linguist`, expect.anything());
     expect(result.name).toBe('Hello-World');
   });
 
@@ -1014,10 +1010,9 @@ describe('RepositoryResource', () => {
       mockTextResponse('# Hello World');
       mockTextResponse('export const ok = true;');
 
-      const content = await gh.repo('octocat', 'Hello-World').multipleRaw(
-        ['README.md', 'src/index.ts'],
-        { ref: 'main' },
-      );
+      const content = await gh
+        .repo('octocat', 'Hello-World')
+        .multipleRaw(['README.md', 'src/index.ts'], { ref: 'main' });
 
       expect(fetchMock).toHaveBeenCalledWith(
         `${API_URL}/repos/octocat/Hello-World/contents/README.md?ref=main`,
@@ -1043,7 +1038,9 @@ describe('RepositoryResource', () => {
       mockTextResponse('# Hello World');
       mockTextResponse('not found', 404);
 
-      const content = await gh.repo('octocat', 'Hello-World').multipleRaw(['README.md', 'missing.md']);
+      const content = await gh
+        .repo('octocat', 'Hello-World')
+        .multipleRaw(['README.md', 'missing.md']);
 
       expect(fetchMock).toHaveBeenCalledTimes(2);
       expect(content).toEqual({ 'README.md': '# Hello World' });
@@ -1226,9 +1223,12 @@ describe('PullRequestResource', () => {
 
       mockPostResponse(mockPullRequest);
 
-      const result = await gh.repo('octocat', 'Hello-World').pullRequest(1).requestReviewers({
-        reviewers: ['octocat'],
-      });
+      const result = await gh
+        .repo('octocat', 'Hello-World')
+        .pullRequest(1)
+        .requestReviewers({
+          reviewers: ['octocat'],
+        });
 
       expect(fetchMock).toHaveBeenCalledWith(
         `${API_URL}/repos/octocat/Hello-World/pulls/1/requested_reviewers`,
@@ -1319,7 +1319,10 @@ describe('CommitResource', () => {
 
       mockJsonResponse(mockCombinedStatus);
 
-      const result = await gh.repo('octocat', 'Hello-World').commit('abc123def456').combinedStatus();
+      const result = await gh
+        .repo('octocat', 'Hello-World')
+        .commit('abc123def456')
+        .combinedStatus();
 
       expect(fetchMock).toHaveBeenCalledWith(
         `${API_URL}/repos/octocat/Hello-World/commits/abc123def456/status`,
@@ -1431,8 +1434,7 @@ describe('Error handling', () => {
     try {
       await gh.repo('octocat', 'nonexistent').get();
       fail('Should have thrown');
-    }
-    catch (err) {
+    } catch (err) {
       expect(err).toBeInstanceOf(GitHubApiError);
       const apiErr = err as GitHubApiError;
 
@@ -1464,7 +1466,12 @@ describe('Request event emission', () => {
     await gh.currentUser();
 
     expect(events).toHaveLength(1);
-    const event = events[0] as { url: string; method: string; statusCode: number; durationMs: number };
+    const event = events[0] as {
+      url: string;
+      method: string;
+      statusCode: number;
+      durationMs: number;
+    };
 
     expect(event.url).toBe(`${API_URL}/user`);
     expect(event.method).toBe('GET');
@@ -1481,7 +1488,11 @@ describe('Request event emission', () => {
 
     gh.on('request', (event) => events.push(event));
 
-    await gh.currentUser().catch(() => { });
+    try {
+      await gh.currentUser();
+    } catch {
+      // Expected: failed request event is asserted below.
+    }
 
     expect(events).toHaveLength(1);
     const event = events[0] as { error: Error; statusCode: number };
@@ -1507,7 +1518,7 @@ describe('Request event emission', () => {
 
   it('on() returns the client for chaining', () => {
     const gh = new GitHubClient({ token: TOKEN });
-    const result = gh.on('request', () => { });
+    const result = gh.on('request', () => {});
 
     expect(result).toBe(gh);
   });
@@ -1540,7 +1551,10 @@ describe('Request headers', () => {
 
     await gh.repo('octocat', 'Hello-World').branches();
 
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
+    const [, init] = fetchMock.mock.calls[0] as [
+      string,
+      RequestInit & { headers: Record<string, string> },
+    ];
 
     expect(init.headers).not.toHaveProperty('Authorization');
     expect(init.headers).toMatchObject({
@@ -1556,10 +1570,7 @@ describe('Request headers', () => {
 
     const result = await gh.user('octocat');
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${API_URL}/users/octocat`,
-      expect.anything(),
-    );
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/users/octocat`, expect.anything());
     expect(result.login).toBe('octocat');
   });
 });
@@ -1735,7 +1746,13 @@ describe('RepositoryResource.createIssue()', () => {
 });
 
 describe('RepositoryResource.labels()', () => {
-  const mockLabel = { id: 1, name: 'bug', color: 'ee0701', description: 'Something broken', default: true };
+  const mockLabel = {
+    id: 1,
+    name: 'bug',
+    color: 'ee0701',
+    description: 'Something broken',
+    default: true,
+  };
 
   it('fetches labels', async () => {
     const gh = new GitHubClient({ token: TOKEN });
@@ -1770,7 +1787,9 @@ describe('RepositoryResource.labels()', () => {
 
     mockPostResponse(mockLabel);
 
-    const result = await gh.repo('octocat', 'Hello-World').createLabel({ name: 'bug', color: 'ee0701' });
+    const result = await gh
+      .repo('octocat', 'Hello-World')
+      .createLabel({ name: 'bug', color: 'ee0701' });
 
     expect(fetchMock).toHaveBeenCalledWith(
       `${API_URL}/repos/octocat/Hello-World/labels`,
@@ -1874,7 +1893,9 @@ describe('RepositoryResource.milestones()', () => {
 
     mockPostResponse(mockMilestone);
 
-    const result = await gh.repo('octocat', 'Hello-World').createMilestone({ title: 'v1.0', due_on: '2025-12-31T00:00:00Z' });
+    const result = await gh
+      .repo('octocat', 'Hello-World')
+      .createMilestone({ title: 'v1.0', due_on: '2025-12-31T00:00:00Z' });
 
     expect(fetchMock).toHaveBeenCalledWith(
       `${API_URL}/repos/octocat/Hello-World/milestones`,
@@ -1961,7 +1982,12 @@ describe('RepositoryResource.collaborators()', () => {
   it('adds a collaborator with a permission level', async () => {
     const gh = new GitHubClient({ token: TOKEN });
 
-    fetchMock.mockResolvedValueOnce({ ok: true, status: 201, json: async () => ({}), headers: { get: () => null } });
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 201,
+      json: async () => ({}),
+      headers: { get: () => null },
+    });
 
     await gh.repo('octocat', 'Hello-World').addCollaborator('hubot', { permission: 'maintain' });
 
@@ -2010,14 +2036,16 @@ describe('IssueResource', () => {
     it('fetches issue comments', async () => {
       const gh = new GitHubClient({ token: TOKEN });
 
-      mockJsonResponse(pagedOf({
-        id: 1,
-        body: 'Me too!',
-        user: mockUser,
-        created_at: '2011-04-14T16:00:49Z',
-        updated_at: '2011-04-14T16:00:49Z',
-        html_url: 'https://github.com/octocat/Hello-World/issues/1#issuecomment-1',
-      }));
+      mockJsonResponse(
+        pagedOf({
+          id: 1,
+          body: 'Me too!',
+          user: mockUser,
+          created_at: '2011-04-14T16:00:49Z',
+          updated_at: '2011-04-14T16:00:49Z',
+          html_url: 'https://github.com/octocat/Hello-World/issues/1#issuecomment-1',
+        }),
+      );
 
       const result = await gh.repo('octocat', 'Hello-World').issue(1).comments();
 
@@ -2043,7 +2071,10 @@ describe('IssueResource', () => {
 
       mockPostResponse(mockComment);
 
-      const result = await gh.repo('octocat', 'Hello-World').issue(1).addComment('Thanks for the report!');
+      const result = await gh
+        .repo('octocat', 'Hello-World')
+        .issue(1)
+        .addComment('Thanks for the report!');
 
       expect(fetchMock).toHaveBeenCalledWith(
         `${API_URL}/repos/octocat/Hello-World/issues/1/comments`,
@@ -2062,7 +2093,10 @@ describe('IssueResource', () => {
 
       mockJsonResponse({ ...mockIssue, state: 'closed' });
 
-      const result = await gh.repo('octocat', 'Hello-World').issue(1).update({ state: 'closed', state_reason: 'completed' });
+      const result = await gh
+        .repo('octocat', 'Hello-World')
+        .issue(1)
+        .update({ state: 'closed', state_reason: 'completed' });
 
       expect(fetchMock).toHaveBeenCalledWith(
         `${API_URL}/repos/octocat/Hello-World/issues/1`,
@@ -2079,7 +2113,10 @@ describe('IssueResource', () => {
 
       mockJsonResponse({ ...mockIssue, title: 'New title' });
 
-      await gh.repo('octocat', 'Hello-World').issue(1).update({ title: 'New title', assignees: ['octocat'] });
+      await gh
+        .repo('octocat', 'Hello-World')
+        .issue(1)
+        .update({ title: 'New title', assignees: ['octocat'] });
 
       expect(fetchMock).toHaveBeenCalledWith(
         `${API_URL}/repos/octocat/Hello-World/issues/1`,
@@ -2115,10 +2152,7 @@ describe('GitHubClient.advisories()', () => {
 
     const result = await gh.advisories();
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${API_URL}/advisories`,
-      expect.anything(),
-    );
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/advisories`, expect.anything());
     expect(result.values).toHaveLength(1);
   });
 });
@@ -2206,7 +2240,11 @@ describe('RepositoryResource.updateAdvisory()', () => {
   it('updates a repository advisory and returns it', async () => {
     const gh = new GitHubClient({ token: TOKEN });
 
-    mockPatchResponse({ ...mockRepoAdvisory, state: 'published', published_at: '2023-02-01T00:00:00Z' });
+    mockPatchResponse({
+      ...mockRepoAdvisory,
+      state: 'published',
+      published_at: '2023-02-01T00:00:00Z',
+    });
 
     const result = await gh.repo('octocat', 'Hello-World').updateAdvisory('GHSA-1234-5678-9abc', {
       state: 'published',
@@ -2290,9 +2328,7 @@ const mockContributionCalendar: ContributionCalendar = {
       ],
     },
     {
-      contributionDays: [
-        { date: '2024-01-08', contributionCount: 5, color: '#39d353' },
-      ],
+      contributionDays: [{ date: '2024-01-08', contributionCount: 5, color: '#39d353' }],
     },
   ],
 };
@@ -2301,15 +2337,18 @@ describe('UserResource.contributionMap()', () => {
   it('returns the contribution calendar for a user', async () => {
     const gh = new GitHubClient({ token: TOKEN });
 
-    mockPostResponse({
-      data: {
-        user: {
-          contributionsCollection: {
-            contributionCalendar: mockContributionCalendar,
+    mockPostResponse(
+      {
+        data: {
+          user: {
+            contributionsCollection: {
+              contributionCalendar: mockContributionCalendar,
+            },
           },
         },
       },
-    }, 200);
+      200,
+    );
 
     const result = await gh.user('octocat').contributionMap();
 
@@ -2329,7 +2368,14 @@ describe('UserResource.contributionMap()', () => {
   it('sends from/to variables when params are provided', async () => {
     const gh = new GitHubClient({ token: TOKEN });
 
-    mockPostResponse({ data: { user: { contributionsCollection: { contributionCalendar: mockContributionCalendar } } } }, 200);
+    mockPostResponse(
+      {
+        data: {
+          user: { contributionsCollection: { contributionCalendar: mockContributionCalendar } },
+        },
+      },
+      200,
+    );
 
     await gh.user('octocat').contributionMap({
       from: '2024-01-01T00:00:00Z',
@@ -2346,7 +2392,14 @@ describe('UserResource.contributionMap()', () => {
   it('omits from/to variables when no params are given', async () => {
     const gh = new GitHubClient({ token: TOKEN });
 
-    mockPostResponse({ data: { user: { contributionsCollection: { contributionCalendar: mockContributionCalendar } } } }, 200);
+    mockPostResponse(
+      {
+        data: {
+          user: { contributionsCollection: { contributionCalendar: mockContributionCalendar } },
+        },
+      },
+      200,
+    );
 
     await gh.user('octocat').contributionMap();
 
@@ -2362,7 +2415,9 @@ describe('UserResource.contributionMap()', () => {
 
     mockPostResponse({ errors: [{ message: 'Could not resolve to a User' }] }, 200);
 
-    await expect(gh.user('octocat').contributionMap()).rejects.toThrow('Could not resolve to a User');
+    await expect(gh.user('octocat').contributionMap()).rejects.toThrow(
+      'Could not resolve to a User',
+    );
   });
 
   it('throws GitHubApiError on HTTP error', async () => {
@@ -2376,19 +2431,35 @@ describe('UserResource.contributionMap()', () => {
 
 describe('UserResource.commitContributionsByRepo()', () => {
   const mockContribs = [
-    { repository: { nameWithOwner: 'octocat/Hello-World', url: 'https://github.com/octocat/Hello-World' }, contributions: { totalCount: 42 } },
+    {
+      repository: {
+        nameWithOwner: 'octocat/Hello-World',
+        url: 'https://github.com/octocat/Hello-World',
+      },
+      contributions: { totalCount: 42 },
+    },
   ];
 
   it('returns commit contributions by repository', async () => {
     const gh = new GitHubClient({ token: TOKEN });
 
-    mockPostResponse({ data: { user: { contributionsCollection: { commitContributionsByRepository: mockContribs } } } }, 200);
+    mockPostResponse(
+      {
+        data: {
+          user: { contributionsCollection: { commitContributionsByRepository: mockContribs } },
+        },
+      },
+      200,
+    );
 
     const result = await gh.user('octocat').commitContributionsByRepo();
 
     expect(fetchMock).toHaveBeenCalledWith(
       `${API_URL}/graphql`,
-      expect.objectContaining({ method: 'POST', body: expect.stringContaining('commitContributionsByRepository') }),
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringContaining('commitContributionsByRepository'),
+      }),
     );
     expect(result).toHaveLength(1);
     expect(result[0].repository.nameWithOwner).toBe('octocat/Hello-World');
@@ -2398,19 +2469,34 @@ describe('UserResource.commitContributionsByRepo()', () => {
 
 describe('UserResource.pullRequestContributionsByRepo()', () => {
   const mockContribs = [
-    { repository: { nameWithOwner: 'octocat/Hello-World', url: 'https://github.com/octocat/Hello-World' }, contributions: { totalCount: 5 } },
+    {
+      repository: {
+        nameWithOwner: 'octocat/Hello-World',
+        url: 'https://github.com/octocat/Hello-World',
+      },
+      contributions: { totalCount: 5 },
+    },
   ];
 
   it('returns pull request contributions by repository', async () => {
     const gh = new GitHubClient({ token: TOKEN });
 
-    mockPostResponse({ data: { user: { contributionsCollection: { pullRequestContributionsByRepository: mockContribs } } } }, 200);
+    mockPostResponse(
+      {
+        data: {
+          user: { contributionsCollection: { pullRequestContributionsByRepository: mockContribs } },
+        },
+      },
+      200,
+    );
 
     const result = await gh.user('octocat').pullRequestContributionsByRepo();
 
     expect(fetchMock).toHaveBeenCalledWith(
       `${API_URL}/graphql`,
-      expect.objectContaining({ body: expect.stringContaining('pullRequestContributionsByRepository') }),
+      expect.objectContaining({
+        body: expect.stringContaining('pullRequestContributionsByRepository'),
+      }),
     );
     expect(result[0].totalCount).toBe(5);
   });
@@ -2418,13 +2504,26 @@ describe('UserResource.pullRequestContributionsByRepo()', () => {
 
 describe('UserResource.issueContributionsByRepo()', () => {
   const mockContribs = [
-    { repository: { nameWithOwner: 'octocat/Hello-World', url: 'https://github.com/octocat/Hello-World' }, contributions: { totalCount: 3 } },
+    {
+      repository: {
+        nameWithOwner: 'octocat/Hello-World',
+        url: 'https://github.com/octocat/Hello-World',
+      },
+      contributions: { totalCount: 3 },
+    },
   ];
 
   it('returns issue contributions by repository', async () => {
     const gh = new GitHubClient({ token: TOKEN });
 
-    mockPostResponse({ data: { user: { contributionsCollection: { issueContributionsByRepository: mockContribs } } } }, 200);
+    mockPostResponse(
+      {
+        data: {
+          user: { contributionsCollection: { issueContributionsByRepository: mockContribs } },
+        },
+      },
+      200,
+    );
 
     const result = await gh.user('octocat').issueContributionsByRepo();
 
@@ -2440,18 +2539,31 @@ describe('UserResource.pinnedItems()', () => {
   it('returns pinned repositories and gists', async () => {
     const gh = new GitHubClient({ token: TOKEN });
 
-    mockPostResponse({
-      data: {
-        user: {
-          pinnedItems: {
-            nodes: [
-              { nameWithOwner: 'octocat/Hello-World', description: 'My repo', url: 'https://github.com/octocat/Hello-World', stargazerCount: 100, primaryLanguage: { name: 'TypeScript' } },
-              { name: 'abc123', description: 'My gist', url: 'https://gist.github.com/octocat/abc123' },
-            ],
+    mockPostResponse(
+      {
+        data: {
+          user: {
+            pinnedItems: {
+              nodes: [
+                {
+                  nameWithOwner: 'octocat/Hello-World',
+                  description: 'My repo',
+                  url: 'https://github.com/octocat/Hello-World',
+                  stargazerCount: 100,
+                  primaryLanguage: { name: 'TypeScript' },
+                },
+                {
+                  name: 'abc123',
+                  description: 'My gist',
+                  url: 'https://gist.github.com/octocat/abc123',
+                },
+              ],
+            },
           },
         },
       },
-    }, 200);
+      200,
+    );
 
     const result = await gh.user('octocat').pinnedItems();
 
@@ -2547,7 +2659,9 @@ describe('GitHubClient.notifications()', () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       `${API_URL}/notifications`,
-      expect.objectContaining({ headers: expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }) }),
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }),
+      }),
     );
     expect(result.values).toHaveLength(1);
     expect(result.values[0].id).toBe('1');
@@ -2645,7 +2759,9 @@ describe('GitHubClient.issues()', () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       `${API_URL}/issues`,
-      expect.objectContaining({ headers: expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }) }),
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }),
+      }),
     );
     expect(result.values[0].number).toBe(1);
   });
@@ -2707,7 +2823,11 @@ describe('GitHubClient.searchIssues()', () => {
 
     mockJsonResponse({ total_count: 5, incomplete_results: false, items: [mockIssue] });
 
-    const result = await gh.searchIssues({ q: 'is:pr is:open author:octocat', sort: 'updated', per_page: 50 });
+    const result = await gh.searchIssues({
+      q: 'is:pr is:open author:octocat',
+      sort: 'updated',
+      per_page: 50,
+    });
 
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('/search/issues'),
@@ -2857,7 +2977,9 @@ describe('RepositoryResource.workflowRuns()', () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       `${API_URL}/repos/octocat/Hello-World/actions/runs?per_page=10`,
-      expect.objectContaining({ headers: expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }) }),
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }),
+      }),
     );
     expect(result.total_count).toBe(1);
     expect(result.workflow_runs[0].conclusion).toBe('success');
@@ -2981,7 +3103,9 @@ describe('RepositoryResource.triggerWorkflow()', () => {
 
     fetchMock.mockResolvedValueOnce({ ok: true, status: 204, headers: { get: () => null } });
 
-    await gh.repo('octocat', 'Hello-World').triggerWorkflow(1, { ref: 'main', inputs: { environment: 'staging' } });
+    await gh
+      .repo('octocat', 'Hello-World')
+      .triggerWorkflow(1, { ref: 'main', inputs: { environment: 'staging' } });
 
     expect(fetchMock).toHaveBeenCalledWith(
       `${API_URL}/repos/octocat/Hello-World/actions/workflows/1/dispatches`,
@@ -3050,10 +3174,7 @@ describe('UserResource.organizations()', () => {
 
     const result = await gh.user('octocat').organizations();
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${API_URL}/users/octocat/orgs`,
-      expect.anything(),
-    );
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/users/octocat/orgs`, expect.anything());
     expect(result.values[0].login).toBe('github');
   });
 

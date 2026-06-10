@@ -1,4 +1,8 @@
-import type { GitHubOrganization, OrgMembersParams, CreateOrgRepoData } from '../domain/Organization';
+import type {
+  GitHubOrganization,
+  OrgMembersParams,
+  CreateOrgRepoData,
+} from '../domain/Organization';
 import type { GitHubRepository, ReposParams } from '../domain/Repository';
 import type { GitHubUser } from '../domain/User';
 import type { GitHubPagedResponse } from '../domain/Pagination';
@@ -26,18 +30,10 @@ export type RequestTextFn = (
 ) => Promise<string>;
 
 /** @internal */
-export type RequestBodyFn = <T>(
-  path: string,
-  body: unknown,
-  signal?: AbortSignal,
-) => Promise<T>;
+export type RequestBodyFn = <T>(path: string, body: unknown, signal?: AbortSignal) => Promise<T>;
 
 /** @internal */
-export type RequestPatchFn = <T>(
-  path: string,
-  body: unknown,
-  signal?: AbortSignal,
-) => Promise<T>;
+export type RequestPatchFn = <T>(path: string, body: unknown, signal?: AbortSignal) => Promise<T>;
 
 /** @internal */
 export type RequestDeleteFn = (path: string, signal?: AbortSignal) => Promise<void>;
@@ -49,7 +45,11 @@ export type RequestPutFn = (path: string, signal?: AbortSignal) => Promise<void>
 export type RequestBodyPutFn = <T>(path: string, body: unknown, signal?: AbortSignal) => Promise<T>;
 
 /** @internal */
-export type GraphQLFn = <T>(query: string, variables?: Record<string, unknown>, signal?: AbortSignal) => Promise<T>;
+export type GraphQLFn = <T>(
+  query: string,
+  variables?: Record<string, unknown>,
+  signal?: AbortSignal,
+) => Promise<T>;
 
 /**
  * Represents a GitHub organization resource with chainable async methods.
@@ -89,11 +89,21 @@ export class OrganizationResource implements PromiseLike<GitHubOrganization> {
    * Allows the resource to be awaited directly, resolving with the organization info.
    * Delegates to {@link OrganizationResource.get}.
    */
-  then<TResult1 = GitHubOrganization, TResult2 = never>(
+  async then<TResult1 = GitHubOrganization, TResult2 = never>(
     onfulfilled?: ((value: GitHubOrganization) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
-  ): PromiseLike<TResult1 | TResult2> {
-    return this.get().then(onfulfilled, onrejected);
+  ): Promise<TResult1 | TResult2> {
+    try {
+      const value = await this.get();
+
+      return onfulfilled ? await onfulfilled(value) : (value as unknown as TResult1);
+    } catch (reason) {
+      if (onrejected) {
+        return await onrejected(reason);
+      }
+
+      throw reason;
+    }
   }
 
   /**
@@ -115,7 +125,10 @@ export class OrganizationResource implements PromiseLike<GitHubOrganization> {
    * @param params - Optional filters: `type`, `sort`, `direction`, `per_page`, `page`
    * @returns A paged response of repositories
    */
-  async repos(params?: ReposParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubRepository>> {
+  async repos(
+    params?: ReposParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubRepository>> {
     return this.requestList<GitHubRepository>(
       `/orgs/${this.org}/repos`,
       params as Record<string, string | number | boolean>,
@@ -161,7 +174,10 @@ export class OrganizationResource implements PromiseLike<GitHubOrganization> {
    * @param params - Optional filters: `role`, `filter`, `per_page`, `page`
    * @returns A paged response of users
    */
-  async members(params?: OrgMembersParams, signal?: AbortSignal): Promise<GitHubPagedResponse<GitHubUser>> {
+  async members(
+    params?: OrgMembersParams,
+    signal?: AbortSignal,
+  ): Promise<GitHubPagedResponse<GitHubUser>> {
     return this.requestList<GitHubUser>(
       `/orgs/${this.org}/members`,
       params as Record<string, string | number | boolean>,

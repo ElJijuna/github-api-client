@@ -57,7 +57,16 @@ export interface GitHubCheckRun {
   /** Current status */
   status: 'queued' | 'in_progress' | 'completed';
   /** Conclusion (only set when `status` is `'completed'`) */
-  conclusion: 'action_required' | 'cancelled' | 'failure' | 'neutral' | 'success' | 'skipped' | 'stale' | 'timed_out' | null;
+  conclusion:
+    | 'action_required'
+    | 'cancelled'
+    | 'failure'
+    | 'neutral'
+    | 'success'
+    | 'skipped'
+    | 'stale'
+    | 'timed_out'
+    | null;
   /** ISO 8601 timestamp of when the check started */
   started_at: string | null;
   /** ISO 8601 timestamp of when the check completed */
