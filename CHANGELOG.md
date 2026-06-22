@@ -1,3 +1,12 @@
+## [1.16.2](https://github.com/ElJijuna/github-api-client/compare/v1.16.1...v1.16.2) (2026-05-27)
+
+
+### Performance Improvements
+
+* optimize request listener fanout ([bed69bc](https://github.com/ElJijuna/github-api-client/commit/bed69bc68bb9ae08e020b1913dfb987c6bb08507))
+* reduce GitHubClient request overhead ([d9b639f](https://github.com/ElJijuna/github-api-client/commit/d9b639fce77eb3f3d7d6fa593a132f098b64e8d2))
+* reduce heap pressure in Link parsing ([fed176f](https://github.com/ElJijuna/github-api-client/commit/fed176f773ac0647494289ed17b9640a1d1745b0))
+
 # [1.16.0](https://github.com/ElJijuna/github-api-client/compare/v1.15.0...v1.16.0) (2026-05-25)
 
 
